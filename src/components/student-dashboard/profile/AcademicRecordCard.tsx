@@ -1,6 +1,6 @@
 import { School, Award, Calendar, BookOpen, Target } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import type { IStudentProfile } from "../../types/student"
+import type { IStudentProfile } from "@/types/student"
 
 interface AcademicRecordCardProps {
   profile: IStudentProfile

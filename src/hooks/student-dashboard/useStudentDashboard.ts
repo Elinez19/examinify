@@ -6,14 +6,14 @@ import type {
   IRecentExamResult,
   IClassAnnouncement,
   IDashboardMetric,
-} from "../types/student"
+} from "@/types/student"
 import {
   MOCK_STUDENT_PROFILE,
   MOCK_UPCOMING_EXAMS,
   MOCK_RECENT_RESULTS,
   MOCK_ANNOUNCEMENTS,
   MOCK_METRICS,
-} from "../services/mockStudentData"
+} from "@/services/student-dashboard/mockStudentData"
 
 interface UseStudentDashboardOptions {
   initialTab?: DashboardTab

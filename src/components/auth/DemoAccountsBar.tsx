@@ -1,8 +1,8 @@
 import { Sparkles, ArrowRight, GraduationCap, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DEMO_ACCOUNTS } from "../services/demoAccounts"
-import type { DemoAccount } from "../types/auth"
+import { DEMO_ACCOUNTS } from "@/services/auth/demoAccounts"
+import type { DemoAccount } from "@/types/auth"
 
 interface DemoAccountsBarProps {
   onQuickLogin: (account: DemoAccount) => void

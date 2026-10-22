@@ -8,7 +8,7 @@ import { GoogleOAuthButton } from "./GoogleOAuthButton"
 import { OAuthDivider } from "./OAuthDivider"
 import { PasswordInputField } from "./PasswordInputField"
 import { DemoAccountsBar } from "./DemoAccountsBar"
-import type { SignInFormData, AuthErrors, DemoAccount } from "../types/auth"
+import type { SignInFormData, AuthErrors, DemoAccount } from "@/types/auth"
 
 interface SignInFormProps {
   data: SignInFormData

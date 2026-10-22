@@ -1,6 +1,6 @@
 import * as React from "react"
-import type { IStudentProfile } from "../types/student"
-import { MOCK_STUDENT_PROFILE } from "../services/mockStudentData"
+import type { IStudentProfile } from "@/types/student"
+import { MOCK_STUDENT_PROFILE } from "@/services/student-dashboard/mockStudentData"
 
 export function useStudentProfile() {
   const [profile, setProfile] = React.useState<IStudentProfile>(MOCK_STUDENT_PROFILE)

@@ -15,7 +15,7 @@ import type {
   IRecentExamResult,
   IClassAnnouncement,
   IDashboardMetric,
-} from "../types/student"
+} from "@/types/student"
 
 export class StudentDashboardService {
   public static async getStudentProfile(): Promise<IStudentProfile> {

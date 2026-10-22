@@ -3,7 +3,7 @@ import { HomePage } from "@/pages/HomePage"
 import { AuthPage } from "@/pages/AuthPage"
 import { StudentDashboardPage } from "@/pages/StudentDashboardPage"
 import { CbtExamPage } from "@/pages/CbtExamPage"
-import type { AuthMode } from "@/features/auth/types/auth"
+import type { AuthMode } from "@/types/auth"
 
 type AppView = "home" | AuthMode | "dashboard" | "cbt"
 

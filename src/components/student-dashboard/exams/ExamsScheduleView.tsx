@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import type { IUpcomingExam, IClassCohort } from "../../types/student"
+import type { IUpcomingExam, IClassCohort } from "@/types/student"
 
 interface ExamsScheduleViewProps {
   upcomingExams: IUpcomingExam[]

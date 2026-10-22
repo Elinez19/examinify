@@ -1,6 +1,6 @@
 import { Users, Phone, Mail, MapPin, Shield } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import type { IStudentGuardian } from "../../types/student"
+import type { IStudentGuardian } from "@/types/student"
 
 interface GuardianInfoCardProps {
   guardian: IStudentGuardian

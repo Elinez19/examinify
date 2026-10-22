@@ -1,7 +1,7 @@
 import * as React from "react"
 import { DashboardHeader } from "./DashboardHeader"
 import { DashboardSidebar } from "./DashboardSidebar"
-import type { IStudentProfile, DashboardTab } from "../../types/student"
+import type { IStudentProfile, DashboardTab } from "@/types/student"
 
 interface DashboardLayoutProps {
   profile: IStudentProfile

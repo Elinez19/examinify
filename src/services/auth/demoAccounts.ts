@@ -1,4 +1,4 @@
-import type { DemoAccount } from "../types/auth"
+import type { DemoAccount } from "@/types/auth"
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   {

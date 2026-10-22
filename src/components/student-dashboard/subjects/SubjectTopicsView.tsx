@@ -2,7 +2,7 @@ import { CheckCircle2, Circle, Clock, X, BookOpen } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import type { ISubjectItem } from "../../types/student"
+import type { ISubjectItem } from "@/types/student"
 
 interface SubjectTopicsViewProps {
   subject: ISubjectItem

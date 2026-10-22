@@ -9,9 +9,9 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import type { ICbtCandidateInfo } from "../../types/cbt"
-import type { TimerUrgency } from "../../hooks/useCbtTimer"
-import type { CbtFontSize } from "../../hooks/useCbtExamRunner"
+import type { ICbtCandidateInfo } from "@/types/cbt"
+import type { TimerUrgency } from "@/hooks/cbt-exam/useCbtTimer"
+import type { CbtFontSize } from "@/hooks/cbt-exam/useCbtExamRunner"
 
 interface CbtExamHeaderHUDProps {
   candidate: ICbtCandidateInfo

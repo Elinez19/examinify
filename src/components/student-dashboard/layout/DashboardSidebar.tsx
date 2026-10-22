@@ -10,7 +10,7 @@ import {
   School,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { DashboardTab } from "../../types/student"
+import type { DashboardTab } from "@/types/student"
 
 interface DashboardSidebarProps {
   currentTab: DashboardTab

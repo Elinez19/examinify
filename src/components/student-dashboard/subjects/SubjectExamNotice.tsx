@@ -1,7 +1,7 @@
 import { Zap, Clock, ArrowRight, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import type { ISubjectItem } from "../../types/student"
+import type { ISubjectItem } from "@/types/student"
 
 interface SubjectExamNoticeProps {
   scheduledSubjects: ISubjectItem[]

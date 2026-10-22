@@ -1,11 +1,11 @@
-import { useStudentDashboard } from "@/features/student-dashboard/hooks/useStudentDashboard"
-import { DashboardLayout } from "@/features/student-dashboard/components/layout/DashboardLayout"
-import { DashboardOverviewTab } from "@/features/student-dashboard/components/overview/DashboardOverviewTab"
-import { SubjectListView } from "@/features/student-dashboard/components/subjects/SubjectListView"
-import { ExamsScheduleView } from "@/features/student-dashboard/components/exams/ExamsScheduleView"
-import { ProfileDetailsView } from "@/features/student-dashboard/components/profile/ProfileDetailsView"
-import { ResultsAnalyticsView } from "@/features/student-dashboard/components/results/ResultsAnalyticsView"
-import type { DashboardTab } from "@/features/student-dashboard/types/student"
+import { useStudentDashboard } from "@/hooks/student-dashboard/useStudentDashboard"
+import { DashboardLayout } from "@/components/student-dashboard/layout/DashboardLayout"
+import { DashboardOverviewTab } from "@/components/student-dashboard/overview/DashboardOverviewTab"
+import { SubjectListView } from "@/components/student-dashboard/subjects/SubjectListView"
+import { ExamsScheduleView } from "@/components/student-dashboard/exams/ExamsScheduleView"
+import { ProfileDetailsView } from "@/components/student-dashboard/profile/ProfileDetailsView"
+import { ResultsAnalyticsView } from "@/components/student-dashboard/results/ResultsAnalyticsView"
+import type { DashboardTab } from "@/types/student"
 
 interface StudentDashboardPageProps {
   initialTab?: DashboardTab

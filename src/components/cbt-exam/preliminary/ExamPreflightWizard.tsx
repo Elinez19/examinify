@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CandidateAdmitSlipModal } from "./CandidateAdmitSlipModal"
 import { ExamInstructionsModal } from "./ExamInstructionsModal"
 import { ProctoringNoticeModal } from "./ProctoringNoticeModal"
-import type { ICbtExamSession, PreflightStep } from "../../types/cbt"
+import type { ICbtExamSession, PreflightStep } from "@/types/cbt"
 
 interface ExamPreflightWizardProps {
   session: ICbtExamSession

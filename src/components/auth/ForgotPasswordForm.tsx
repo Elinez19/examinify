@@ -3,7 +3,7 @@ import { Mail, ArrowRight, ArrowLeft, KeyRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
-import type { ForgotPasswordFormData, AuthErrors } from "../types/auth"
+import type { ForgotPasswordFormData, AuthErrors } from "@/types/auth"
 
 interface ForgotPasswordFormProps {
   data: ForgotPasswordFormData

@@ -1,4 +1,4 @@
-import type { ICbtExamSession, ICbtCandidateInfo } from "../types/cbt"
+import type { ICbtExamSession, ICbtCandidateInfo } from "@/types/cbt"
 
 export const MOCK_CBT_CANDIDATE: ICbtCandidateInfo = {
   registrationNumber: "EXAM-2026-8842",

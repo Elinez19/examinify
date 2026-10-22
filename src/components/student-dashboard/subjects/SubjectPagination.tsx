@@ -115,7 +115,7 @@ export function SubjectPagination({
         {/* First Page */}
         <Button
           variant="outline"
-          size="icon-xs"
+          size="icon-sm"
           onClick={() => onPageChange(1)}
           disabled={currentPage <= 1}
           aria-label="First page"
@@ -127,7 +127,7 @@ export function SubjectPagination({
         {/* Previous Page */}
         <Button
           variant="outline"
-          size="icon-xs"
+          size="icon-sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
           aria-label="Previous page"
@@ -163,7 +163,7 @@ export function SubjectPagination({
         {/* Next Page */}
         <Button
           variant="outline"
-          size="icon-xs"
+          size="icon-sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
           aria-label="Next page"
@@ -175,7 +175,7 @@ export function SubjectPagination({
         {/* Last Page */}
         <Button
           variant="outline"
-          size="icon-xs"
+          size="icon-sm"
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage >= totalPages}
           aria-label="Last page"

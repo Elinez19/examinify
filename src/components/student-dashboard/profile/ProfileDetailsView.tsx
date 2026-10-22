@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { ProfileSummaryCard } from "./ProfileSummaryCard"
 import { AcademicRecordCard } from "./AcademicRecordCard"
 import { GuardianInfoCard } from "./GuardianInfoCard"
-import type { IStudentProfile } from "../../types/student"
+import type { IStudentProfile } from "@/types/student"
 
 interface ProfileDetailsViewProps {
   profile: IStudentProfile

@@ -1,4 +1,4 @@
-import { useSubjectList } from "../../hooks/useSubjectList"
+import { useSubjectList } from "@/hooks/student-dashboard/useSubjectList"
 import { SubjectTableView } from "./SubjectTableView"
 
 interface SubjectListViewProps {

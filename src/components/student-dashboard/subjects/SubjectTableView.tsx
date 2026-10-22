@@ -1,4 +1,3 @@
-import * as React from "react"
 import {
   Search,
   BookOpen,
@@ -15,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { SubjectExamNotice } from "./SubjectExamNotice"
 import { SubjectPagination } from "./SubjectPagination"
-import type { ISubjectItem } from "../../types/student"
+import type { ISubjectItem } from "@/types/student"
 
 interface SubjectTableViewProps {
   subjects: ISubjectItem[]

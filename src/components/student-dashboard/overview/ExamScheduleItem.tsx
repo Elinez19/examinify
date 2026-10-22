@@ -1,7 +1,7 @@
 import { Clock, HelpCircle, ArrowRight, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import type { IUpcomingExam } from "../../types/student"
+import type { IUpcomingExam } from "@/types/student"
 
 interface ExamScheduleItemProps {
   exam: IUpcomingExam

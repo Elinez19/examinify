@@ -2,7 +2,7 @@ import { CheckCircle2, Mail, Phone, MapPin, Sparkles } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import type { IStudentProfile } from "../../types/student"
+import type { IStudentProfile } from "@/types/student"
 
 interface ProfileSummaryCardProps {
   profile: IStudentProfile

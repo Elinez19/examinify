@@ -1,6 +1,6 @@
 import { Sparkles, CheckCircle2, BookOpen, Clock } from "lucide-react"
 import { DashboardMetricCard } from "./DashboardMetricCard"
-import type { IDashboardMetric } from "../../types/student"
+import type { IDashboardMetric } from "@/types/student"
 
 interface DashboardMetricsGridProps {
   metrics: IDashboardMetric[]

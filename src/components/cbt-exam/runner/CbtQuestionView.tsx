@@ -1,8 +1,8 @@
 import { Bookmark } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import type { ICbtQuestion, ICbtQuestionOption } from "../../types/cbt"
-import type { CbtFontSize } from "../../hooks/useCbtExamRunner"
+import type { ICbtQuestion, ICbtQuestionOption } from "@/types/cbt"
+import type { CbtFontSize } from "@/hooks/cbt-exam/useCbtExamRunner"
 
 interface CbtQuestionViewProps {
   question: ICbtQuestion

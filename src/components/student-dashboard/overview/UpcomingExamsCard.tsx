@@ -2,7 +2,7 @@ import { CalendarDays } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ExamScheduleItem } from "./ExamScheduleItem"
-import type { IUpcomingExam } from "../../types/student"
+import type { IUpcomingExam } from "@/types/student"
 
 interface UpcomingExamsCardProps {
   exams: IUpcomingExam[]

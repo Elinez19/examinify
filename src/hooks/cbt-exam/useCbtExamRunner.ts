@@ -1,6 +1,6 @@
 import * as React from "react"
-import { getCbtExamSession } from "../services/cbtMockExams"
-import { computeCbtExamResult } from "../services/cbtScoring.service"
+import { getCbtExamSession } from "@/services/cbt-exam/cbtMockExams"
+import { computeCbtExamResult } from "@/services/cbt-exam/cbtScoring.service"
 import { useCbtTimer } from "./useCbtTimer"
 import { useCbtProctoring } from "./useCbtProctoring"
 import { useCbtKeyboardShortcuts } from "./useCbtKeyboardShortcuts"
@@ -12,7 +12,7 @@ import type {
   ICbtFlagMap,
   ICbtVisitedMap,
   ICbtExamResult,
-} from "../types/cbt"
+} from "@/types/cbt"
 
 export type CbtFontSize = "normal" | "large" | "extra-large"
 

@@ -34,10 +34,14 @@ Before finishing any task:
 4. Verify responsiveness and ensure pure light mode design system consistency (dark mode disabled).
 
 ## 3. Directory Layout
-- `src/components/ui/`: shadcn/ui base primitives (`button.tsx`, `card.tsx`, `badge.tsx`, etc.)
-- `src/components/common/`: Shared presentational components (`StatCard.tsx`, `HeroBanner.tsx`, `Navbar.tsx`)
-- `src/features/`: Domain feature slices (`catalog`, `exam-runner`, `exam-builder`, `analytics`)
-  - Each feature contains: `components/`, `hooks/`, `services/`, and `types/`
-- `src/hooks/`: Cross-cutting global hooks (`useTheme.ts`, `useLocalStorage.ts`)
-- `src/lib/`: Utilities (`utils.ts`, `formatters.ts`)
-- `src/types/`: Global domain models (`exam.ts`, `submission.ts`, `user.ts`)
+- `src/pages/`: Top-level application pages (`HomePage.tsx`, `AuthPage.tsx`, `SignInPage.tsx`, `SignUpPage.tsx`, `ForgotPasswordPage.tsx`, `CbtExamPage.tsx`, `StudentDashboardPage.tsx`)
+- `src/components/`: Modular component domain folders and primitives
+  - `auth/`: Authentication forms and modals
+  - `cbt-exam/`: CBT exam preliminary, runner HUD, question palette, and result slips
+  - `student-dashboard/`: Overview, classes, subjects, exams, and profile components
+  - `hero/`, `home-features/`, `info/`, `cta/`, `navigation/`: Landing page components
+  - `ui/`: Base UI primitives (`button.tsx`, `card.tsx`, `badge.tsx`, etc.)
+- `src/hooks/`: Custom React hooks (`auth/`, `cbt-exam/`, `student-dashboard/`, `scroll/`, `simulator/`, `theme/`)
+- `src/services/`: Data mocking and backend services (`auth/`, `cbt-exam/`, `student-dashboard/`)
+- `src/types/`: Domain TypeScript models (`auth.ts`, `cbt.ts`, `student.ts`, `exam.ts`, `landing.ts`)
+- `src/lib/`: Shared utility functions (`utils.ts`)

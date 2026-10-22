@@ -20,7 +20,7 @@ import type {
   IRecentExamResult,
   IClassAnnouncement,
   DashboardTab,
-} from "../../types/student"
+} from "@/types/student"
 
 interface DashboardOverviewTabProps {
   profile: IStudentProfile

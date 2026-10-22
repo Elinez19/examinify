@@ -6,7 +6,7 @@ import type {
   IRecentExamResult,
   IClassAnnouncement,
   IDashboardMetric,
-} from "../types/student"
+} from "@/types/student"
 
 export const MOCK_CLASS: IClassCohort = {
   id: "cls-sss3-sci",

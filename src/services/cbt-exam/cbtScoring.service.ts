@@ -3,7 +3,7 @@ import type {
   ICbtAnswerMap,
   ICbtExamResult,
   ICbtSubjectScore,
-} from "../types/cbt"
+} from "@/types/cbt"
 
 function getGradeLetter(percentage: number): string {
   if (percentage >= 80) return "A1 (Distinction)"

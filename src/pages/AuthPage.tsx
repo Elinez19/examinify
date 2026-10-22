@@ -1,10 +1,10 @@
-import { useAuthFlow } from "@/features/auth/hooks/useAuthFlow"
-import { AuthLayout } from "@/features/auth/components/AuthLayout"
-import { SignInForm } from "@/features/auth/components/SignInForm"
-import { SignUpForm } from "@/features/auth/components/SignUpForm"
-import { ForgotPasswordForm } from "@/features/auth/components/ForgotPasswordForm"
-import { ResetSuccessView } from "@/features/auth/components/ResetSuccessView"
-import type { AuthMode } from "@/features/auth/types/auth"
+import { useAuthFlow } from "@/hooks/auth/useAuthFlow"
+import { AuthLayout } from "@/components/auth/AuthLayout"
+import { SignInForm } from "@/components/auth/SignInForm"
+import { SignUpForm } from "@/components/auth/SignUpForm"
+import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm"
+import { ResetSuccessView } from "@/components/auth/ResetSuccessView"
+import type { AuthMode } from "@/types/auth"
 import { CheckCircle2, AlertCircle, Info } from "lucide-react"
 
 interface AuthPageProps {

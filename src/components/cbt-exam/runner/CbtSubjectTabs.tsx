@@ -1,4 +1,4 @@
-import type { ICbtSubject } from "../../types/cbt"
+import type { ICbtSubject } from "@/types/cbt"
 
 interface SubjectStat {
   subjectId: string

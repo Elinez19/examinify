@@ -1,6 +1,6 @@
 import * as React from "react"
-import type { ISubjectItem } from "../types/student"
-import { MOCK_SUBJECTS } from "../services/mockStudentData"
+import type { ISubjectItem } from "@/types/student"
+import { MOCK_SUBJECTS } from "@/services/student-dashboard/mockStudentData"
 
 export function useSubjectList() {
   const [subjects, setSubjects] = React.useState<ISubjectItem[]>(MOCK_SUBJECTS)

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { ClassCard } from "./ClassCard"
 import { ClassScheduleCard } from "./ClassScheduleCard"
 import { ClassAnnouncementsList } from "./ClassAnnouncementsList"
-import type { IClassCohort, IClassAnnouncement } from "../../types/student"
+import type { IClassCohort, IClassAnnouncement } from "@/types/student"
 
 interface ClassListViewProps {
   classes: IClassCohort[]

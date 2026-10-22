@@ -7,7 +7,7 @@ import type {
   AuthErrors,
   UserRole,
   DemoAccount,
-} from "../types/auth"
+} from "@/types/auth"
 
 interface UseAuthFlowOptions {
   initialMode?: AuthMode

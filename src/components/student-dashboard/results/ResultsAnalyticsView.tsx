@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import type { IRecentExamResult } from "../../types/student"
+import type { IRecentExamResult } from "@/types/student"
 
 interface ResultsAnalyticsViewProps {
   results: IRecentExamResult[]

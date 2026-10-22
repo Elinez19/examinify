@@ -1,4 +1,4 @@
-import type { ICbtQuestion, ICbtAnswerMap, ICbtFlagMap, ICbtVisitedMap } from "../../types/cbt"
+import type { ICbtQuestion, ICbtAnswerMap, ICbtFlagMap, ICbtVisitedMap } from "@/types/cbt"
 
 interface CbtQuestionPaletteProps {
   questions: ICbtQuestion[]

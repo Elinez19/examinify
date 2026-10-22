@@ -8,7 +8,7 @@ import { FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/f
 import { GoogleOAuthButton } from "./GoogleOAuthButton"
 import { OAuthDivider } from "./OAuthDivider"
 import { PasswordInputField } from "./PasswordInputField"
-import type { SignUpFormData, AuthErrors } from "../types/auth"
+import type { SignUpFormData, AuthErrors } from "@/types/auth"
 
 interface SignUpFormProps {
   data: SignUpFormData

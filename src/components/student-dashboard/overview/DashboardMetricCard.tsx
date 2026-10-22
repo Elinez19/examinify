@@ -1,7 +1,7 @@
 import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import type { IDashboardMetric } from "../../types/student"
+import type { IDashboardMetric } from "@/types/student"
 
 interface DashboardMetricCardProps {
   metric: IDashboardMetric

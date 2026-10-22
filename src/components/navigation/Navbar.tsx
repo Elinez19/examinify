@@ -7,9 +7,15 @@ interface NavbarProps {
   onScrollToSection: (sectionId: string) => void
   onNavigateAuth?: (mode: "signin" | "signup") => void
   onNavigateDashboard?: () => void
+  onNavigateTeacher?: () => void
 }
 
-export function Navbar({ onScrollToSection, onNavigateAuth, onNavigateDashboard }: NavbarProps) {
+export function Navbar({
+  onScrollToSection,
+  onNavigateAuth,
+  onNavigateDashboard,
+  onNavigateTeacher,
+}: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
   return (
@@ -81,6 +87,17 @@ export function Navbar({ onScrollToSection, onNavigateAuth, onNavigateDashboard 
                 className="text-xs font-semibold text-foreground hover:bg-primary/10 hover:text-primary"
               >
                 Student Portal
+              </Button>
+            )}
+            {onNavigateTeacher && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onNavigateTeacher}
+                leftIcon={<School className="size-4 text-primary" />}
+                className="text-xs font-semibold text-foreground hover:bg-primary/10 hover:text-primary"
+              >
+                Teacher Portal
               </Button>
             )}
             {onNavigateAuth && (
@@ -183,6 +200,20 @@ export function Navbar({ onScrollToSection, onNavigateAuth, onNavigateDashboard 
                   className="font-semibold justify-center"
                 >
                   Candidate Portal
+                </Button>
+              )}
+              {onNavigateTeacher && (
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => {
+                    onNavigateTeacher()
+                    setMobileMenuOpen(false)
+                  }}
+                  leftIcon={<School className="size-4 text-primary" />}
+                  className="font-semibold justify-center text-primary border-primary/30"
+                >
+                  Teacher Portal
                 </Button>
               )}
               {onNavigateAuth && (

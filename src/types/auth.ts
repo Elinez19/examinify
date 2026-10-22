@@ -1,4 +1,4 @@
-export type UserRole = "student" | "examiner" | "school_admin"
+export type UserRole = "student" | "teacher" | "examiner" | "school_admin"
 
 export type AuthMode = "signin" | "signup" | "forgot-password" | "reset-success"
 

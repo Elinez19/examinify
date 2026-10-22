@@ -11,12 +11,14 @@ interface AuthPageProps {
   initialMode?: AuthMode
   onNavigateHome?: () => void
   onNavigateDashboard?: () => void
+  onNavigateTeacher?: () => void
 }
 
 export function AuthPage({
   initialMode = "signin",
   onNavigateHome,
   onNavigateDashboard,
+  onNavigateTeacher,
 }: AuthPageProps) {
   const {
     mode,
@@ -41,8 +43,16 @@ export function AuthPage({
     handleGoogleAuth,
   } = useAuthFlow({
     initialMode,
-    onSuccess: () => {
-      onNavigateDashboard?.()
+    onSuccess: (user) => {
+      if (user?.role === "teacher") {
+        if (onNavigateTeacher) {
+          onNavigateTeacher()
+        } else {
+          window.location.hash = "teacher"
+        }
+      } else {
+        onNavigateDashboard?.()
+      }
     },
   })
 

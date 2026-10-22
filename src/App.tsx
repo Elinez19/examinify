@@ -3,9 +3,10 @@ import { HomePage } from "@/pages/HomePage"
 import { AuthPage } from "@/pages/AuthPage"
 import { StudentDashboardPage } from "@/pages/StudentDashboardPage"
 import { CbtExamPage } from "@/pages/CbtExamPage"
+import { TeacherDashboardPage } from "@/pages/TeacherDashboardPage"
 import type { AuthMode } from "@/types/auth"
 
-type AppView = "home" | AuthMode | "dashboard" | "cbt"
+type AppView = "home" | AuthMode | "dashboard" | "cbt" | "teacher"
 
 export function App() {
   const getInitialView = (): AppView => {
@@ -15,6 +16,9 @@ export function App() {
     }
     if (rawHash.startsWith("cbt")) {
       return "cbt"
+    }
+    if (rawHash.startsWith("teacher")) {
+      return "teacher"
     }
     if (
       rawHash === "dashboard" ||
@@ -54,6 +58,8 @@ export function App() {
           setCbtSessionId(parts[1])
         }
         setCurrentView("cbt")
+      } else if (rawHash.startsWith("teacher")) {
+        setCurrentView("teacher")
       } else if (
         rawHash === "dashboard" ||
         rawHash === "portal" ||
@@ -84,6 +90,12 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "instant" })
   }, [])
 
+  const navigateToTeacher = React.useCallback(() => {
+    window.location.hash = "teacher"
+    setCurrentView("teacher")
+    window.scrollTo({ top: 0, behavior: "instant" })
+  }, [])
+
   const navigateToCbt = React.useCallback((sessionId = "exm-term2-day1") => {
     window.location.hash = `cbt/${sessionId}`
     setCbtSessionId(sessionId)
@@ -94,6 +106,15 @@ export function App() {
   const navigateToHome = () => {
     window.location.hash = ""
     setCurrentView("home")
+  }
+
+  if (currentView === "teacher") {
+    return (
+      <TeacherDashboardPage
+        onNavigateHome={navigateToHome}
+        onLogOut={() => navigateToAuth("signin")}
+      />
+    )
   }
 
   if (currentView === "cbt") {
@@ -121,6 +142,7 @@ export function App() {
         initialMode={currentView}
         onNavigateHome={navigateToHome}
         onNavigateDashboard={navigateToDashboard}
+        onNavigateTeacher={navigateToTeacher}
       />
     )
   }
@@ -129,6 +151,7 @@ export function App() {
     <HomePage
       onNavigateAuth={navigateToAuth}
       onNavigateDashboard={navigateToDashboard}
+      onNavigateTeacher={navigateToTeacher}
     />
   )
 }

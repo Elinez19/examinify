@@ -9,9 +9,14 @@ import { useScrollTo } from "@/hooks/scroll/useScrollTo"
 interface HomePageProps {
   onNavigateAuth?: (mode: "signin" | "signup") => void
   onNavigateDashboard?: () => void
+  onNavigateTeacher?: () => void
 }
 
-export function HomePage({ onNavigateAuth, onNavigateDashboard }: HomePageProps = {}) {
+export function HomePage({
+  onNavigateAuth,
+  onNavigateDashboard,
+  onNavigateTeacher,
+}: HomePageProps = {}) {
   const { scrollTo } = useScrollTo()
 
   return (
@@ -21,6 +26,7 @@ export function HomePage({ onNavigateAuth, onNavigateDashboard }: HomePageProps 
         onScrollToSection={scrollTo}
         onNavigateAuth={onNavigateAuth}
         onNavigateDashboard={onNavigateDashboard}
+        onNavigateTeacher={onNavigateTeacher}
       />
 
       {/* Main Landing Sections */}

@@ -1,13 +1,13 @@
 export type DashboardTab =
   | "overview"
-  | "classes"
-  | "subjects"
   | "profile"
+  | "subjects"
+  | "exams"
   | "results"
 
 export type AcademicStanding = "Honor Roll" | "Good Standing" | "Needs Attention"
 
-export type SubjectCategory = "Core" | "Elective" | "STEM" | "Humanities"
+export type SubjectCategory = "Core" | "Elective" | "STEM" | "Humanities" | "Vocational"
 
 export interface IStudentGuardian {
   fullName: string
@@ -15,28 +15,6 @@ export interface IStudentGuardian {
   phone: string
   email: string
   address: string
-}
-
-export interface IStudentProfile {
-  id: string
-  registrationNumber: string
-  fullName: string
-  email: string
-  phone: string
-  avatarUrl?: string
-  gradeLevel: string
-  department: string
-  institutionName: string
-  institutionBranch?: string
-  targetExamTrack: string
-  targetExamYear: string
-  readinessScore: number
-  completedExamsCount: number
-  enrolledSubjectsCount: number
-  attendanceRate: number
-  academicStanding: AcademicStanding
-  enrolledDate: string
-  guardian: IStudentGuardian
 }
 
 export interface IClassCohort {
@@ -57,12 +35,46 @@ export interface IClassCohort {
   description: string
 }
 
+export interface IStudentProfile {
+  id: string
+  registrationNumber: string
+  fullName: string
+  email: string
+  phone: string
+  avatarUrl?: string
+  gradeLevel: string
+  department: string
+  institutionName: string
+  institutionBranch?: string
+  targetExamTrack: string
+  targetExamYear: string
+  enrolledClass: IClassCohort
+  readinessScore: number
+  completedExamsCount: number
+  enrolledSubjectsCount: number
+  attendanceRate: number
+  academicStanding: AcademicStanding
+  enrolledDate: string
+  guardian: IStudentGuardian
+}
+
 export interface ISubjectTopic {
   id: string
   title: string
   isCompleted: boolean
   difficulty: "Basic" | "Intermediate" | "Advanced"
   hours: number
+}
+
+export interface ISubjectExamSchedule {
+  isScheduledToday: boolean
+  scheduledDate: string
+  scheduledTime: string
+  examId?: string
+  examTitle?: string
+  durationMinutes?: number
+  totalQuestions?: number
+  status: "scheduled_today" | "upcoming" | "completed" | "none"
 }
 
 export interface ISubjectItem {
@@ -77,6 +89,7 @@ export interface ISubjectItem {
   totalTopicsCount: number
   currentGradePercentage: number
   currentGradeLetter: string
+  examSchedule: ISubjectExamSchedule
   nextAssessmentDate?: string
   topics: ISubjectTopic[]
 }

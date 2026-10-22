@@ -109,6 +109,7 @@ export function App() {
     return (
       <StudentDashboardPage
         onNavigateHome={navigateToHome}
+        onLogOut={() => navigateToAuth("signin")}
         onStartExam={(examId) => navigateToCbt(examId)}
       />
     )

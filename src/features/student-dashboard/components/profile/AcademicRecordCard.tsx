@@ -54,13 +54,16 @@ export function AcademicRecordCard({ profile }: AcademicRecordCardProps) {
           <div className="rounded-xl border border-border bg-card/60 p-3.5 space-y-1">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
               <BookOpen className="size-3.5 text-primary" />
-              Academic Stream / Department
+              Enrolled Class & Department
             </span>
             <p className="font-bold text-foreground text-sm">
-              {profile.department}
+              {profile.enrolledClass?.name || profile.gradeLevel}
             </p>
             <p className="text-muted-foreground">
-              {profile.enrolledSubjectsCount} Enrolled Core & STEM Subjects
+              {profile.enrolledClass?.room} • Teacher: {profile.enrolledClass?.teacherName}
+            </p>
+            <p className="text-xs text-primary font-medium pt-0.5">
+              {profile.enrolledSubjectsCount} Enrolled Curriculum Subjects
             </p>
           </div>
 

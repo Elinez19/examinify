@@ -1,17 +1,14 @@
 import * as React from "react"
 import {
   LayoutDashboard,
-  School,
   BookOpen,
   GraduationCap,
   Award,
-  Sparkles,
-  LogOut,
+  FileText,
   X,
   ShieldCheck,
-  ChevronRight,
+  School,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { DashboardTab } from "../../types/student"
 
@@ -21,9 +18,10 @@ interface DashboardSidebarProps {
   isMobileOpen: boolean
   onCloseMobile: () => void
   onNavigateHome?: () => void
-  onStartPracticeExam: () => void
-  enrolledClassesCount: number
+  onLogOut?: () => void
+  enrolledClassName?: string
   enrolledSubjectsCount: number
+  todayScheduledExamsCount?: number
 }
 
 interface NavItem {
@@ -31,6 +29,7 @@ interface NavItem {
   label: string
   icon: React.ComponentType<{ className?: string }>
   badge?: string | number
+  badgeVariant?: "default" | "primary"
 }
 
 export function DashboardSidebar({
@@ -38,48 +37,49 @@ export function DashboardSidebar({
   onTabChange,
   isMobileOpen,
   onCloseMobile,
-  onNavigateHome,
-  onStartPracticeExam,
-  enrolledClassesCount,
+  enrolledClassName = "SSS 3 Science Alpha",
   enrolledSubjectsCount,
+  todayScheduledExamsCount = 2,
 }: DashboardSidebarProps) {
+  // Exactly the 5 requested menus: Overview, My Profile, Subjects, Exams, Results
   const navItems: NavItem[] = [
     {
       tab: "overview",
-      label: "Dashboard Overview",
+      label: "Overview",
       icon: LayoutDashboard,
     },
     {
-      tab: "classes",
-      label: "My Classes & Cohorts",
-      icon: School,
-      badge: enrolledClassesCount,
+      tab: "profile",
+      label: "My Profile",
+      icon: GraduationCap,
     },
     {
       tab: "subjects",
-      label: "Subjects & Syllabus",
+      label: "Subjects",
       icon: BookOpen,
       badge: enrolledSubjectsCount,
     },
     {
-      tab: "profile",
-      label: "Candidate Profile",
-      icon: GraduationCap,
+      tab: "exams",
+      label: "Exams",
+      icon: FileText,
+      badge: todayScheduledExamsCount > 0 ? `${todayScheduledExamsCount} today` : undefined,
+      badgeVariant: "primary",
     },
     {
       tab: "results",
-      label: "Exam Results & Scores",
+      label: "Results",
       icon: Award,
     },
   ]
 
   const sidebarContent = (
-    <div className="flex h-full flex-col justify-between bg-card text-card-foreground">
-      {/* Top Branding Section */}
-      <div className="p-5 border-b border-border">
+    <div className="flex h-full flex-col bg-card text-card-foreground overflow-hidden">
+      {/* Top Branding Section & Single Class Badge */}
+      <div className="p-5 border-b border-border space-y-3 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
               <ShieldCheck className="size-5 stroke-[2.2]" />
             </div>
             <div className="flex flex-col">
@@ -102,12 +102,21 @@ export function DashboardSidebar({
             <X className="size-5" />
           </button>
         </div>
+
+        {/* Single Student Class Chip (No multi-cohort switcher needed) */}
+        <div className="rounded-xl border border-border bg-muted/40 px-3 py-2 flex items-center gap-2 text-xs">
+          <School className="size-3.5 text-primary shrink-0" />
+          <div className="flex flex-col min-w-0">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Enrolled Class</span>
+            <span className="font-bold text-foreground truncate">{enrolledClassName}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Middle Navigation Links */}
+      {/* Middle Navigation Links (5 strict menus) */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         <div className="px-3 pb-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-          Menu
+          Student Menus
         </div>
 
         {navItems.map((item) => {
@@ -125,7 +134,7 @@ export function DashboardSidebar({
               className={cn(
                 "group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer text-left",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                  ? "bg-primary text-primary-foreground shadow-xs shadow-primary/20"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
@@ -142,9 +151,11 @@ export function DashboardSidebar({
               {item.badge !== undefined && (
                 <span
                   className={cn(
-                    "flex size-5 items-center justify-center rounded-full text-[10px] font-bold",
+                    "px-2 py-0.5 rounded-full text-[10px] font-bold",
                     isActive
                       ? "bg-primary-foreground/20 text-primary-foreground"
+                      : item.badgeVariant === "primary"
+                      ? "bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground group-hover:bg-card"
                   )}
                 >
@@ -154,46 +165,6 @@ export function DashboardSidebar({
             </button>
           )
         })}
-
-        {/* Practice CBT Promo Banner */}
-        <div className="pt-6 px-1">
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-xs">
-            <div className="flex items-center gap-2 text-primary font-bold">
-              <Sparkles className="size-4" />
-              <span>CBT Simulator</span>
-            </div>
-            <p className="mt-1.5 text-muted-foreground leading-relaxed">
-              Launch realistic timed mock exams with instant AI diagnostic breakdown.
-            </p>
-            <Button
-              variant="primary"
-              size="sm"
-              sheen
-              onClick={() => {
-                onStartPracticeExam()
-                onCloseMobile()
-              }}
-              className="mt-3 w-full text-xs font-semibold"
-              rightIcon={<ChevronRight className="size-3.5" />}
-            >
-              Launch CBT Practice
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer Navigation: Home & Sign Out */}
-      <div className="p-3 border-t border-border space-y-1">
-        {onNavigateHome && (
-          <button
-            type="button"
-            onClick={onNavigateHome}
-            className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-          >
-            <LogOut className="size-4" />
-            <span>Exit to Homepage</span>
-          </button>
-        )}
       </div>
     </div>
   )
@@ -201,7 +172,7 @@ export function DashboardSidebar({
   return (
     <>
       {/* Desktop Sticky Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-border min-h-screen sticky top-0 shrink-0">
+      <aside className="hidden md:flex w-64 flex-col border-r border-border h-screen sticky top-0 shrink-0 self-start overflow-hidden bg-card z-20">
         {sidebarContent}
       </aside>
 

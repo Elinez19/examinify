@@ -1,8 +1,8 @@
 import { useStudentDashboard } from "@/features/student-dashboard/hooks/useStudentDashboard"
 import { DashboardLayout } from "@/features/student-dashboard/components/layout/DashboardLayout"
 import { DashboardOverviewTab } from "@/features/student-dashboard/components/overview/DashboardOverviewTab"
-import { ClassListView } from "@/features/student-dashboard/components/classes/ClassListView"
 import { SubjectListView } from "@/features/student-dashboard/components/subjects/SubjectListView"
+import { ExamsScheduleView } from "@/features/student-dashboard/components/exams/ExamsScheduleView"
 import { ProfileDetailsView } from "@/features/student-dashboard/components/profile/ProfileDetailsView"
 import { ResultsAnalyticsView } from "@/features/student-dashboard/components/results/ResultsAnalyticsView"
 import type { DashboardTab } from "@/features/student-dashboard/types/student"
@@ -10,31 +10,34 @@ import type { DashboardTab } from "@/features/student-dashboard/types/student"
 interface StudentDashboardPageProps {
   initialTab?: DashboardTab
   onNavigateHome?: () => void
+  onLogOut?: () => void
   onStartExam?: (examId: string) => void
 }
 
 export function StudentDashboardPage({
   initialTab = "overview",
   onNavigateHome,
+  onLogOut,
   onStartExam,
 }: StudentDashboardPageProps) {
   const {
     currentTab,
     setCurrentTab,
     profile,
-    classes,
     upcomingExams,
+    todayExams,
     recentResults,
     announcements,
     metrics,
     unreadNotificationsCount,
     markAllNotificationsRead,
-    activeClass,
     handleStartExam,
+    handleLogOut,
   } = useStudentDashboard({
     initialTab,
     onStartExam,
     onNavigateHome,
+    onLogOut,
   })
 
   return (
@@ -45,9 +48,9 @@ export function StudentDashboardPage({
       unreadNotificationsCount={unreadNotificationsCount}
       onMarkNotificationsRead={markAllNotificationsRead}
       onNavigateHome={onNavigateHome}
-      onStartPracticeExam={() => handleStartExam("exm-jamb-mock-2")}
-      enrolledClassesCount={classes.length}
+      onLogOut={handleLogOut}
       enrolledSubjectsCount={profile.enrolledSubjectsCount}
+      todayScheduledExamsCount={todayExams.length}
     >
       {currentTab === "overview" && (
         <DashboardOverviewTab
@@ -55,23 +58,25 @@ export function StudentDashboardPage({
           metrics={metrics}
           upcomingExams={upcomingExams}
           recentResults={recentResults}
-          primaryClass={activeClass || undefined}
           announcements={announcements}
           onStartExam={handleStartExam}
           onNavigateTab={setCurrentTab}
         />
       )}
 
-      {currentTab === "classes" && (
-        <ClassListView
-          classes={classes}
-          announcements={announcements}
-        />
+      {currentTab === "profile" && <ProfileDetailsView profile={profile} />}
+
+      {currentTab === "subjects" && (
+        <SubjectListView onStartExam={handleStartExam} />
       )}
 
-      {currentTab === "subjects" && <SubjectListView />}
-
-      {currentTab === "profile" && <ProfileDetailsView profile={profile} />}
+      {currentTab === "exams" && (
+        <ExamsScheduleView
+          upcomingExams={upcomingExams}
+          enrolledClass={profile.enrolledClass}
+          onStartExam={handleStartExam}
+        />
+      )}
 
       {currentTab === "results" && (
         <ResultsAnalyticsView

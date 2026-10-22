@@ -10,9 +10,9 @@ interface DashboardLayoutProps {
   unreadNotificationsCount: number
   onMarkNotificationsRead: () => void
   onNavigateHome?: () => void
-  onStartPracticeExam: () => void
-  enrolledClassesCount: number
+  onLogOut?: () => void
   enrolledSubjectsCount: number
+  todayScheduledExamsCount?: number
   children: React.ReactNode
 }
 
@@ -23,9 +23,9 @@ export function DashboardLayout({
   unreadNotificationsCount,
   onMarkNotificationsRead,
   onNavigateHome,
-  onStartPracticeExam,
-  enrolledClassesCount,
+  onLogOut,
   enrolledSubjectsCount,
+  todayScheduledExamsCount,
   children,
 }: DashboardLayoutProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(false)
@@ -39,9 +39,10 @@ export function DashboardLayout({
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
         onNavigateHome={onNavigateHome}
-        onStartPracticeExam={onStartPracticeExam}
-        enrolledClassesCount={enrolledClassesCount}
+        onLogOut={onLogOut}
+        enrolledClassName={profile.enrolledClass?.name}
         enrolledSubjectsCount={enrolledSubjectsCount}
+        todayScheduledExamsCount={todayScheduledExamsCount}
       />
 
       {/* Main Content Area */}
@@ -51,6 +52,7 @@ export function DashboardLayout({
           unreadNotificationsCount={unreadNotificationsCount}
           onMarkNotificationsRead={onMarkNotificationsRead}
           onNavigateHome={onNavigateHome}
+          onLogOut={onLogOut}
           onTabChange={onTabChange}
           onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
         />

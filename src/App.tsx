@@ -46,6 +46,21 @@ export function App() {
   const [currentView, setCurrentView] = React.useState<AppView>(getInitialView)
   const [cbtSessionId, setCbtSessionId] = React.useState<string>(getInitialCbtSessionId)
 
+  // Synchronize document title with active application page
+  React.useEffect(() => {
+    const titles: Record<AppView, string> = {
+      home: "Examinify — School & Readiness CBT Platform",
+      signin: "Sign In — Examinify",
+      signup: "Sign Up — Examinify",
+      "forgot-password": "Reset Password — Examinify",
+      "reset-success": "Password Reset — Examinify",
+      dashboard: "Student Portal — Examinify",
+      teacher: "Teacher Portal — Examinify",
+      cbt: "CBT Examination Runner — Examinify",
+    }
+    document.title = titles[currentView] || "Examinify — School & Readiness CBT Platform"
+  }, [currentView])
+
   // Listen to hash changes for browser back/forward buttons
   React.useEffect(() => {
     const handleHashChange = () => {

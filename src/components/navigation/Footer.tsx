@@ -1,4 +1,4 @@
-import { ShieldCheck } from "lucide-react"
+import { BookOpenCheck } from "lucide-react"
 
 export function Footer() {
   return (
@@ -9,7 +9,7 @@ export function Footer() {
           <div className="sm:col-span-2">
             <div className="flex items-center gap-2.5">
               <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-                <ShieldCheck className="size-5" />
+                <BookOpenCheck className="size-5 stroke-[2.2]" />
               </div>
               <span className="text-xl font-bold tracking-tight text-foreground">
                 Examinify

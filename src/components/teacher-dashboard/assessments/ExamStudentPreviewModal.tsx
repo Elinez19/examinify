@@ -86,6 +86,22 @@ export function ExamStudentPreviewModal({
               </span>
             </div>
 
+            {/* Diagram / Illustration if attached */}
+            {currentQ?.imageUrl && (
+              <div className="rounded-2xl border border-border bg-muted/20 p-3 max-w-lg space-y-1.5">
+                <img
+                  src={currentQ.imageUrl}
+                  alt={currentQ.imageCaption || "Question Diagram"}
+                  className="rounded-xl object-contain max-h-56 w-auto mx-auto"
+                />
+                {currentQ.imageCaption && (
+                  <p className="text-[11px] font-medium text-center text-muted-foreground italic">
+                    {currentQ.imageCaption}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Prompt */}
             <div className="text-base font-semibold text-foreground leading-relaxed">
               {currentQ?.prompt || "No prompt text provided for this question."}

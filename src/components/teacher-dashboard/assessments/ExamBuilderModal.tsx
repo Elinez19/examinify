@@ -11,12 +11,14 @@ import {
   Check,
   HelpCircle,
   CornerDownLeft,
+  Database,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useExamBuilder } from "@/hooks/teacher-dashboard/useExamBuilder"
 import { BulkQuestionImporterModal } from "./BulkQuestionImporterModal"
 import { ExamStudentPreviewModal } from "./ExamStudentPreviewModal"
+import { QuestionBankModal } from "./QuestionBankModal"
 import type { ITeacherCbtExam, ITeacherQuestion } from "@/types/teacher"
 
 interface ExamBuilderModalProps {
@@ -65,11 +67,14 @@ function ExamBuilderModalContent({
     updateExplanation,
     saveAndNext,
     importBulkQuestions,
+    importQuestionsFromBank,
     getQuestionValidity,
     isPreviewOpen,
     setIsPreviewOpen,
     isBulkImportOpen,
     setIsBulkImportOpen,
+    isQuestionBankOpen,
+    setIsQuestionBankOpen,
     saveToastVisible,
   } = useExamBuilder({ exam, onSaveQuestions })
 
@@ -126,6 +131,17 @@ function ExamBuilderModalContent({
 
             {/* Top Action Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsQuestionBankOpen(true)}
+                leftIcon={<Database className="size-3.5 text-primary" />}
+                className="text-xs font-semibold"
+              >
+                Question Bank
+              </Button>
+
               <Button
                 type="button"
                 variant="outline"
@@ -334,7 +350,7 @@ function ExamBuilderModalContent({
                 </div>
 
                 <div className="space-y-2.5">
-                  {currentQuestion.options.map((opt) => {
+                  {(currentQuestion.options || []).map((opt) => {
                     const isCorrect = currentQuestion.correctOptionId === opt.id
 
                     return (
@@ -349,7 +365,7 @@ function ExamBuilderModalContent({
                         {/* Radio for Correct Answer */}
                         <button
                           type="button"
-                          onClick={() => setCorrectOption(opt.id)}
+                          onClick={() => setCorrectOption(opt.id as "A" | "B" | "C" | "D")}
                           className={`size-7 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 transition-all cursor-pointer ${
                             isCorrect
                               ? "bg-primary text-primary-foreground shadow-xs shadow-primary/20"
@@ -364,7 +380,7 @@ function ExamBuilderModalContent({
                         <input
                           type="text"
                           value={opt.text}
-                          onChange={(e) => updateOptionText(opt.id, e.target.value)}
+                          onChange={(e) => updateOptionText(opt.id as "A" | "B" | "C" | "D", e.target.value)}
                           placeholder={`Enter Option ${opt.id} text...`}
                           className="flex-1 bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                         />
@@ -446,6 +462,14 @@ function ExamBuilderModalContent({
         isOpen={isBulkImportOpen}
         onClose={() => setIsBulkImportOpen(false)}
         onImport={importBulkQuestions}
+      />
+
+      {/* Question Bank Modal */}
+      <QuestionBankModal
+        isOpen={isQuestionBankOpen}
+        onClose={() => setIsQuestionBankOpen(false)}
+        onImport={(imported) => importQuestionsFromBank(imported)}
+        currentSubject={exam.subject}
       />
 
       {/* Live CBT Student Preview Modal */}

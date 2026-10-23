@@ -35,6 +35,7 @@ export function useExamBuilder({ exam, onSaveQuestions }: UseExamBuilderOptions)
   const [currentIndex, setCurrentIndex] = React.useState<number>(0)
   const [isPreviewOpen, setIsPreviewOpen] = React.useState<boolean>(false)
   const [isBulkImportOpen, setIsBulkImportOpen] = React.useState<boolean>(false)
+  const [isQuestionBankOpen, setIsQuestionBankOpen] = React.useState<boolean>(false)
   const [saveToastVisible, setSaveToastVisible] = React.useState<boolean>(false)
 
   // Current active question
@@ -82,7 +83,7 @@ export function useExamBuilder({ exam, onSaveQuestions }: UseExamBuilderOptions)
         id: `q-${Date.now()}-${nextNum}`,
         questionNumber: nextNum,
         prompt: `${source.prompt} (Copy)`,
-        options: source.options.map((o) => ({ ...o })),
+        options: (source.options || []).map((o) => ({ ...o })),
       }
       const updated = [...questions, cloned]
       persistChanges(updated)
@@ -144,7 +145,7 @@ export function useExamBuilder({ exam, onSaveQuestions }: UseExamBuilderOptions)
         if (i !== currentIndex) return q
         return {
           ...q,
-          options: q.options.map((opt) => (opt.id === optId ? { ...opt, text } : opt)),
+          options: (q.options || []).map((opt) => (opt.id === optId ? { ...opt, text } : opt)),
         }
       })
       persistChanges(updated)
@@ -217,10 +218,29 @@ export function useExamBuilder({ exam, onSaveQuestions }: UseExamBuilderOptions)
     [questions, persistChanges]
   )
 
+  // Question Bank Importer handler
+  const importQuestionsFromBank = React.useCallback(
+    (importedList: ITeacherQuestion[]) => {
+      if (!importedList || importedList.length === 0) return
+      const cloned = importedList.map((q, idx) => ({
+        ...q,
+        id: `qb-mod-${Date.now()}-${idx}`,
+        questionNumber: questions.length + idx + 1,
+      }))
+      const combined =
+        questions.length === 1 && !questions[0].prompt.trim()
+          ? cloned.map((q, idx) => ({ ...q, questionNumber: idx + 1 }))
+          : [...questions, ...cloned]
+      persistChanges(combined)
+      setIsQuestionBankOpen(false)
+    },
+    [questions, persistChanges]
+  )
+
   // Validity checks
   const getQuestionValidity = React.useCallback((q: ITeacherQuestion) => {
     const hasPrompt = Boolean(q.prompt && q.prompt.trim().length > 0)
-    const hasAtLeastTwoOptions = q.options.filter((o) => o.text && o.text.trim().length > 0).length >= 2
+    const hasAtLeastTwoOptions = (q.options || []).filter((o) => o.text && o.text.trim().length > 0).length >= 2
     const hasCorrectOption = Boolean(q.correctOptionId)
     return {
       isValid: hasPrompt && hasAtLeastTwoOptions && hasCorrectOption,
@@ -245,11 +265,14 @@ export function useExamBuilder({ exam, onSaveQuestions }: UseExamBuilderOptions)
     updateExplanation,
     saveAndNext,
     importBulkQuestions,
+    importQuestionsFromBank,
     getQuestionValidity,
     isPreviewOpen,
     setIsPreviewOpen,
     isBulkImportOpen,
     setIsBulkImportOpen,
+    isQuestionBankOpen,
+    setIsQuestionBankOpen,
     saveToastVisible,
   }
 }

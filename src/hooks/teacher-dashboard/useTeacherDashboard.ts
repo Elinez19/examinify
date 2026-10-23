@@ -6,7 +6,8 @@ import type {
   ITeacherAssignedClass,
   ITeacherCbtExam,
   ITimetablePeriod,
-  ITeacherQuestion,
+  ITeacherSubject,
+  IClassStudentRosterItem,
 } from "@/types/teacher"
 import {
   MOCK_SECONDARY_TEACHER,
@@ -17,6 +18,8 @@ import {
   MOCK_PRIMARY_CLASSES,
   MOCK_PRIMARY_EXAMS,
   MOCK_PRIMARY_TIMETABLE,
+  MOCK_TEACHER_SUBJECTS,
+  MOCK_ALL_SECONDARY_STUDENTS,
 } from "@/services/teacher-dashboard/mockTeacherData"
 
 interface UseTeacherDashboardOptions {
@@ -38,6 +41,9 @@ export function useTeacherDashboard({
   // Datasets according to selected teacher level
   const [secondaryExams, setSecondaryExams] = React.useState<ITeacherCbtExam[]>(MOCK_SECONDARY_EXAMS)
   const [primaryExams, setPrimaryExams] = React.useState<ITeacherCbtExam[]>(MOCK_PRIMARY_EXAMS)
+  const [subjects] = React.useState<ITeacherSubject[]>(MOCK_TEACHER_SUBJECTS)
+  const [selectedSubject, setSelectedSubject] = React.useState<string | null>(null)
+  const [builderDefaultSubject, setBuilderDefaultSubject] = React.useState<string>("English Language")
 
   // Current active teacher profile & classes
   const profile: ITeacherProfile = React.useMemo(() => {
@@ -52,32 +58,47 @@ export function useTeacherDashboard({
     return teacherLevel === "secondary" ? secondaryExams : primaryExams
   }, [teacherLevel, secondaryExams, primaryExams])
 
+  const students: IClassStudentRosterItem[] = React.useMemo(() => {
+    return MOCK_ALL_SECONDARY_STUDENTS
+  }, [])
+
   const timetable: ITimetablePeriod[] = React.useMemo(() => {
     return teacherLevel === "secondary" ? MOCK_SECONDARY_TIMETABLE : MOCK_PRIMARY_TIMETABLE
   }, [teacherLevel])
 
   // Modals & Drawers state
   const [activeExamForBuilder, setActiveExamForBuilder] = React.useState<ITeacherCbtExam | null>(null)
+  const [isCreatingExam, setIsCreatingExam] = React.useState<boolean>(false)
   const [activeClassForRoster, setActiveClassForRoster] = React.useState<ITeacherAssignedClass | null>(null)
-  const [isCreateExamOpen, setIsCreateExamOpen] = React.useState(false)
+  const [activeStudentForDrawer, setActiveStudentForDrawer] = React.useState<IClassStudentRosterItem | null>(null)
 
   // Switch demo teacher level
   const switchTeacherLevel = React.useCallback((level: TeacherSchoolLevel) => {
     setTeacherLevel(level)
     setActiveExamForBuilder(null)
+    setIsCreatingExam(false)
     setActiveClassForRoster(null)
   }, [])
 
   // Exam Builder triggers
-  const openExamBuilder = React.useCallback((exam: ITeacherCbtExam) => {
-    setActiveExamForBuilder(exam)
-  }, [])
+  const openExamBuilder = React.useCallback((exam?: ITeacherCbtExam | null, defaultSubj?: string) => {
+    if (exam) {
+      setActiveExamForBuilder(exam)
+      setIsCreatingExam(false)
+      setBuilderDefaultSubject(exam.subject)
+    } else {
+      setActiveExamForBuilder(null)
+      setIsCreatingExam(true)
+      setBuilderDefaultSubject(defaultSubj || selectedSubject || "English Language")
+    }
+  }, [selectedSubject])
 
   const closeExamBuilder = React.useCallback(() => {
     setActiveExamForBuilder(null)
+    setIsCreatingExam(false)
   }, [])
 
-  // Class Roster triggers
+  // Class Roster & Student Details triggers
   const openClassRoster = React.useCallback((cls: ITeacherAssignedClass) => {
     setActiveClassForRoster(cls)
   }, [])
@@ -86,52 +107,33 @@ export function useTeacherDashboard({
     setActiveClassForRoster(null)
   }, [])
 
-  // Save updated questions from Exam Builder back to state
-  const saveExamQuestions = React.useCallback(
-    (examId: string, updatedQuestions: ITeacherQuestion[]) => {
-      const updater = (prev: ITeacherCbtExam[]) =>
-        prev.map((e) => {
-          if (e.id === examId) {
-            return {
-              ...e,
-              questions: updatedQuestions,
-              readyQuestionsCount: updatedQuestions.length,
-            }
-          }
-          return e
-        })
+  const openStudentDrawer = React.useCallback((student: IClassStudentRosterItem) => {
+    setActiveStudentForDrawer(student)
+    // Find matching class if available
+    const cls = assignedClasses.find((c) => c.className === student.assignedClass)
+    if (cls) {
+      setActiveClassForRoster(cls)
+    }
+  }, [assignedClasses])
+
+  // Save entire exam from builder
+  const saveFullExam = React.useCallback(
+    (examToSave: ITeacherCbtExam) => {
+      const updater = (prev: ITeacherCbtExam[]) => {
+        const exists = prev.some((e) => e.id === examToSave.id)
+        if (exists) {
+          return prev.map((e) => (e.id === examToSave.id ? examToSave : e))
+        }
+        return [examToSave, ...prev]
+      }
 
       if (teacherLevel === "secondary") {
         setSecondaryExams(updater)
       } else {
         setPrimaryExams(updater)
       }
-
-      // Also update currently active exam object
-      setActiveExamForBuilder((prev) =>
-        prev && prev.id === examId
-          ? {
-              ...prev,
-              questions: updatedQuestions,
-              readyQuestionsCount: updatedQuestions.length,
-            }
-          : prev
-      )
-    },
-    [teacherLevel]
-  )
-
-  // Add newly created exam
-  const addNewExam = React.useCallback(
-    (newExam: ITeacherCbtExam) => {
-      if (teacherLevel === "secondary") {
-        setSecondaryExams((prev) => [newExam, ...prev])
-      } else {
-        setPrimaryExams((prev) => [newExam, ...prev])
-      }
-      setIsCreateExamOpen(false)
-      // Automatically open exam builder for this new exam
-      setActiveExamForBuilder(newExam)
+      setActiveExamForBuilder(null)
+      setIsCreatingExam(false)
     },
     [teacherLevel]
   )
@@ -147,6 +149,7 @@ export function useTeacherDashboard({
       }
       if (activeExamForBuilder?.id === examId) {
         setActiveExamForBuilder(null)
+        setIsCreatingExam(false)
       }
     },
     [teacherLevel, activeExamForBuilder]
@@ -159,19 +162,24 @@ export function useTeacherDashboard({
     switchTeacherLevel,
     profile,
     assignedClasses,
+    subjects,
+    selectedSubject,
+    setSelectedSubject,
+    builderDefaultSubject,
+    students,
     exams,
     timetable,
     activeExamForBuilder,
+    isCreatingExam,
     openExamBuilder,
     closeExamBuilder,
-    saveExamQuestions,
+    saveFullExam,
     deleteExam,
-    isCreateExamOpen,
-    setIsCreateExamOpen,
-    addNewExam,
     activeClassForRoster,
     openClassRoster,
     closeClassRoster,
+    activeStudentForDrawer,
+    openStudentDrawer,
     onNavigateHome,
     onLogOut,
   }

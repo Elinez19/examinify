@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="16" fill="#3730a3"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" stroke="#4f46e5" stroke-width="2" stroke-opacity="0.5"/>
+  <!-- Open Book & Checkmark Icon -->
+  <path d="M16 46c3.2-1.6 7-2 11-1 2.2.6 4.3 1.8 5 2.5V20.5c-.7-.7-2.8-1.9-5-2.5-4-1-7.8-.6-11 1V46z" fill="#ffffff" fill-opacity="0.95"/>
+  <path d="M48 46c-3.2-1.6-7-2-11-1-2.2.6-4.3 1.8-5 2.5V20.5c.7-.7 2.8-1.9 5-2.5 4-1 7.8-.6 11 1V46z" fill="#ffffff" fill-opacity="0.85"/>
+  <path d="M32 20.5V47.5" stroke="#3730a3" stroke-width="2" stroke-linecap="round"/>
+  <!-- Checkmark Badge in Gold/Emerald -->
+  <circle cx="44" cy="20" r="9" fill="#10b981"/>
+  <path d="M40.5 20l2.5 2.5 5-5" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

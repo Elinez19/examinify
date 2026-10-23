@@ -1,332 +1,236 @@
 import {
-  Sparkles,
+  BookOpen,
   Users,
-  Clock,
   FileCheck2,
-  TrendingUp,
+  FileEdit,
+  Plus,
   ArrowRight,
-  School,
-  MapPin,
-  CalendarCheck,
-  CheckCircle2,
+  Clock,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import type {
   ITeacherProfile,
   ITeacherAssignedClass,
   ITeacherCbtExam,
-  ITimetablePeriod,
+  ITeacherSubject,
   TeacherDashboardTab,
 } from "@/types/teacher"
+import { MOCK_TEACHER_SUBJECTS } from "@/services/teacher-dashboard/mockTeacherData"
 
 interface TeacherOverviewTabProps {
   profile: ITeacherProfile
   assignedClasses: ITeacherAssignedClass[]
   exams: ITeacherCbtExam[]
-  timetable: ITimetablePeriod[]
+  subjects?: ITeacherSubject[]
   onNavigateTab: (tab: TeacherDashboardTab) => void
-  onOpenExamBuilder: (exam: ITeacherCbtExam) => void
+  onOpenExamBuilder: (exam?: ITeacherCbtExam | null) => void
 }
 
 export function TeacherOverviewTab({
   profile,
   assignedClasses,
   exams,
-  timetable,
+  subjects = MOCK_TEACHER_SUBJECTS,
   onNavigateTab,
   onOpenExamBuilder,
 }: TeacherOverviewTabProps) {
-  // Today's periods
-  const todayPeriods = timetable.filter((t) => t.isToday)
+  const publishedExams = exams.filter((e) => e.status === "published" || e.status === "live")
+  const draftExams = exams.filter((e) => e.status === "draft")
+  const totalStudents = assignedClasses.reduce((sum, c) => sum + c.studentCount, 0)
+
+  const firstName = profile.fullName.replace(/^(Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.)\s*/i, "").split(" ")[0]
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-border bg-linear-to-br from-card via-card to-primary/5 p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2.5 max-w-2xl">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="pill" className="text-xs font-bold gap-1.5 px-3 py-1">
-                <School className="size-3.5 text-primary" />
-                <span>{profile.schoolName}</span>
-              </Badge>
-              <Badge variant="outline" className="text-xs font-medium gap-1 text-muted-foreground">
-                <MapPin className="size-3 text-primary" />
-                <span>{profile.branchName}</span>
-              </Badge>
-              {profile.assignedClassRole && (
-                <Badge variant="success" className="text-xs font-bold gap-1">
-                  <CheckCircle2 className="size-3" />
-                  <span>{profile.assignedClassRole}</span>
-                </Badge>
-              )}
-            </div>
-
+    <div className="space-y-8 animate-in fade-in duration-200">
+      {/* Top Welcome & Create New Exam Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-              Welcome back, {profile.fullName.split(" ")[0]}!
+              Welcome back, {firstName}!
             </h1>
-
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Staff ID: <strong className="text-foreground font-mono">{profile.staffId}</strong> •{" "}
-              {profile.department}. You have{" "}
-              <strong className="text-foreground">{assignedClasses.length} assigned classes</strong> and{" "}
-              <strong className="text-foreground">{exams.length} active CBT assessments</strong>.
-            </p>
+            <Sparkles className="size-5 text-primary" />
           </div>
+          <p className="text-sm text-muted-foreground">
+            Manage your subjects, student evaluations, and computer-based tests seamlessly.
+          </p>
+        </div>
 
-          {/* Quick CTA Actions */}
-          <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 shrink-0">
-            {exams.length > 0 && (
-              <Button
-                variant="primary"
-                size="default"
-                sheen
-                onClick={() => onOpenExamBuilder(exams[0])}
-                leftIcon={<Sparkles className="size-4" />}
-                className="text-xs font-bold shadow-md shadow-primary/20"
-              >
-                Set Questions ({exams[0].subject})
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="default"
-              onClick={() => onNavigateTab("gradebook")}
-              leftIcon={<TrendingUp className="size-4 text-primary" />}
-              className="text-xs font-bold"
-            >
-              Open Broadsheet Gradebook
-            </Button>
+        {/* Quick Action: Create New Exam */}
+        <Button
+          type="button"
+          variant="primary"
+          size="default"
+          onClick={() => onOpenExamBuilder(null)}
+          leftIcon={<Plus className="size-4" />}
+          className="text-xs sm:text-sm font-bold shadow-xs shrink-0 self-start sm:self-auto"
+        >
+          Create New Exam
+        </Button>
+      </div>
+
+      {/* 4 Minimalist KPI Cards (Glossy White Surfaces & Electric Blue Accents) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Assigned Subjects */}
+        <div
+          onClick={() => onNavigateTab("subjects")}
+          className="group rounded-2xl border border-border bg-card p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Subjects
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+              <BookOpen className="size-4.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl sm:text-3xl font-black text-foreground">
+              {subjects.length}
+            </span>
+            <span className="text-xs text-muted-foreground block mt-1">
+              Active curriculum subjects
+            </span>
+          </div>
+        </div>
+
+        {/* Card 2: Total Students */}
+        <div
+          onClick={() => onNavigateTab("students")}
+          className="group rounded-2xl border border-border bg-card p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Students
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+              <Users className="size-4.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl sm:text-3xl font-black text-foreground">
+              {totalStudents}
+            </span>
+            <span className="text-xs text-muted-foreground block mt-1">
+              Across {assignedClasses.length} class groups
+            </span>
+          </div>
+        </div>
+
+        {/* Card 3: Published Exams */}
+        <div
+          onClick={() => onNavigateTab("exams")}
+          className="group rounded-2xl border border-border bg-card p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Published Exams
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+              <FileCheck2 className="size-4.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl sm:text-3xl font-black text-foreground">
+              {publishedExams.length}
+            </span>
+            <span className="text-xs text-muted-foreground block mt-1">
+              Active examinations
+            </span>
+          </div>
+        </div>
+
+        {/* Card 4: Saved Drafts */}
+        <div
+          onClick={() => onNavigateTab("exams")}
+          className="group rounded-2xl border border-border bg-card p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Saved Drafts
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-xl bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+              <FileEdit className="size-4.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl sm:text-3xl font-black text-foreground">
+              {draftExams.length}
+            </span>
+            <span className="text-xs text-muted-foreground block mt-1">
+              Pending completion
+            </span>
           </div>
         </div>
       </div>
 
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Students */}
-        <Card className="rounded-2xl border-border bg-card shadow-xs">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Total Students
-              </span>
-              <p className="text-2xl font-extrabold text-foreground">
-                {profile.totalStudentsTaught}
-              </p>
-              <span className="text-[11px] text-muted-foreground">
-                Across {assignedClasses.length} assigned classes
-              </span>
-            </div>
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary shrink-0">
-              <Users className="size-5.5" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Recent Examinations Card */}
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-foreground">Recent Examinations</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Quick access to your active CBT evaluations and drafts.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigateTab("exams")}
+            className="flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer"
+          >
+            <span>View All Exams</span>
+            <ArrowRight className="size-3.5" />
+          </button>
+        </div>
 
-        {/* Weekly Teaching Load */}
-        <Card className="rounded-2xl border-border bg-card shadow-xs">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Weekly Periods
-              </span>
-              <p className="text-2xl font-extrabold text-foreground">
-                {profile.totalWeeklyPeriods}
-              </p>
-              <span className="text-[11px] text-muted-foreground">
-                Standard 45-min instructional periods
-              </span>
-            </div>
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary shrink-0">
-              <Clock className="size-5.5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* CBT Exams */}
-        <Card className="rounded-2xl border-border bg-card shadow-xs">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                CBT Assessments
-              </span>
-              <p className="text-2xl font-extrabold text-foreground">
-                {exams.length}
-              </p>
-              <span className="text-[11px] text-muted-foreground">
-                {exams.filter((e) => e.status === "draft").length} in draft / question setting
-              </span>
-            </div>
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary shrink-0">
-              <FileCheck2 className="size-5.5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Performance Average */}
-        <Card className="rounded-2xl border-border bg-card shadow-xs">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Class Average
-              </span>
-              <p className="text-2xl font-extrabold text-foreground">
-                76.4%
-              </p>
-              <span className="text-[11px] text-status-success font-semibold">
-                WAEC Grade B2 Average
-              </span>
-            </div>
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-status-success/10 text-status-success shrink-0">
-              <TrendingUp className="size-5.5" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Two Column Layout: Today's Schedule HUD + Recent CBT Assessments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Today's Teaching Schedule HUD */}
-        <Card className="rounded-2xl border-border bg-card shadow-xs">
-          <CardHeader className="pb-3 border-b border-border/60 flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarCheck className="size-4.5 text-primary" />
-              <CardTitle className="text-sm font-bold text-foreground">
-                Today&apos;s Teaching Schedule
-              </CardTitle>
-            </div>
-            <Badge variant="pill" className="text-[10px] font-bold">
-              {todayPeriods.length} Periods Today
-            </Badge>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3">
-            {todayPeriods.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-4 text-center">
-                No classes scheduled for today.
-              </p>
-            ) : (
-              todayPeriods.map((period) => (
-                <div
-                  key={period.id}
-                  className={`p-3.5 rounded-xl border transition-all ${
-                    period.isCurrent
-                      ? "border-primary bg-primary/5 shadow-xs"
-                      : "border-border bg-muted/30"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`size-2.5 rounded-full ${
-                          period.isCurrent ? "bg-primary animate-pulse" : "bg-muted-foreground/40"
-                        }`}
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-foreground">
-                            {period.subjectName}
-                          </span>
-                          <Badge variant="outline" className="text-[10px] font-semibold">
-                            {period.className}
-                          </Badge>
-                        </div>
-                        <span className="text-xs text-muted-foreground">{period.room}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-mono font-bold text-foreground">
-                        {period.timeSlot}
-                      </span>
-                      {period.isCurrent && (
-                        <p className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                          Active Now
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigateTab("profile")}
-              className="w-full text-xs font-semibold text-muted-foreground hover:text-foreground mt-2"
-              rightIcon={<ArrowRight className="size-3.5" />}
+        <div className="divide-y divide-border/60">
+          {exams.slice(0, 4).map((exam) => (
+            <div
+              key={exam.id}
+              className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
             >
-              View Full Weekly Timetable
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Recent CBT Assessments */}
-        <Card className="rounded-2xl border-border bg-card shadow-xs">
-          <CardHeader className="pb-3 border-b border-border/60 flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileCheck2 className="size-4.5 text-primary" />
-              <CardTitle className="text-sm font-bold text-foreground">
-                CBT & Assessments Overview
-              </CardTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigateTab("assessments")}
-              className="text-xs font-bold text-primary hover:text-primary"
-              rightIcon={<ArrowRight className="size-3.5" />}
-            >
-              All Exams
-            </Button>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3">
-            {exams.map((exam) => (
-              <div
-                key={exam.id}
-                className="p-3.5 rounded-xl border border-border bg-card hover:border-primary/40 transition-all flex items-center justify-between gap-3"
-              >
-                <div className="space-y-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-foreground truncate">
-                      {exam.title}
-                    </span>
-                    <Badge
-                      variant={
-                        exam.status === "live"
-                          ? "destructive"
-                          : exam.status === "scheduled"
-                          ? "default"
-                          : "pill"
-                      }
-                      className="text-[10px] uppercase font-bold shrink-0"
-                    >
-                      {exam.status}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-semibold text-primary">{exam.subject}</span>
-                    <span>•</span>
-                    <span className="truncate">{exam.targetClasses.join(", ")}</span>
-                    <span>•</span>
-                    <span>{exam.readyQuestionsCount}/{exam.totalQuestions} Qs</span>
-                  </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                    {exam.title}
+                  </span>
+                  <Badge
+                    variant={exam.status === "published" || exam.status === "live" ? "success" : "secondary"}
+                    className="text-[10px] uppercase font-bold"
+                  >
+                    {exam.status}
+                  </Badge>
                 </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                  <span className="font-semibold text-foreground">{exam.subject}</span>
+                  <span>•</span>
+                  <span>{exam.targetClasses.join(", ")}</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="size-3" />
+                    <span>{exam.durationMinutes} mins</span>
+                  </span>
+                  <span>•</span>
+                  <span>{exam.questions.length} questions</span>
+                </div>
+              </div>
 
+              <div className="flex items-center gap-2 shrink-0">
                 <Button
-                  variant={exam.status === "draft" ? "primary" : "outline"}
+                  type="button"
+                  variant="outline"
                   size="sm"
-                  sheen={exam.status === "draft"}
                   onClick={() => onOpenExamBuilder(exam)}
-                  className="shrink-0 text-xs font-bold"
+                  className="text-xs font-semibold h-8"
                 >
-                  {exam.status === "draft" ? "Set Questions" : "Manage"}
+                  Edit in Builder
                 </Button>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

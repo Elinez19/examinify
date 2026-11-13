@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" fill="none">
+  <defs>
+    <linearGradient id="bgPearl" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F6F9FF"/>
+      <stop offset="55%" stop-color="#EDF3FF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <radialGradient id="bgCobalt" cx="50%" cy="25%" r="80%">
+      <stop offset="0%" stop-color="#478BFF"/>
+      <stop offset="50%" stop-color="#0E46F5"/>
+      <stop offset="100%" stop-color="#05113D"/>
+    </radialGradient>
+    <linearGradient id="porcelain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="70%" stop-color="#F6F9FF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <linearGradient id="cobaltGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5CE1FF"/>
+      <stop offset="25%" stop-color="#478BFF"/>
+      <stop offset="75%" stop-color="#0E46F5"/>
+      <stop offset="100%" stop-color="#0A2999"/>
+    </linearGradient>
+    <linearGradient id="goldGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="50%" stop-color="#FFB800"/>
+      <stop offset="100%" stop-color="#CC8800"/>
+    </linearGradient>
+    <filter id="drop3d" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#05113D" flood-opacity="0.22"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0E46F5" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="600" rx="64" fill="url(#bgPearl)"/>
+  <circle cx="300" cy="300" r="210" fill="#FFFFFF" opacity="0.78"/>
+  <ellipse cx="300" cy="495" rx="160" ry="26" fill="#0E46F5" opacity="0.14"/>
+
+  <g filter="url(#drop3d)">
+    <!-- Glossy Secondary CBT Slate with Science Atom Motif -->
+    <rect x="135" y="215" width="330" height="245" rx="34" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="7"/>
+    <rect x="157" y="237" width="286" height="201" rx="22" fill="url(#bgCobalt)"/>
+    <path d="M172 248 H280 L210 422 H172 Z" fill="#FFFFFF" opacity="0.11"/>
+
+    <!-- Glowing Atom / STEM Orbit Graphic on Screen -->
+    <ellipse cx="300" cy="338" rx="76" ry="28" transform="rotate(-28 300 338)" stroke="#5CE1FF" stroke-width="6"/>
+    <ellipse cx="300" cy="338" rx="76" ry="28" transform="rotate(28 300 338)" stroke="#FFFFFF" stroke-opacity="0.75" stroke-width="6"/>
+    <circle cx="300" cy="338" r="16" fill="url(#goldGloss)"/>
+
+    <!-- 3D Glossy Graduation Mortarboard Cap Floating Above -->
+    <path d="M210 185 V225 C210 245 250 262 300 262 C350 262 390 245 390 225 V185 Z" fill="url(#cobaltGloss)" stroke="#FFFFFF" stroke-width="5"/>
+    <path d="M300 95 L475 162 L300 228 L125 162 Z" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M300 108 L445 162 L300 214 L155 162 Z" fill="url(#cobaltGloss)"/>
+    <!-- Gold Cap Button & Tassel -->
+    <circle cx="300" cy="162" r="13" fill="url(#goldGloss)"/>
+    <path d="M300 162 L425 205 V258" stroke="url(#goldGloss)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="415" y="252" width="20" height="34" rx="10" fill="url(#goldGloss)"/>
+  </g>
+</svg>

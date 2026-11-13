@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" fill="none">
+  <defs>
+    <linearGradient id="bgPearl" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F6F9FF"/>
+      <stop offset="55%" stop-color="#EDF3FF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <radialGradient id="bgCobalt" cx="50%" cy="25%" r="80%">
+      <stop offset="0%" stop-color="#478BFF"/>
+      <stop offset="50%" stop-color="#0E46F5"/>
+      <stop offset="100%" stop-color="#05113D"/>
+    </radialGradient>
+    <linearGradient id="porcelain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="70%" stop-color="#F6F9FF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <linearGradient id="cobaltGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5CE1FF"/>
+      <stop offset="25%" stop-color="#478BFF"/>
+      <stop offset="75%" stop-color="#0E46F5"/>
+      <stop offset="100%" stop-color="#0A2999"/>
+    </linearGradient>
+    <linearGradient id="goldGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="50%" stop-color="#FFB800"/>
+      <stop offset="100%" stop-color="#CC8800"/>
+    </linearGradient>
+    <filter id="drop3d" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#05113D" flood-opacity="0.22"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0E46F5" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="600" rx="64" fill="url(#bgPearl)"/>
+  <circle cx="300" cy="300" r="210" fill="#FFFFFF" opacity="0.78"/>
+  <ellipse cx="300" cy="495" rx="165" ry="26" fill="#0E46F5" opacity="0.14"/>
+
+  <g filter="url(#drop3d)">
+    <!-- Back Stacked Sheet -->
+    <rect x="165" y="110" width="290" height="350" rx="34" transform="rotate(6 310 285)" fill="#DBE8FF" stroke="#FFFFFF" stroke-width="5"/>
+
+    <!-- Main Porcelain Broadsheet Document Card -->
+    <rect x="130" y="125" width="320" height="355" rx="36" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="8"/>
+
+    <!-- Cobalt Header Strip -->
+    <rect x="158" y="155" width="264" height="58" rx="18" fill="url(#cobaltGloss)"/>
+    <rect x="178" y="177" width="135" height="14" rx="7" fill="#FFFFFF" opacity="0.9"/>
+    <circle cx="390" cy="184" r="14" fill="url(#goldGloss)"/>
+
+    <!-- Broadsheet Score Bars & Table Rows -->
+    <rect x="158" y="236" width="264" height="44" rx="14" fill="#EDF3FF"/>
+    <rect x="174" y="251" width="90" height="14" rx="7" fill="#0E46F5" opacity="0.25"/>
+    <rect x="330" y="247" width="76" height="22" rx="11" fill="url(#cobaltGloss)"/>
+
+    <rect x="158" y="294" width="264" height="44" rx="14" fill="#EDF3FF"/>
+    <rect x="174" y="309" width="110" height="14" rx="7" fill="#0E46F5" opacity="0.25"/>
+    <rect x="330" y="305" width="76" height="22" rx="11" fill="url(#goldGloss)"/>
+
+    <!-- Mini Analytics Chart Strip -->
+    <rect x="158" y="356" width="264" height="92" rx="20" fill="url(#bgCobalt)"/>
+    <rect x="184" y="396" width="26" height="36" rx="8" fill="#5CE1FF"/>
+    <rect x="224" y="378" width="26" height="54" rx="8" fill="#FFFFFF" opacity="0.9"/>
+    <rect x="264" y="388" width="26" height="44" rx="8" fill="#5CE1FF"/>
+    <rect x="304" y="370" width="26" height="62" rx="8" fill="url(#goldGloss)"/>
+    <rect x="344" y="382" width="26" height="50" rx="8" fill="#FFFFFF" opacity="0.9"/>
+
+    <!-- Floating Verified Checkmark Badge -->
+    <circle cx="445" cy="400" r="62" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="6"/>
+    <circle cx="445" cy="400" r="46" fill="#00C47E"/>
+    <path d="M425 400 L439 414 L467 386" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

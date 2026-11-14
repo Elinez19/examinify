@@ -4,7 +4,10 @@ import * as React from "react";
 import { BookCheck, Eye, Users } from "lucide-react";
 import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
-import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
+import {
+  AdminSearchInput,
+  AdminSelectField,
+} from "@/components/admin/ui/admin-form-controls";
 import {
   AdminSortableTableHead,
   AdminTableCell,
@@ -142,30 +145,28 @@ export function TeacherClassListWorkspace() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={classFilter}
-              onChange={(event) => setClassFilter(event.target.value)}
+            <AdminSelectField
+              variant="filter"
               aria-label="Filter by class"
-              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900 focus:border-brand-600 focus:outline-none"
-            >
-              <option value="ALL">All Classes</option>
-              {classOptions.map((cls) => (
-                <option key={cls} value={cls}>
-                  {cls}
-                </option>
-              ))}
-            </select>
+              value={classFilter}
+              onChange={setClassFilter}
+              options={[
+                { id: "ALL", label: "All Classes" },
+                ...classOptions.map((cls) => ({ id: cls, label: cls })),
+              ]}
+            />
 
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
+            <AdminSelectField
+              variant="filter"
               aria-label="Filter by status"
-              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900 focus:border-brand-600 focus:outline-none"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { id: "ALL", label: "All Statuses" },
+                { id: "active", label: "Active" },
+                { id: "inactive", label: "Inactive" },
+              ]}
+            />
           </div>
         </div>
 

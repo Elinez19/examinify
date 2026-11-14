@@ -18,6 +18,7 @@ import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import {
   AdminSearchInput,
+  AdminSelectField,
   AdminTextField,
   AdminTextareaField,
 } from "@/components/admin/ui/admin-form-controls";
@@ -240,18 +241,19 @@ export function ExamsWorkspace() {
               />
             </div>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+            <AdminSelectField
+              variant="filter"
               aria-label="Filter status"
-              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="live">Live</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="completed">Completed</option>
-              <option value="draft">Draft</option>
-            </select>
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { id: "ALL", label: "All Statuses" },
+                { id: "live", label: "Live" },
+                { id: "scheduled", label: "Scheduled" },
+                { id: "completed", label: "Completed" },
+                { id: "draft", label: "Draft" },
+              ]}
+            />
           </div>
 
           <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
@@ -497,42 +499,28 @@ export function ExamsWorkspace() {
             required
           />
           <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Subject
-              </label>
-              <select
-                value={examForm.subjectCode}
-                onChange={(e) =>
-                  setExamForm((p) => ({ ...p, subjectCode: e.target.value }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                {store.subjects.map((sub) => (
-                  <option key={sub.id} value={sub.code}>
-                    {sub.title} ({sub.code})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Class Arm
-              </label>
-              <select
-                value={examForm.classLevel}
-                onChange={(e) =>
-                  setExamForm((p) => ({ ...p, classLevel: e.target.value }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                {store.classArms.map((arm) => (
-                  <option key={arm.id} value={arm.name}>
-                    {arm.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AdminSelectField
+              label="Subject"
+              value={examForm.subjectCode}
+              onChange={(val) =>
+                setExamForm((p) => ({ ...p, subjectCode: val }))
+              }
+              options={store.subjects.map((sub) => ({
+                id: sub.code,
+                label: `${sub.title} (${sub.code})`,
+              }))}
+            />
+            <AdminSelectField
+              label="Class Arm"
+              value={examForm.classLevel}
+              onChange={(val) =>
+                setExamForm((p) => ({ ...p, classLevel: val }))
+              }
+              options={store.classArms.map((arm) => ({
+                id: arm.name,
+                label: arm.name,
+              }))}
+            />
             <AdminTextField
               label="Duration (mins)"
               type="number"
@@ -563,26 +551,17 @@ export function ExamsWorkspace() {
               }
               required
             />
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Status
-              </label>
-              <select
-                value={examForm.status}
-                onChange={(e) =>
-                  setExamForm((p) => ({
-                    ...p,
-                    status: e.target.value as PortalExam["status"],
-                  }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                <option value="scheduled">Scheduled</option>
-                <option value="live">Live Now</option>
-                <option value="draft">Draft</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
+            <AdminSelectField<PortalExam["status"]>
+              label="Status"
+              value={examForm.status}
+              onChange={(val) => setExamForm((p) => ({ ...p, status: val }))}
+              options={[
+                { id: "scheduled", label: "Scheduled" },
+                { id: "live", label: "Live Now" },
+                { id: "draft", label: "Draft" },
+                { id: "completed", label: "Completed" },
+              ]}
+            />
           </div>
 
           <label className="flex items-center gap-2 text-xs font-bold text-brand-900 cursor-pointer">

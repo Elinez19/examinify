@@ -16,6 +16,7 @@ import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import {
   AdminSearchInput,
+  AdminSelectField,
   AdminTextField,
   AdminTextareaField,
 } from "@/components/admin/ui/admin-form-controls";
@@ -980,24 +981,17 @@ export function SubjectsWorkspace() {
               }
             />
           </div>
-          <div>
-            <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-              Assign Class Teacher
-            </label>
-            <select
-              value={classForm.classTeacherId}
-              onChange={(e) =>
-                setClassForm((p) => ({ ...p, classTeacherId: e.target.value }))
-              }
-              className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-            >
-              {store.teachers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <AdminSelectField
+            label="Assign Class Teacher"
+            value={classForm.classTeacherId}
+            onChange={(val) =>
+              setClassForm((p) => ({ ...p, classTeacherId: val }))
+            }
+            options={store.teachers.map((t) => ({
+              id: t.id,
+              label: t.name,
+            }))}
+          />
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
@@ -1034,25 +1028,16 @@ export function SubjectsWorkspace() {
             placeholder="2026/2027"
             required
           />
-          <div>
-            <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-              Term
-            </label>
-            <select
-              value={termForm.term}
-              onChange={(e) =>
-                setTermForm((p) => ({
-                  ...p,
-                  term: e.target.value as AcademicSessionTerm["term"],
-                }))
-              }
-              className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-            >
-              <option value="First Term">First Term</option>
-              <option value="Second Term">Second Term</option>
-              <option value="Third Term">Third Term</option>
-            </select>
-          </div>
+          <AdminSelectField<AcademicSessionTerm["term"]>
+            label="Term"
+            value={termForm.term}
+            onChange={(val) => setTermForm((p) => ({ ...p, term: val }))}
+            options={[
+              { id: "First Term", label: "First Term" },
+              { id: "Second Term", label: "Second Term" },
+              { id: "Third Term", label: "Third Term" },
+            ]}
+          />
           <div className="grid gap-3 grid-cols-2">
             <AdminTextField
               label="Starts"
@@ -1108,44 +1093,30 @@ export function SubjectsWorkspace() {
       >
         <form onSubmit={handleSaveQuestion} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Subject
-              </label>
-              <select
-                value={questionForm.subjectCode}
-                onChange={(e) =>
-                  setQuestionForm((p) => ({ ...p, subjectCode: e.target.value }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                {store.subjects.map((sub) => (
-                  <option key={sub.id} value={sub.code}>
-                    {sub.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Type
-              </label>
-              <select
-                value={questionForm.type}
-                onChange={(e) =>
-                  setQuestionForm((p) => ({
-                    ...p,
-                    type: e.target.value as QuestionType,
-                  }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                <option value="objective">Objective</option>
-                <option value="multi_select">Multi-Select</option>
-                <option value="fill_blank">Fill-in-Blank</option>
-                <option value="theory">Theory</option>
-              </select>
-            </div>
+            <AdminSelectField
+              label="Subject"
+              value={questionForm.subjectCode}
+              onChange={(val) =>
+                setQuestionForm((p) => ({ ...p, subjectCode: val }))
+              }
+              options={store.subjects.map((sub) => ({
+                id: sub.code,
+                label: sub.title,
+              }))}
+            />
+            <AdminSelectField<QuestionType>
+              label="Type"
+              value={questionForm.type}
+              onChange={(val) =>
+                setQuestionForm((p) => ({ ...p, type: val }))
+              }
+              options={[
+                { id: "objective", label: "Objective" },
+                { id: "multi_select", label: "Multi-Select" },
+                { id: "fill_blank", label: "Fill-in-Blank" },
+                { id: "theory", label: "Theory" },
+              ]}
+            />
             <AdminTextField
               label="Marks"
               type="number"

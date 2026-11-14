@@ -22,6 +22,7 @@ import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import {
   AdminSearchInput,
+  AdminSelectField,
   AdminTextField,
   AdminTextareaField,
 } from "@/components/admin/ui/admin-form-controls";
@@ -474,18 +475,19 @@ export function TeacherExamsWorkspace() {
               />
             </div>
 
-            <select
-              value={examStatusFilter}
-              onChange={(event) => setExamStatusFilter(event.target.value)}
+            <AdminSelectField
+              variant="filter"
               aria-label="Filter by exam status"
-              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="live">Live</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="completed">Completed</option>
-              <option value="draft">Draft</option>
-            </select>
+              value={examStatusFilter}
+              onChange={setExamStatusFilter}
+              options={[
+                { id: "ALL", label: "All Statuses" },
+                { id: "live", label: "Live" },
+                { id: "scheduled", label: "Scheduled" },
+                { id: "completed", label: "Completed" },
+                { id: "draft", label: "Draft" },
+              ]}
+            />
           </div>
 
           <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
@@ -635,18 +637,19 @@ export function TeacherExamsWorkspace() {
               />
             </div>
 
-            <select
-              value={monitorStatusFilter}
-              onChange={(event) => setMonitorStatusFilter(event.target.value)}
+            <AdminSelectField
+              variant="filter"
               aria-label="Filter candidate status"
-              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900"
-            >
-              <option value="ALL">All Candidates</option>
-              <option value="active">Active</option>
-              <option value="flagged">Flagged</option>
-              <option value="offline">Offline Cache</option>
-              <option value="submitted">Submitted</option>
-            </select>
+              value={monitorStatusFilter}
+              onChange={setMonitorStatusFilter}
+              options={[
+                { id: "ALL", label: "All Candidates" },
+                { id: "active", label: "Active" },
+                { id: "flagged", label: "Flagged" },
+                { id: "offline", label: "Offline Cache" },
+                { id: "submitted", label: "Submitted" },
+              ]}
+            />
           </div>
 
           <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
@@ -790,16 +793,17 @@ export function TeacherExamsWorkspace() {
               />
             </div>
 
-            <select
-              value={gradingStatusFilter}
-              onChange={(event) => setGradingStatusFilter(event.target.value)}
+            <AdminSelectField
+              variant="filter"
               aria-label="Filter grading status"
-              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900"
-            >
-              <option value="ALL">All Scripts</option>
-              <option value="needs_theory_review">Needs Theory Review</option>
-              <option value="published">Published</option>
-            </select>
+              value={gradingStatusFilter}
+              onChange={setGradingStatusFilter}
+              options={[
+                { id: "ALL", label: "All Scripts" },
+                { id: "needs_theory_review", label: "Needs Theory Review" },
+                { id: "published", label: "Published" },
+              ]}
+            />
           </div>
 
           <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
@@ -921,19 +925,19 @@ export function TeacherExamsWorkspace() {
               />
             </div>
 
-            <select
-              value={broadsheetSubject}
-              onChange={(event) => setBroadsheetSubject(event.target.value)}
+            <AdminSelectField
+              variant="filter"
               aria-label="Filter by subject"
-              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900"
-            >
-              <option value="ALL">All Subjects</option>
-              {store.subjects.map((sub) => (
-                <option key={sub.id} value={sub.code}>
-                  {sub.code} · {sub.title}
-                </option>
-              ))}
-            </select>
+              value={broadsheetSubject}
+              onChange={setBroadsheetSubject}
+              options={[
+                { id: "ALL", label: "All Subjects" },
+                ...store.subjects.map((sub) => ({
+                  id: sub.code,
+                  label: `${sub.code} · ${sub.title}`,
+                })),
+              ]}
+            />
           </div>
 
           <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
@@ -1021,53 +1025,38 @@ export function TeacherExamsWorkspace() {
           />
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Subject
-              </label>
-              <select
-                value={examForm.subjectCode}
-                onChange={(event) => {
-                  const code = event.target.value;
-                  setExamForm((prev) => ({
-                    ...prev,
-                    subjectCode: code,
-                    questionIds: store.questions
-                      .filter((q) => q.subjectCode === code)
-                      .map((q) => q.id),
-                  }));
-                }}
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                {store.subjects.map((sub) => (
-                  <option key={sub.id} value={sub.code}>
-                    {sub.title} ({sub.code})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AdminSelectField
+              label="Subject"
+              value={examForm.subjectCode}
+              onChange={(code) =>
+                setExamForm((prev) => ({
+                  ...prev,
+                  subjectCode: code,
+                  questionIds: store.questions
+                    .filter((q) => q.subjectCode === code)
+                    .map((q) => q.id),
+                }))
+              }
+              options={store.subjects.map((sub) => ({
+                id: sub.code,
+                label: `${sub.title} (${sub.code})`,
+              }))}
+            />
 
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Target Class Arm
-              </label>
-              <select
-                value={examForm.classLevel}
-                onChange={(event) =>
-                  setExamForm((prev) => ({
-                    ...prev,
-                    classLevel: event.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                {store.classArms.map((arm) => (
-                  <option key={arm.id} value={arm.name}>
-                    {arm.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AdminSelectField
+              label="Target Class Arm"
+              value={examForm.classLevel}
+              onChange={(val) =>
+                setExamForm((prev) => ({
+                  ...prev,
+                  classLevel: val,
+                }))
+              }
+              options={store.classArms.map((arm) => ({
+                id: arm.name,
+                label: arm.name,
+              }))}
+            />
 
             <AdminTextField
               label="Duration (Minutes)"
@@ -1096,26 +1085,22 @@ export function TeacherExamsWorkspace() {
               }
               placeholder="e.g. Fri, Nov 20 · 09:00 AM"
             />
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Status
-              </label>
-              <select
-                value={examForm.status}
-                onChange={(event) =>
-                  setExamForm((prev) => ({
-                    ...prev,
-                    status: event.target.value as PortalExam["status"],
-                  }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                <option value="scheduled">Scheduled</option>
-                <option value="live">Live Now</option>
-                <option value="draft">Draft</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
+            <AdminSelectField<PortalExam["status"]>
+              label="Status"
+              value={examForm.status}
+              onChange={(val) =>
+                setExamForm((prev) => ({
+                  ...prev,
+                  status: val,
+                }))
+              }
+              options={[
+                { id: "scheduled", label: "Scheduled" },
+                { id: "live", label: "Live Now" },
+                { id: "draft", label: "Draft" },
+                { id: "completed", label: "Completed" },
+              ]}
+            />
           </div>
 
           <AdminTextareaField
@@ -1157,38 +1142,25 @@ export function TeacherExamsWorkspace() {
         size="md"
       >
         <form onSubmit={handleBroadcastSubmit} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-              Target Examination
-            </label>
-            <select
-              value={broadcastExamId}
-              onChange={(event) => setBroadcastExamId(event.target.value)}
-              className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-ink-primary"
-            >
-              {store.exams.map((exam) => (
-                <option key={exam.id} value={exam.id}>
-                  {exam.title}
-                </option>
-              ))}
-            </select>
-          </div>
+          <AdminSelectField
+            label="Target Examination"
+            value={broadcastExamId}
+            onChange={setBroadcastExamId}
+            options={store.exams.map((exam) => ({
+              id: exam.id,
+              label: exam.title,
+            }))}
+          />
 
-          <div>
-            <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-              Notice Urgency
-            </label>
-            <select
-              value={broadcastUrgency}
-              onChange={(event) =>
-                setBroadcastUrgency(event.target.value as "info" | "warning")
-              }
-              className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-ink-primary"
-            >
-              <option value="info">Standard Instruction</option>
-              <option value="warning">Urgent Reminder</option>
-            </select>
-          </div>
+          <AdminSelectField<"info" | "warning">
+            label="Notice Urgency"
+            value={broadcastUrgency}
+            onChange={setBroadcastUrgency}
+            options={[
+              { id: "info", label: "Standard Instruction" },
+              { id: "warning", label: "Urgent Reminder" },
+            ]}
+          />
 
           <AdminTextareaField
             label="Notice Message"

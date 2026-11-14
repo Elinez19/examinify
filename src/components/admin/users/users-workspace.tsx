@@ -17,6 +17,7 @@ import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import {
   AdminSearchInput,
+  AdminSelectField,
   AdminTextField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
@@ -493,16 +494,17 @@ export function UsersWorkspace() {
               placeholder="Search name, email, ID..."
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
+          <AdminSelectField
+            variant="filter"
             aria-label="Filter account status"
-            className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { id: "ALL", label: "All Statuses" },
+              { id: "active", label: "Active" },
+              { id: "inactive", label: "Inactive" },
+            ]}
+          />
         </div>
 
         <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
@@ -878,24 +880,17 @@ export function UsersWorkspace() {
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Assign Class Arm
-              </label>
-              <select
-                value={studentForm.classArmId}
-                onChange={(e) =>
-                  setStudentForm((p) => ({ ...p, classArmId: e.target.value }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                {store.classArms.map((arm) => (
-                  <option key={arm.id} value={arm.id}>
-                    {arm.name} ({arm.arm})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AdminSelectField
+              label="Assign Class Arm"
+              value={studentForm.classArmId}
+              onChange={(val) =>
+                setStudentForm((p) => ({ ...p, classArmId: val }))
+              }
+              options={store.classArms.map((arm) => ({
+                id: arm.id,
+                label: `${arm.name} (${arm.arm})`,
+              }))}
+            />
             <AdminTextField
               label="Portal Password"
               value={studentForm.password}
@@ -947,22 +942,15 @@ export function UsersWorkspace() {
             }}
             className="space-y-4"
           >
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Select Class Arm
-              </label>
-              <select
-                value={selectedClassArmId}
-                onChange={(e) => setSelectedClassArmId(e.target.value)}
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                {store.classArms.map((arm) => (
-                  <option key={arm.id} value={arm.id}>
-                    {arm.name} · {arm.arm}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AdminSelectField
+              label="Select Class Arm"
+              value={selectedClassArmId}
+              onChange={setSelectedClassArmId}
+              options={store.classArms.map((arm) => ({
+                id: arm.id,
+                label: `${arm.name} · ${arm.arm}`,
+              }))}
+            />
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -992,26 +980,22 @@ export function UsersWorkspace() {
       >
         <form onSubmit={handleSaveTeacher} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Title
-              </label>
-              <select
-                value={teacherForm.displayPrefix}
-                onChange={(e) =>
-                  setTeacherForm((p) => ({
-                    ...p,
-                    displayPrefix: e.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                <option value="Mr.">Mr.</option>
-                <option value="Mrs.">Mrs.</option>
-                <option value="Ms.">Ms.</option>
-                <option value="Dr.">Dr.</option>
-              </select>
-            </div>
+            <AdminSelectField
+              label="Title"
+              value={teacherForm.displayPrefix}
+              onChange={(val) =>
+                setTeacherForm((p) => ({
+                  ...p,
+                  displayPrefix: val,
+                }))
+              }
+              options={[
+                { id: "Mr.", label: "Mr." },
+                { id: "Mrs.", label: "Mrs." },
+                { id: "Ms.", label: "Ms." },
+                { id: "Dr.", label: "Dr." },
+              ]}
+            />
             <AdminTextField
               label="First Name"
               value={teacherForm.firstName}

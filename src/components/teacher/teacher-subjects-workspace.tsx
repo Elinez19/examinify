@@ -12,6 +12,7 @@ import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import {
   AdminSearchInput,
+  AdminSelectField,
   AdminTextField,
   AdminTextareaField,
 } from "@/components/admin/ui/admin-form-controls";
@@ -367,19 +368,19 @@ export function TeacherSubjectsWorkspace() {
               />
             </div>
 
-            <select
-              value={subClassFilter}
-              onChange={(event) => setSubClassFilter(event.target.value)}
+            <AdminSelectField
+              variant="filter"
               aria-label="Filter by class"
-              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900 focus:border-brand-600 focus:outline-none"
-            >
-              <option value="ALL">All Class Arms</option>
-              {store.classArms.map((arm) => (
-                <option key={arm.id} value={arm.name}>
-                  {arm.name}
-                </option>
-              ))}
-            </select>
+              value={subClassFilter}
+              onChange={setSubClassFilter}
+              options={[
+                { id: "ALL", label: "All Class Arms" },
+                ...store.classArms.map((arm) => ({
+                  id: arm.name,
+                  label: arm.name,
+                })),
+              ]}
+            />
           </div>
 
           <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
@@ -522,32 +523,33 @@ export function TeacherSubjectsWorkspace() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={qSubjectFilter}
-                onChange={(event) => setQSubjectFilter(event.target.value)}
+              <AdminSelectField
+                variant="filter"
                 aria-label="Filter by subject"
-                className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900 focus:border-brand-600 focus:outline-none"
-              >
-                <option value="ALL">All Subjects</option>
-                {store.subjects.map((sub) => (
-                  <option key={sub.id} value={sub.code}>
-                    {sub.code} · {sub.title}
-                  </option>
-                ))}
-              </select>
+                value={qSubjectFilter}
+                onChange={setQSubjectFilter}
+                options={[
+                  { id: "ALL", label: "All Subjects" },
+                  ...store.subjects.map((sub) => ({
+                    id: sub.code,
+                    label: `${sub.code} · ${sub.title}`,
+                  })),
+                ]}
+              />
 
-              <select
-                value={qTypeFilter}
-                onChange={(event) => setQTypeFilter(event.target.value)}
+              <AdminSelectField
+                variant="filter"
                 aria-label="Filter by question type"
-                className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900 focus:border-brand-600 focus:outline-none"
-              >
-                <option value="ALL">All Types</option>
-                <option value="objective">Objective</option>
-                <option value="multi_select">Multi-Select</option>
-                <option value="fill_blank">Fill-in-Blank</option>
-                <option value="theory">Theory</option>
-              </select>
+                value={qTypeFilter}
+                onChange={setQTypeFilter}
+                options={[
+                  { id: "ALL", label: "All Types" },
+                  { id: "objective", label: "Objective" },
+                  { id: "multi_select", label: "Multi-Select" },
+                  { id: "fill_blank", label: "Fill-in-Blank" },
+                  { id: "theory", label: "Theory" },
+                ]}
+              />
             </div>
           </div>
 
@@ -773,48 +775,37 @@ export function TeacherSubjectsWorkspace() {
       >
         <form onSubmit={handleSaveQuestion} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Subject
-              </label>
-              <select
-                value={formState.subjectCode}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    subjectCode: event.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                {store.subjects.map((sub) => (
-                  <option key={sub.id} value={sub.code}>
-                    {sub.title} ({sub.code})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AdminSelectField
+              label="Subject"
+              value={formState.subjectCode}
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  subjectCode: val,
+                }))
+              }
+              options={store.subjects.map((sub) => ({
+                id: sub.code,
+                label: `${sub.title} (${sub.code})`,
+              }))}
+            />
 
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Question Type
-              </label>
-              <select
-                value={formState.type}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    type: event.target.value as QuestionType,
-                  }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                <option value="objective">Objective</option>
-                <option value="multi_select">Multi-Select</option>
-                <option value="fill_blank">Fill-in-Blank</option>
-                <option value="theory">Theory</option>
-              </select>
-            </div>
+            <AdminSelectField<QuestionType>
+              label="Question Type"
+              value={formState.type}
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  type: val,
+                }))
+              }
+              options={[
+                { id: "objective", label: "Objective" },
+                { id: "multi_select", label: "Multi-Select" },
+                { id: "fill_blank", label: "Fill-in-Blank" },
+                { id: "theory", label: "Theory" },
+              ]}
+            />
 
             <AdminTextField
               label="Marks"
@@ -841,46 +832,35 @@ export function TeacherSubjectsWorkspace() {
               placeholder="e.g. Linear Equations"
               required
             />
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Class Arm
-              </label>
-              <select
-                value={formState.classLevel}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    classLevel: event.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                {store.classArms.map((arm) => (
-                  <option key={arm.id} value={arm.name}>
-                    {arm.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Difficulty
-              </label>
-              <select
-                value={formState.difficulty}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    difficulty: event.target.value as QuestionItem["difficulty"],
-                  }))
-                }
-                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
-              >
-                <option value="Easy">Easy</option>
-                <option value="Standard">Standard</option>
-                <option value="Challenge">Challenge</option>
-              </select>
-            </div>
+            <AdminSelectField
+              label="Class Arm"
+              value={formState.classLevel}
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  classLevel: val,
+                }))
+              }
+              options={store.classArms.map((arm) => ({
+                id: arm.name,
+                label: arm.name,
+              }))}
+            />
+            <AdminSelectField<QuestionItem["difficulty"]>
+              label="Difficulty"
+              value={formState.difficulty}
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  difficulty: val,
+                }))
+              }
+              options={[
+                { id: "Easy", label: "Easy" },
+                { id: "Standard", label: "Standard" },
+                { id: "Challenge", label: "Challenge" },
+              ]}
+            />
           </div>
 
           <AdminTextareaField
@@ -929,26 +909,23 @@ export function TeacherSubjectsWorkspace() {
           )}
 
           {formState.type === "objective" && (
-            <div>
-              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-                Correct Option
-              </label>
-              <select
-                value={formState.correctOptionId}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    correctOptionId: event.target.value,
-                  }))
-                }
-                className="w-full max-w-xs rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-ink-primary"
-              >
-                <option value="a">Option A</option>
-                <option value="b">Option B</option>
-                <option value="c">Option C</option>
-                <option value="d">Option D</option>
-              </select>
-            </div>
+            <AdminSelectField
+              label="Correct Option"
+              className="max-w-xs"
+              value={formState.correctOptionId}
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  correctOptionId: val,
+                }))
+              }
+              options={[
+                { id: "a", label: "Option A" },
+                { id: "b", label: "Option B" },
+                { id: "c", label: "Option C" },
+                { id: "d", label: "Option D" },
+              ]}
+            />
           )}
 
           {formState.type === "fill_blank" && (

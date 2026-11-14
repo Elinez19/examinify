@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" fill="none">
+  <defs>
+    <linearGradient id="bgPearl" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F6F9FF"/>
+      <stop offset="55%" stop-color="#EDF3FF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <radialGradient id="bgCobalt" cx="50%" cy="25%" r="80%">
+      <stop offset="0%" stop-color="#478BFF"/>
+      <stop offset="50%" stop-color="#0E46F5"/>
+      <stop offset="100%" stop-color="#05113D"/>
+    </radialGradient>
+    <linearGradient id="porcelain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="70%" stop-color="#F6F9FF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <linearGradient id="cobaltGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5CE1FF"/>
+      <stop offset="25%" stop-color="#478BFF"/>
+      <stop offset="75%" stop-color="#0E46F5"/>
+      <stop offset="100%" stop-color="#0A2999"/>
+    </linearGradient>
+    <linearGradient id="goldGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="50%" stop-color="#FFB800"/>
+      <stop offset="100%" stop-color="#CC8800"/>
+    </linearGradient>
+    <filter id="drop3d" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#05113D" flood-opacity="0.22"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0E46F5" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="600" rx="64" fill="url(#bgPearl)"/>
+  <circle cx="300" cy="300" r="210" fill="#FFFFFF" opacity="0.78"/>
+  <ellipse cx="300" cy="495" rx="160" ry="26" fill="#0E46F5" opacity="0.14"/>
+
+  <g filter="url(#drop3d)">
+    <!-- Back Floating Cobalt Insight Pill -->
+    <rect x="170" y="112" width="290" height="220" rx="38" transform="rotate(6 315 222)" fill="url(#bgCobalt)" stroke="#FFFFFF" stroke-width="6"/>
+
+    <!-- Main Porcelain Personalized Feedback Speech Card -->
+    <path d="M115 170 C115 142 137 120 165 120 H425 C453 120 475 142 475 170 V345 C475 373 453 395 425 395 H235 L165 452 V395 H165 C137 395 115 373 115 345 Z" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>
+
+    <!-- Cobalt Accent Header Pill -->
+    <rect x="155" y="160" width="180" height="36" rx="18" fill="url(#cobaltGloss)"/>
+    <circle cx="177" cy="178" r="8" fill="#5CE1FF"/>
+    <rect x="196" y="172" width="115" height="12" rx="6" fill="#FFFFFF" opacity="0.9"/>
+
+    <!-- Personalized Feedback Insight Rows -->
+    <rect x="155" y="218" width="275" height="44" rx="16" fill="#EDF3FF"/>
+    <circle cx="182" cy="240" r="12" fill="#00C47E"/>
+    <path d="M176 240 L180 244 L188 235" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="206" y="233" width="195" height="14" rx="7" fill="#0E46F5" opacity="0.24"/>
+
+    <rect x="155" y="276" width="275" height="44" rx="16" fill="#EDF3FF"/>
+    <circle cx="182" cy="298" r="12" fill="url(#cobaltGloss)"/>
+    <rect x="206" y="291" width="160" height="14" rx="7" fill="#0E46F5" opacity="0.24"/>
+
+    <rect x="155" y="334" width="210" height="24" rx="12" fill="#5CE1FF" opacity="0.3"/>
+
+    <!-- Floating Gold Star & Emerald Instant Spark Badge -->
+    <circle cx="448" cy="148" r="56" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="6"/>
+    <circle cx="448" cy="148" r="42" fill="url(#goldGloss)"/>
+    <path d="M448 120 L456 137 L474 139 L460 152 L464 170 L448 161 L432 170 L436 152 L422 139 L440 137 Z" fill="#FFFFFF"/>
+
+    <!-- Floating Emerald Verified Check Badge -->
+    <circle cx="435" cy="395" r="52" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="6"/>
+    <circle cx="435" cy="395" r="38" fill="#00C47E"/>
+    <path d="M418 395 L430 407 L454 382" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

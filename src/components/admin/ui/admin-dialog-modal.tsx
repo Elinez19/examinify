@@ -48,11 +48,11 @@ export function AdminDialogModal({
   confirmDisabled = false,
   children,
 }: AdminDialogModalProps) {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   // Close on Escape key
   React.useEffect(() => {

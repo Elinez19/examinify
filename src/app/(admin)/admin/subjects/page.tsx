@@ -1,6 +1,5 @@
-import { CategoriesTaxonomyWorkspace } from "@/components/admin/composites/subjects-workspace";
-import { MOCK_CATEGORIES } from "@/components/admin/mock-data";
+import { SubjectsWorkspace } from "@/components/admin/subjects/subjects-workspace";
 
-export default function AdminCategoriesPage() {
-  return <CategoriesTaxonomyWorkspace initialCategories={MOCK_CATEGORIES} />;
+export default function AdminSubjectsPage() {
+  return <SubjectsWorkspace />;
 }

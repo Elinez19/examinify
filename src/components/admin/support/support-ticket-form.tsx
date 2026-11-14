@@ -2,8 +2,8 @@
 
 import type { RefObject, FormEvent } from "react";
 import { Plus, Save } from "lucide-react";
+import { AdminModal } from "@/components/admin/ui/admin-modal";
 import {
-  AdminInlineForm,
   AdminSelectPills,
   AdminTextareaField,
   AdminTextField,
@@ -59,7 +59,7 @@ export function SupportTicketForm({
 }: SupportTicketFormProps) {
   return (
     <div className="mt-6">
-      <AdminInlineForm
+      <AdminModal
         formRef={formRef}
         eyebrow="Inline Support Helpdesk Form"
         title={
@@ -152,7 +152,7 @@ export function SupportTicketForm({
             </CtaButton>
           </div>
         </form>
-      </AdminInlineForm>
+      </AdminModal>
     </div>
   );
 }

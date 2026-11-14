@@ -2,8 +2,8 @@
 
 import type { RefObject, FormEvent } from "react";
 import { Save, ShieldCheck } from "lucide-react";
+import { AdminModal } from "@/components/admin/ui/admin-modal";
 import {
-  AdminInlineForm,
   AdminSelectPills,
   AdminTextField,
 } from "@/components/admin/ui/admin-form-controls";
@@ -85,7 +85,7 @@ export function PlatformPolicyForm({
 }: PlatformPolicyFormProps) {
   return (
     <div className="mt-6">
-      <AdminInlineForm
+      <AdminModal
         formRef={formRef}
         eyebrow="Inline Examinify Settings & Policy Form"
         title={
@@ -236,7 +236,7 @@ export function PlatformPolicyForm({
             </div>
           </div>
         </form>
-      </AdminInlineForm>
+      </AdminModal>
     </div>
   );
 }

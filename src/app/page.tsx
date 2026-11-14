@@ -4,6 +4,7 @@ import { HowItWorksSection } from "@/components/landing/composites/school-page-s
 import {
   FaqSection,
   HeroSection,
+  QuestionTypesSection,
   ServicesGridSection,
 } from "@/components/landing/composites/hero-and-sections";
 import {
@@ -39,10 +40,13 @@ export default function LandingPage() {
         {/* 2. "Offline CBT For Every School" Dashboard Showcase + 4 Floating Notification Banners */}
         <DashboardShowcaseSection />
 
-        {/* 3. "Every Home & Office Fix Covered" Big Glossy 3D Service Cards */}
+        {/* 3. "Everything Your School Needs for Stronger Exams" 6 Core Capability Cards */}
         <ServicesGridSection />
 
-        {/* 4. "How It Works" 3 Numbered Step Cards + Perks Strip */}
+        {/* 4. "Every Question Format, Ready Immediately" 7 Question Types Showcase */}
+        <QuestionTypesSection />
+
+        {/* 5. "How Examinify Works" 5-Step Exam Workflow + /login CTA */}
         <HowItWorksSection />
 
         {/* 5. "Trusted Across Abuja and Nigeria" Dotted Map + OffsetRing Bubbles */}

@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  SESSION_COOKIE_NAME,
+  getRoleHomePath,
+  parseSessionCookie,
+} from "@/lib/portal-auth";
 
 const ALLOWED_ORIGINS = new Set([
   "http://localhost:3000",
@@ -25,6 +30,50 @@ function isTrustedOrigin(origin: string): boolean {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (
+    pathname.startsWith("/student") ||
+    pathname.startsWith("/teacher") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/exam") ||
+    pathname === "/login"
+  ) {
+    const rawCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const session = parseSessionCookie(rawCookie);
+
+    if (pathname === "/login") {
+      if (session) {
+        return NextResponse.redirect(
+          new URL(getRoleHomePath(session.role), request.url)
+        );
+      }
+      return NextResponse.next();
+    }
+
+    if (!session) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    if (pathname.startsWith("/student") && session.role !== "student") {
+      return NextResponse.redirect(
+        new URL(getRoleHomePath(session.role), request.url)
+      );
+    }
+
+    if (pathname.startsWith("/teacher") && session.role !== "teacher") {
+      return NextResponse.redirect(
+        new URL(getRoleHomePath(session.role), request.url)
+      );
+    }
+
+    if (pathname.startsWith("/admin") && session.role !== "admin") {
+      return NextResponse.redirect(
+        new URL(getRoleHomePath(session.role), request.url)
+      );
+    }
+
+    return NextResponse.next();
+  }
   const origin = request.headers.get("origin") || "";
 
   // 1. API CORS Handling (No wildcard '*' paired with Allow-Credentials)
@@ -70,5 +119,10 @@ export const config = {
     "/api/auth/:path*",
     "/api/v1/:path*",
     "/v1/:path*",
+    "/student/:path*",
+    "/teacher/:path*",
+    "/admin/:path*",
+    "/exam/:path*",
+    "/login",
   ],
 };

@@ -20,6 +20,23 @@ export interface ServiceCategoryItem {
   etaBadge: string;
   image: string;
   popularTags: string[];
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+
+export interface QuestionTypeItem {
+  id: string;
+  title: string;
+  description: string;
+  badge: string;
+  iconType:
+    | "list-checks"
+    | "text-cursor"
+    | "file-text"
+    | "pen-line"
+    | "sigma"
+    | "book-open"
+    | "shapes";
 }
 
 export interface FloatingNotificationItem {
@@ -74,6 +91,7 @@ export interface WhatsNewItem {
   description: string;
   fullStory: string[];
   bodyBlocks: readonly BlogBodyBlock[];
+  image?: string;
   visualType:
     | "reward"
     | "dashboards"
@@ -117,10 +135,11 @@ export interface FaqCategoryTab {
 
 export interface HowItWorksStepItem {
   id: string;
-  stepNumber: "01" | "02" | "03";
+  stepNumber: "01" | "02" | "03" | "04" | "05";
   title: string;
   description: string;
-  illustrationType: "store" | "dispatch" | "orders";
+  image: string;
+  illustrationType?: "store" | "dispatch" | "orders";
 }
 
 export interface HowItWorksPerkItem {
@@ -147,106 +166,106 @@ export const landingContent = {
     secondaryCta: "Book a Demo",
   },
   hero: {
-    eyebrow: "Offline-Ready + Online Sync · 100% School Owned · Nigerian Schools",
-    headlineLine1: "Go Paperless.",
-    headlineLine2: "Grade Exams in Seconds.",
+    eyebrow: "One Unified Exam Platform · AI Question Studio · 100% School Owned",
+    headlineLine1: "Better Exams.",
+    headlineLine2: "Graded in Minutes.",
     subtitle:
-      "Run smooth computer-based exams across Primary 1–6 and JSS 1–SSS 3—even when internet drops—and sync results online anytime. Plus, it's CBT personalized and customized just for your school, with your school owning the entire software.",
-    primaryCta: "Book a School Demo",
+      "Turn lesson notes into ready-made exam questions in seconds, prevent copy-paste and tab switching, and grade hundreds of multiple choice, theory, and cloze scripts in minutes—all inside a CBT customized and owned by your school.",
+    primaryCta: "Reclaim Your Time",
     secondaryCta: "Explore CBT Portal",
     marqueeCards: [
       {
         id: "ac-refill",
-        title: "Mathematics 1st Term CBT",
-        provider: "JSS 1–3 · Objective & Theory",
-        area: "Lagos",
-        fromFee: "Instant Broadsheet",
+        title: "AI Lesson-to-Exam Studio",
+        provider: "Multiple Choice · Theory · Cloze",
+        area: "In Seconds",
+        fromFee: "Fully Editable",
         rating: "4.9",
         reviews: 210,
-        eta: "45 Min",
-        badgeText: "Auto-Graded",
-        image: "/images/landing/cbt-maths.jpg",
+        eta: "AI Ready",
+        badgeText: "Question Studio",
+        image: "/images/landing/feature-question-generator.jpg",
         tiltDeg: -4,
       },
       {
         id: "pipe-leak",
-        title: "English Language 2nd CA",
-        provider: "Primary 4–6 · Comprehension",
-        area: "Abuja",
-        fromFee: "Zero Paper Printing",
-        rating: "4.8",
+        title: "Anti-Malpractice Lockdown",
+        provider: "Copy, Paste & Tab Switch Blocked",
+        area: "Live Guard",
+        fromFee: "Distraction-Free",
+        rating: "4.9",
         reviews: 185,
-        eta: "30 Min",
-        badgeText: "Auto-Graded",
-        image: "/images/landing/cbt-primary.svg",
+        eta: "Secured",
+        badgeText: "Exam Lock",
+        image: "/images/landing/feature-malpractice-control.jpg",
         tiltDeg: 3.5,
       },
       {
         id: "carpentry-doors",
-        title: "Basic Science & Tech Exam",
-        provider: "JSS 1–3 · NERDC Aligned",
-        area: "Ibadan",
-        fromFee: "Question Shuffling",
+        title: "Mathematics & Diagram CBT",
+        provider: "Equations · Graphs · Geometry",
+        area: "JSS & SSS",
+        fromFee: "Autosaving Room",
         rating: "4.9",
         reviews: 164,
-        eta: "40 Min",
-        badgeText: "Auto-Graded",
-        image: "/images/landing/cbt-termly-exams.svg",
+        eta: "45 Min",
+        badgeText: "7 Formats",
+        image: "/images/landing/cbt-maths.jpg",
         tiltDeg: -3,
       },
       {
         id: "inverter-solar",
-        title: "Physics & Chemistry Mock",
-        provider: "SSS 1–3 · WAEC-Style CBT",
-        area: "Port Harcourt",
-        fromFee: "Auto-Submit Timer",
+        title: "Automated Script Grading",
+        provider: "MCQ, Cloze & Theory in Minutes",
+        area: "High Scale",
+        fromFee: "Review & Adjust",
         rating: "4.8",
         reviews: 192,
-        eta: "60 Min",
+        eta: "Minutes",
         badgeText: "Auto-Graded",
-        image: "/images/landing/cbt-security.svg",
+        image: "/images/landing/feature-auto-grading.svg",
         tiltDeg: 4,
       },
       {
         id: "deep-clean",
-        title: "Quantitative & Verbal CA",
-        provider: "Primary 1–6 · Timed Quiz",
-        area: "Enugu",
-        fromFee: "Audio & Image Prompts",
+        title: "Personalized Feedback",
+        provider: "Tailored Guidance per Answer",
+        area: "Clear Insights",
+        fromFee: "Student-Ready",
         rating: "4.9",
         reviews: 240,
-        eta: "25 Min",
-        badgeText: "Auto-Graded",
-        image: "/images/landing/cbt-secondary.svg",
+        eta: "Instant",
+        badgeText: "Auto-Feedback",
+        image: "/images/landing/feature-instant-feedback.svg",
         tiltDeg: -3.5,
       },
       {
         id: "tv-mounting",
-        title: "Civic & Social Studies CBT",
-        provider: "Primary & JSS · 1st CA",
-        area: "Kano",
-        fromFee: "Instant Parent Slip",
-        rating: "4.7",
+        title: "Instant Broadsheet Export",
+        provider: "Review Before Sharing Results",
+        area: "Full Control",
+        fromFee: "Excel & Slips",
+        rating: "4.8",
         reviews: 150,
-        eta: "30 Min",
-        badgeText: "Auto-Graded",
-        image: "/images/landing/cbt-broadsheets.svg",
+        eta: "1-Click",
+        badgeText: "Export Ready",
+        image: "/images/landing/feature-export-results.svg",
         tiltDeg: 3,
       },
     ] satisfies ArtisanMarqueeItem[],
   },
   appShowcase: {
-    headline: "Reliable CBT For Every School",
+    headline: "One Reliable System. Zero Tool Hopping.",
     subtitle:
-      "Students take tests smoothly even on weak or lost internet and sync online once reconnected. Built as a CBT personalized and customized just for your school, with your school owning the entire software.",
-    primaryCta: "Book a School Demo",
-    secondaryCta: "Try Student CBT",
-    promoLine: "Built to work through unstable connections, sync online later, and stay 100% yours.",
+      "Why juggle separate apps for question writing, exam security, grading, and broadsheets when one dependable platform handles every stage—and keeps working through unstable internet?",
+    primaryCta: "Reclaim Your Time",
+    secondaryCta: "See 5-Step Flow",
+    promoLine: "Generate questions, lock down the exam hall, grade in minutes, and export organized results in one flow.",
     notifications: [
       {
         id: "notif-1",
-        title: "Offline-Ready + Auto-Sync",
-        subtitle: "JSS 2 Maths · Saves locally, syncs online.",
+        title: "Notes to Questions in Seconds",
+        subtitle: "AI Question Studio · Edit & customize freely.",
         tone: "blue",
         iconType: "scooter",
         position: "top-left",
@@ -254,8 +273,8 @@ export const landingContent = {
       },
       {
         id: "notif-2",
-        title: "Instant Exam Resumption",
-        subtitle: "Power or network cut? Resume where you stopped.",
+        title: "Timed & Autosaving Setup",
+        subtitle: "Power or network drop? Resume right away.",
         tone: "ink",
         iconType: "gift",
         position: "bottom-left",
@@ -263,8 +282,8 @@ export const landingContent = {
       },
       {
         id: "notif-3",
-        title: "Browser Lockdown Active",
-        subtitle: "Shuffled questions & strict time limits on.",
+        title: "Copy, Paste & Tabs Blocked",
+        subtitle: "Malpractice control active on every seat.",
         tone: "ink",
         iconType: "check",
         position: "top-right",
@@ -272,8 +291,8 @@ export const landingContent = {
       },
       {
         id: "notif-4",
-        title: "100% School Owned",
-        subtitle: "Tailored for your school · Full software ownership",
+        title: "Review Before You Export",
+        subtitle: "Adjust grades & send personalized feedback.",
         tone: "sapphire",
         iconType: "tag",
         position: "bottom-right",
@@ -282,72 +301,145 @@ export const landingContent = {
     ] satisfies FloatingNotificationItem[],
   },
   services: {
-    eyebrow: "Works Anywhere · 100% Yours",
-    headline: "Powerful CBT Features You Own",
+    eyebrow: "One Unified Exam Platform",
+    headline: "Everything Your School Needs for Stronger Exams",
     subtitle:
-      "Everything your school needs to run exams smoothly on any connection, sync results online seamlessly, and own your entire assessment platform.",
+      "Why stitch together separate tools when a single, dependable system lets you generate questions, guard against malpractice, grade in minutes, and export polished results?",
     items: [
       {
-        id: "cat-ac",
-        title: "Offline-Ready & Online Sync",
+        id: "cat-question-gen",
+        title: "Smart Question Studio",
         description:
-          "Students take tests seamlessly even with weak, patchy, or unavailable internet. Answers save safely and sync online once connectivity returns.",
-        startingPrice: "Auto-Sync",
-        etaBadge: "Any Connection",
-        image: "/images/landing/cbt-maths.jpg",
-        popularTags: ["Low-Bandwidth Ready", "Offline Resilience", "Cloud Sync"],
+          "Transform your lesson notes and topics into ready-to-publish exam items in seconds—then edit, format, and tailor every question to your class.",
+        startingPrice: "AI-Assisted",
+        etaBadge: "In Seconds",
+        image: "/images/landing/feature-question-generator.jpg",
+        popularTags: ["Notes to Questions", "Editable Prompts", "NERDC Ready"],
+        ctaLabel: "Try Question Studio",
+        ctaHref: "/login",
       },
       {
-        id: "cat-carpentry",
-        title: "Exam Resumption & Control",
+        id: "cat-malpractice",
+        title: "Anti-Malpractice Lockdown",
         description:
-          "Students resume exams right where they stopped after power or network drops, while admins activate tests and control access.",
-        startingPrice: "Auto-Resume",
-        etaBadge: "Live Control",
-        image: "/images/landing/cbt-termly-exams.svg",
-        popularTags: ["Power-Drop Safe", "Exam Activation", "Student Access"],
-      },
-      {
-        id: "cat-plumbing",
-        title: "Personalized & School-Owned",
-        description:
-          "No vendor lock-in. Get a CBT personalized and customized just for your school—supporting unlimited classes across Primary 1–6 and JSS 1–SSS 3, with your school owning the entire software.",
-        startingPrice: "100% Yours",
-        etaBadge: "Custom & Owned",
-        image: "/images/landing/cbt-primary.svg",
-        popularTags: ["Tailored for Your School", "Full Software Ownership", "Unlimited Scale"],
-      },
-      {
-        id: "cat-cleaning",
-        title: "View Student Scripts",
-        description:
-          "Administrators and teachers can open, inspect, and review complete student answer scripts for all subjects immediately after exams.",
-        startingPrice: "Full Scripts",
-        etaBadge: "Post-Exam Audit",
-        image: "/images/landing/cbt-secondary.svg",
-        popularTags: ["Script Review", "Answer Audit", "All Subjects"],
-      },
-      {
-        id: "cat-electronics",
-        title: "Performance Analysis",
-        description:
-          "Detailed performance analytics, instant broadsheets, and question analysis to identify each student's strengths and weaknesses.",
-        startingPrice: "Deep Insights",
-        etaBadge: "Instant Grades",
-        image: "/images/landing/cbt-broadsheets.svg",
-        popularTags: ["Question Analysis", "Strengths & Gaps", "Broadsheets"],
-      },
-      {
-        id: "cat-electrical",
-        title: "Secure Environment",
-        description:
-          "Prevent cheating with browser lockdown, per-student question randomization, keyboard navigation, and strict automatic time limits.",
+          "Keep every test fair from start to finish. Candidates cannot copy, paste, or switch browser tabs while your examination is active.",
         startingPrice: "Anti-Cheat",
-        etaBadge: "Tamper Proof",
-        image: "/images/landing/cbt-security.svg",
-        popularTags: ["Browser Lockdown", "Randomization", "Time Limits"],
+        etaBadge: "Tab & Copy Lock",
+        image: "/images/landing/feature-malpractice-control.jpg",
+        popularTags: ["Copy-Paste Blocked", "Tab-Switch Guard", "Shuffled Items"],
+        ctaLabel: "See Exam Security",
+        ctaHref: "#how-it-works",
+      },
+      {
+        id: "cat-feedback",
+        title: "Personalized Instant Feedback",
+        description:
+          "Give each student clear, constructive feedback automatically tailored to their specific answers so every learner knows how to improve.",
+        startingPrice: "Tailored Clarity",
+        etaBadge: "Auto-Feedback",
+        image: "/images/landing/feature-instant-feedback.svg",
+        popularTags: ["Answer Explanations", "Strengths & Gaps", "Student-Ready"],
+        ctaLabel: "Explore Feedback",
+        ctaHref: "/login",
+      },
+      {
+        id: "cat-setup",
+        title: "Distraction-Free Exam Room",
+        description:
+          "Deliver strictly timed, real-time autosaving exams in a calm, controlled environment—resilient even on weak internet and synced online later.",
+        startingPrice: "Autosave + Sync",
+        etaBadge: "Timed Focus",
+        image: "/images/landing/feature-standard-exam.svg",
+        popularTags: ["Real-Time Autosave", "Zero Distractions", "Power-Drop Safe"],
+        ctaLabel: "Explore Exam Room",
+        ctaHref: "#how-it-works",
+      },
+      {
+        id: "cat-export",
+        title: "One-Click Result Export",
+        description:
+          "Download neatly organized broadsheets and score reports instantly—while staying in full command to inspect scripts and adjust marks before sharing.",
+        startingPrice: "Full Oversight",
+        etaBadge: "Instant Export",
+        image: "/images/landing/feature-export-results.svg",
+        popularTags: ["Pre-Share Review", "Score Adjustments", "Clean Broadsheets"],
+        ctaLabel: "See Broadsheets",
+        ctaHref: "/login",
+      },
+      {
+        id: "cat-auto-grade",
+        title: "Minutes-Fast Auto-Grading",
+        description:
+          "Score hundreds of scripts across multiple choice, structured theory, and fill-in-the-gap questions in minutes—giving teachers their evenings back.",
+        startingPrice: "High Volume",
+        etaBadge: "Graded in Minutes",
+        image: "/images/landing/feature-auto-grading.svg",
+        popularTags: ["MCQ & Cloze", "Theory Marking", "Teacher Override"],
+        ctaLabel: "Start Grading Faster",
+        ctaHref: "/login",
       },
     ] satisfies ServiceCategoryItem[],
+  },
+  questionTypes: {
+    eyebrow: "7 Supported Formats",
+    headline: "Every Question Format, Ready Immediately",
+    highlightWords: ["Question", "Format,", "Immediately"],
+    subtitle:
+      "Mix objective, fill-in-the-blank, mathematical, diagram-based, and extended written prompts inside a single examination—built and scored without switching tools.",
+    showcaseImage: "/images/landing/question-types-showcase.jpg",
+    ctaLabel: "Create With Any Format",
+    ctaHref: "/login",
+    items: [
+      {
+        id: "qt-mcq",
+        title: "Multiple Choice",
+        description: "Single or multi-select A–D options with seat-by-seat shuffling and instant scoring.",
+        badge: "Instant Auto-Score",
+        iconType: "list-checks",
+      },
+      {
+        id: "qt-cloze",
+        title: "Fill in the Blank",
+        description: "Cloze passages and missing-word statements graded accurately in seconds.",
+        badge: "Cloze Precision",
+        iconType: "text-cursor",
+      },
+      {
+        id: "qt-theory",
+        title: "Structured Theory",
+        description: "Short and multi-part written answers evaluated quickly with AI rubric support.",
+        badge: "AI Rubric Assist",
+        iconType: "file-text",
+      },
+      {
+        id: "qt-essay",
+        title: "Long-Form Essay",
+        description: "Extended composition questions with clear scoring guides and teacher review.",
+        badge: "Full Oversight",
+        iconType: "pen-line",
+      },
+      {
+        id: "qt-math",
+        title: "Mathematics",
+        description: "Clean algebraic equations, fractions, symbols, and numerical problem solving.",
+        badge: "Formula Ready",
+        iconType: "sigma",
+      },
+      {
+        id: "qt-case-study",
+        title: "Case Studies",
+        description: "Real-world scenarios and comprehension passages paired with linked sub-items.",
+        badge: "Scenario Linked",
+        iconType: "book-open",
+      },
+      {
+        id: "qt-diagram",
+        title: "Labeled Diagrams",
+        description: "Crisp scientific illustrations, maps, and charts embedded directly in questions.",
+        badge: "Visual Prompts",
+        iconType: "shapes",
+      },
+    ] satisfies QuestionTypeItem[],
   },
   coverage: {
     badge: "36 States & FCT Ready",
@@ -442,18 +534,18 @@ export const landingContent = {
   },
   everythingYouNeed: {
     headline: "Everything You Need To Own Your CBT",
-    primaryCta: "Book a School Demo",
+    primaryCta: "Reclaim Your Time",
     secondaryCta: "Explore CBT Portal",
-    promoLine: "Test smoothly even with unstable or lost internet, sync online anytime, and own the full system.",
+    promoLine: "Generate questions from notes, block tab-switching, grade in minutes, and own your entire CBT platform.",
     chips: [
-      "Offline-Ready & Online Sync",
-      "Personalized & School-Owned",
-      "Exam Resumption",
-      "View Student Scripts",
-      "Unlimited Classes & Subjects",
-      "Performance Analysis",
-      "Keyboard Navigation",
-      "Exam Activation Control",
+      "AI Question Studio",
+      "Copy & Tab Lock",
+      "Auto-Grade in Minutes",
+      "7 Question Formats",
+      "Personalized Feedback",
+      "Timed & Autosaving",
+      "Review & Export Results",
+      "100% School Owned",
     ],
   },
   whatsNew: {
@@ -530,130 +622,95 @@ export const landingContent = {
       },
       {
         id: "new-2",
-        slug: "the-all-new-examinify-cbt-engine",
+        slug: "from-lesson-notes-to-graded-results-in-five-steps",
         categoryId: "product-update",
         category: "Product Update",
-        readTime: "2 mins read",
-        title: "The All-New Hybrid CBT Engine",
-        highlightWords: ["All-New", "Hybrid"],
+        readTime: "3 mins read",
+        title: "Lesson Notes to Graded Broadsheets in Five Steps",
+        highlightWords: ["Lesson", "Notes", "Five", "Steps"],
         description:
-          "Test smoothly on weak, unstable, or no internet and sync online automatically later—with a CBT personalized for your school and full software ownership.",
+          "Generate questions in seconds, block copy-paste and tab switching, and grade hundreds of MCQ, cloze, and theory scripts in minutes.",
         fullStory: [
-          "We engineered Examinify so students can take tests and exams even when internet is slow, unstable, or temporarily out—saving answers safely and syncing online once connectivity returns.",
-          "Plus, Examinify delivers a CBT personalized and customized just for your school—with your school owning the entire software—paired with instant exam resumption, keyboard navigation, browser lockdown, and post-exam script analytics.",
+          "Why stitch together separate apps when one dependable platform lets teachers convert lesson notes into exam questions in seconds, organize student groups, and run distraction-free timed tests?",
+          "With Examinify's five-step workflow, hundreds of scripts across multiple choice, theory, and fill-in-the-gap questions are graded in minutes—leaving teachers in complete control to review, adjust marks, share personalized feedback, and export results.",
         ],
         bodyBlocks: [
           {
             type: "paragraph",
-            text: "Setting, invigilating, and grading termly continuous assessments should be fast, calm, and reliable — and that's exactly what the new Examinify CBT engine delivers.",
+            text: "Setting, invigilating, and grading termly continuous assessments shouldn't require three disconnected tools — Examinify brings every stage into one reliable, school-owned workflow.",
           },
           {
             type: "list",
-            leadIn: "We've upgraded the exam portal to make it:",
+            leadIn: "Our five-step exam pipeline saves staff hours at every stage:",
             items: [
-              "Faster for pupils in Primary 1–6 and students in JSS 1–SSS 3",
-              "Resilient during brief Wi-Fi or power interruptions",
-              "Easier for teachers to upload equations, diagrams, and passages",
-              "Clearer for exam officers tracking live submissions",
+              "01 Craft Your Examination: Turn lesson notes into editable exam questions in seconds using AI",
+              "02 Group Your Learners: Organize students into classes, arms, or cohorts ready for testing",
+              "03 Publish & Share Access: Launch timed, autosaving exams with copy-paste and tab-switch lock",
+              "04 Review & Approve Marks: Inspect AI-graded MCQ, cloze, and theory scripts and adjust scores",
+              "05 Export & Deliver Feedback: Download organized broadsheets and share personalized feedback",
             ],
           },
           {
             type: "paragraph",
-            text: "The updated experience makes scheduling termly exams across multiple arms effortless. Whether you're running a 20-minute 1st CA test in Primary 5 or a 90-minute SSS 3 mock exam, every second is accounted for.",
+            text: "Every candidate writes inside a calm, distraction-free exam room that autosaves in real time—even when internet drops—and automatically syncs completed scripts once reconnected.",
           },
           {
             type: "list",
-            leadIn: "Behind the scenes, Examinify is optimized for:",
+            leadIn: "Teachers and exam officers keep complete oversight from start to finish:",
             items: [
-              "Auto-saving every clicked answer locally in real time",
-              "Instant countdown sync and automatic submission at time-up",
-              "Tab-switch alerts and randomized question order per seat",
-              "One-click export to Excel broadsheets and PDF report slips",
-            ],
-          },
-          {
-            type: "list",
-            leadIn: "That means with Examinify your school can:",
-            items: [
-              "Grade hundreds of objective scripts in under 2 seconds",
-              "Combine 1st CA, 2nd CA, and exam scores automatically",
-              "Spot struggling topics with item-by-item analytics",
-              "Share verified results with parents without delays",
+              "Built-in malpractice control prevents copying, pasting, and switching browser tabs",
+              "Minutes-fast automated grading across Multiple Choice, Cloze, and Theory prompts",
+              "Clear, constructive automatic feedback personalized to each student's answers",
+              "One-click export to clean Excel broadsheets after final teacher approval",
             ],
           },
           {
             type: "paragraph",
-            text: "New features like bulk Word/Excel question import, rich math notation, and offline-resilient online sync mean your ICT lab runs smoothly even on modest or patchy internet—inside a platform your school owns completely.",
-          },
-          {
-            type: "paragraph",
-            text: "Try the new Examinify CBT experience today and give your teachers their weekends back.",
+            text: "Reclaim your weekends by running your next continuous assessment or terminal exam inside Examinify.",
           },
         ],
+        image: "/images/landing/feature-question-generator.jpg",
         visualType: "dashboards",
       },
       {
         id: "new-3",
-        slug: "nerdc-aligned-termly-cbt-question-banks",
+        slug: "seven-question-formats-and-malpractice-lockdown",
         categoryId: "artisans",
         category: "Schools",
         readTime: "3 mins read",
-        title: "NERDC-Aligned Question Banks Now on Examinify",
-        highlightWords: ["Question", "Banks"],
+        title: "Seven Question Formats & Built-In Malpractice Control",
+        highlightWords: ["Seven", "Question", "Formats"],
         description:
-          "Access structured termly assessment templates across Mathematics, English, Basic Science, Civic Education, and senior secondary subjects...",
+          "Combine Multiple Choice, Fill in the Blank, Theory, Essay, Mathematics, Case Study, and Diagram prompts inside one tamper-proof exam room.",
         fullStory: [
-          "We are excited to roll out curated, NERDC-aligned CBT question bank templates for Nigerian Primary 1–6, JSS 1–3, and SSS 1–3 classes—covering 1st, 2nd, and 3rd term schemes of work.",
-          "Teachers can adopt ready-made items, customize questions to match their classroom notes, and reuse vetted termly banks year after year.",
+          "Modern school assessments go far beyond simple A–D bubbles. Examinify supports seven rich question formats out of the box: Multiple Choice, Fill in the Blank, Theory, Essay, Mathematics, Case Study, and Diagram items.",
+          "Every paper runs inside a distraction-free, timed, autosaving workspace where copying, pasting, and tab switching are strictly blocked.",
         ],
         bodyBlocks: [
           {
             type: "paragraph",
-            text: "Building fresh test items from scratch every mid-term shouldn't exhaust teachers — and with NERDC-aligned question banks now on Examinify, quality termly assessments are ready in minutes.",
+            text: "Whether you're setting a Primary 5 comprehension passage, a JSS 2 math quiz, or an SSS 3 biology diagram exam, Examinify handles all seven assessment formats seamlessly in one place.",
           },
           {
             type: "list",
-            leadIn: "Every school question bank on Examinify supports:",
+            leadIn: "Every school examination on Examinify supports:",
             items: [
-              "Primary 1–6 core subjects including Numeracy, Literacy, and Verbal Reasoning",
-              "JSS 1–3 Basic Science, Social Studies, Business Studies, and Civic Education",
-              "SSS 1–3 Science, Commercial, and Arts subjects with diagram support",
-              "Topic tagging by 1st, 2nd, and 3rd Term scheme of work",
+              "Multiple Choice & Fill in the Blank (Cloze) with instant auto-scoring",
+              "Structured Theory & Long-Form Essay prompts graded rapidly with AI rubric support",
+              "Mathematics equations, Case Studies, and Labeled Diagrams embedded cleanly",
+              "Copy-paste blocking and tab-switch prevention active on every candidate screen",
             ],
           },
           {
             type: "paragraph",
-            text: "Teachers can either start from school-owned question banks or adapt structured templates to match exact lesson notes before publishing a 1st CA, 2nd CA, or terminal exam.",
-          },
-          {
-            type: "list",
-            leadIn: "Exam officers get full oversight before any test goes live:",
-            items: [
-              "Head of Department review and approval workflow",
-              "Difficulty balance checks across objective and theory sections",
-              "Automatic shuffling of question numbers and A–D options",
-              "Reusable archived exams across academic sessions",
-            ],
-          },
-          {
-            type: "list",
-            leadIn: "When your school runs CBT on Examinify, you get:",
-            items: [
-              "Consistent academic standards across all class arms",
-              "Zero leaked papers or photocopier bottlenecks",
-              "Instant score breakdown per topic and per student",
-              "Seamless term-end broadsheets ready for report cards",
-            ],
+            text: "After students submit, teachers review AI-assisted grades across hundreds of scripts in minutes, fine-tune any marks, and release personalized answer feedback alongside downloadable broadsheets.",
           },
           {
             type: "paragraph",
             text: "Organize your school's termly question bank once on Examinify and reuse it effortlessly every session.",
           },
-          {
-            type: "paragraph",
-            text: "Book a walkthrough with our team to see how Nigerian schools set up an entire term's CBT calendar in one afternoon.",
-          },
         ],
+        image: "/images/landing/question-types-showcase.jpg",
         visualType: "emblem",
       },
     ] satisfies WhatsNewItem[],
@@ -748,130 +805,95 @@ export const landingContent = {
       },
       {
         id: "new-2",
-        slug: "the-all-new-examinify-cbt-engine",
+        slug: "from-lesson-notes-to-graded-results-in-five-steps",
         categoryId: "product-update",
         category: "Product Update",
-        readTime: "2 mins read",
-        title: "The All-New Hybrid CBT Engine",
-        highlightWords: ["All-New", "Hybrid"],
+        readTime: "3 mins read",
+        title: "Lesson Notes to Graded Broadsheets in Five Steps",
+        highlightWords: ["Lesson", "Notes", "Five", "Steps"],
         description:
-          "Test smoothly on weak, unstable, or no internet and sync online automatically later—with a CBT personalized for your school and full software ownership.",
+          "Generate questions in seconds, block copy-paste and tab switching, and grade hundreds of MCQ, cloze, and theory scripts in minutes.",
         fullStory: [
-          "We engineered Examinify so students can take tests and exams even when internet is slow, unstable, or temporarily out—saving answers safely and syncing online once connectivity returns.",
-          "Plus, Examinify delivers a CBT personalized and customized just for your school—with your school owning the entire software—paired with instant exam resumption, keyboard navigation, browser lockdown, and post-exam script analytics.",
+          "Why stitch together separate apps when one dependable platform lets teachers convert lesson notes into exam questions in seconds, organize student groups, and run distraction-free timed tests?",
+          "With Examinify's five-step workflow, hundreds of scripts across multiple choice, theory, and fill-in-the-gap questions are graded in minutes—leaving teachers in complete control to review, adjust marks, share personalized feedback, and export results.",
         ],
         bodyBlocks: [
           {
             type: "paragraph",
-            text: "Setting, invigilating, and grading termly continuous assessments should be fast, calm, and reliable — and that's exactly what the new Examinify CBT engine delivers.",
+            text: "Setting, invigilating, and grading termly continuous assessments shouldn't require three disconnected tools — Examinify brings every stage into one reliable, school-owned workflow.",
           },
           {
             type: "list",
-            leadIn: "We've upgraded the exam portal to make it:",
+            leadIn: "Our five-step exam pipeline saves staff hours at every stage:",
             items: [
-              "Faster for pupils in Primary 1–6 and students in JSS 1–SSS 3",
-              "Resilient during brief Wi-Fi or power interruptions",
-              "Easier for teachers to upload equations, diagrams, and passages",
-              "Clearer for exam officers tracking live submissions",
+              "01 Craft Your Examination: Turn lesson notes into editable exam questions in seconds using AI",
+              "02 Group Your Learners: Organize students into classes, arms, or cohorts ready for testing",
+              "03 Publish & Share Access: Launch timed, autosaving exams with copy-paste and tab-switch lock",
+              "04 Review & Approve Marks: Inspect AI-graded MCQ, cloze, and theory scripts and adjust scores",
+              "05 Export & Deliver Feedback: Download organized broadsheets and share personalized feedback",
             ],
           },
           {
             type: "paragraph",
-            text: "The updated experience makes scheduling termly exams across multiple arms effortless. Whether you're running a 20-minute 1st CA test in Primary 5 or a 90-minute SSS 3 mock exam, every second is accounted for.",
+            text: "Every candidate writes inside a calm, distraction-free exam room that autosaves in real time—even when internet drops—and automatically syncs completed scripts once reconnected.",
           },
           {
             type: "list",
-            leadIn: "Behind the scenes, Examinify is optimized for:",
+            leadIn: "Teachers and exam officers keep complete oversight from start to finish:",
             items: [
-              "Auto-saving every clicked answer locally in real time",
-              "Instant countdown sync and automatic submission at time-up",
-              "Tab-switch alerts and randomized question order per seat",
-              "One-click export to Excel broadsheets and PDF report slips",
-            ],
-          },
-          {
-            type: "list",
-            leadIn: "That means with Examinify your school can:",
-            items: [
-              "Grade hundreds of objective scripts in under 2 seconds",
-              "Combine 1st CA, 2nd CA, and exam scores automatically",
-              "Spot struggling topics with item-by-item analytics",
-              "Share verified results with parents without delays",
+              "Built-in malpractice control prevents copying, pasting, and switching browser tabs",
+              "Minutes-fast automated grading across Multiple Choice, Cloze, and Theory prompts",
+              "Clear, constructive automatic feedback personalized to each student's answers",
+              "One-click export to clean Excel broadsheets after final teacher approval",
             ],
           },
           {
             type: "paragraph",
-            text: "New features like bulk Word/Excel question import, rich math notation, and offline-resilient online sync mean your ICT lab runs smoothly even on modest or patchy internet—inside a platform your school owns completely.",
-          },
-          {
-            type: "paragraph",
-            text: "Try the new Examinify CBT experience today and give your teachers their weekends back.",
+            text: "Reclaim your weekends by running your next continuous assessment or terminal exam inside Examinify.",
           },
         ],
+        image: "/images/landing/feature-question-generator.jpg",
         visualType: "dashboards",
       },
       {
         id: "new-3",
-        slug: "nerdc-aligned-termly-cbt-question-banks",
+        slug: "seven-question-formats-and-malpractice-lockdown",
         categoryId: "artisans",
         category: "Schools",
         readTime: "3 mins read",
-        title: "NERDC-Aligned Question Banks Now on Examinify",
-        highlightWords: ["Question", "Banks"],
+        title: "Seven Question Formats & Built-In Malpractice Control",
+        highlightWords: ["Seven", "Question", "Formats"],
         description:
-          "Access structured termly assessment templates across Mathematics, English, Basic Science, Civic Education, and senior secondary subjects...",
+          "Combine Multiple Choice, Fill in the Blank, Theory, Essay, Mathematics, Case Study, and Diagram prompts inside one tamper-proof exam room.",
         fullStory: [
-          "We are excited to roll out curated, NERDC-aligned CBT question bank templates for Nigerian Primary 1–6, JSS 1–3, and SSS 1–3 classes—covering 1st, 2nd, and 3rd term schemes of work.",
-          "Teachers can adopt ready-made items, customize questions to match their classroom notes, and reuse vetted termly banks year after year.",
+          "Modern school assessments go far beyond simple A–D bubbles. Examinify supports seven rich question formats out of the box: Multiple Choice, Fill in the Blank, Theory, Essay, Mathematics, Case Study, and Diagram items.",
+          "Every paper runs inside a distraction-free, timed, autosaving workspace where copying, pasting, and tab switching are strictly blocked.",
         ],
         bodyBlocks: [
           {
             type: "paragraph",
-            text: "Building fresh test items from scratch every mid-term shouldn't exhaust teachers — and with NERDC-aligned question banks now on Examinify, quality termly assessments are ready in minutes.",
+            text: "Whether you're setting a Primary 5 comprehension passage, a JSS 2 math quiz, or an SSS 3 biology diagram exam, Examinify handles all seven assessment formats seamlessly in one place.",
           },
           {
             type: "list",
-            leadIn: "Every school question bank on Examinify supports:",
+            leadIn: "Every school examination on Examinify supports:",
             items: [
-              "Primary 1–6 core subjects including Numeracy, Literacy, and Verbal Reasoning",
-              "JSS 1–3 Basic Science, Social Studies, Business Studies, and Civic Education",
-              "SSS 1–3 Science, Commercial, and Arts subjects with diagram support",
-              "Topic tagging by 1st, 2nd, and 3rd Term scheme of work",
+              "Multiple Choice & Fill in the Blank (Cloze) with instant auto-scoring",
+              "Structured Theory & Long-Form Essay prompts graded rapidly with AI rubric support",
+              "Mathematics equations, Case Studies, and Labeled Diagrams embedded cleanly",
+              "Copy-paste blocking and tab-switch prevention active on every candidate screen",
             ],
           },
           {
             type: "paragraph",
-            text: "Teachers can either start from school-owned question banks or adapt structured templates to match exact lesson notes before publishing a 1st CA, 2nd CA, or terminal exam.",
-          },
-          {
-            type: "list",
-            leadIn: "Exam officers get full oversight before any test goes live:",
-            items: [
-              "Head of Department review and approval workflow",
-              "Difficulty balance checks across objective and theory sections",
-              "Automatic shuffling of question numbers and A–D options",
-              "Reusable archived exams across academic sessions",
-            ],
-          },
-          {
-            type: "list",
-            leadIn: "When your school runs CBT on Examinify, you get:",
-            items: [
-              "Consistent academic standards across all class arms",
-              "Zero leaked papers or photocopier bottlenecks",
-              "Instant score breakdown per topic and per student",
-              "Seamless term-end broadsheets ready for report cards",
-            ],
+            text: "After students submit, teachers review AI-assisted grades across hundreds of scripts in minutes, fine-tune any marks, and release personalized answer feedback alongside downloadable broadsheets.",
           },
           {
             type: "paragraph",
             text: "Organize your school's termly question bank once on Examinify and reuse it effortlessly every session.",
           },
-          {
-            type: "paragraph",
-            text: "Book a walkthrough with our team to see how Nigerian schools set up an entire term's CBT calendar in one afternoon.",
-          },
         ],
+        image: "/images/landing/question-types-showcase.jpg",
         visualType: "emblem",
       },
       {
@@ -1071,102 +1093,124 @@ export const landingContent = {
       headlineLine1: "Great Teaching Deserves",
       headlineLine2: "Smarter Exams.",
       subtitle:
-        "Run reliable computer-based exams even with weak or no internet, sync results online later, and get a CBT personalized and customized just for your school, with your school owning the entire software.",
-      primaryCta: "Book a School Demo",
-      secondaryCta: "Explore CBT Portal",
+        "Why juggle disconnected platforms when one dependable system turns lesson notes into questions in seconds, blocks copy-paste and tab switching, grades hundreds of scripts in minutes, and stays 100% owned by your school?",
+      primaryCta: "Reclaim Your Time",
+      secondaryCta: "See 5-Step Flow",
     },
     howItWorks: {
-      headline: "How It Works",
+      eyebrow: "Five Steps. Zero Guesswork.",
+      headline: "How Examinify Works",
       subtitle:
-        "Own your complete CBT system, let students test reliably on any connection and sync online later, and inspect full answer scripts right after submission.",
+        "Scroll through a streamlined five-step workflow that saves hours at every stage—from generating exam items and organizing learner cohorts to reviewing AI-assisted scores in one place.",
       steps: [
         {
           id: "step-01",
           stepNumber: "01",
-          title: "Own Your Full System",
+          title: "Craft Your Examination",
           description:
-            "Deploy a CBT personalized and customized just for your school—with your school owning the entire software, unlimited classes, and question banks.",
+            "Build your own questions or convert lesson notes into ready-to-edit exam items in seconds using AI.",
+          image: "/images/landing/step-01-create-exam.svg",
           illustrationType: "store",
         },
         {
           id: "step-02",
           stepNumber: "02",
-          title: "Test Offline, Sync Online",
+          title: "Group Your Learners",
           description:
-            "Activate tests and manage student access. Candidates take exams smoothly even on weak or lost internet, then sync results online when connected.",
+            "Organize students into classes, arms, or exam cohorts so every candidate is prepared before test time.",
+          image: "/images/landing/step-02-student-group.svg",
           illustrationType: "dispatch",
         },
         {
           id: "step-03",
           stepNumber: "03",
-          title: "Scripts & Deep Analytics",
+          title: "Publish & Share Access",
           description:
-            "View full student answer scripts after exams, analyze question strengths and weaknesses, and export instant broadsheets.",
+            "Take the examination live and distribute access to your learners from one tidy, distraction-free workspace.",
+          image: "/images/landing/step-03-publish-exam.svg",
+          illustrationType: "dispatch",
+        },
+        {
+          id: "step-04",
+          stepNumber: "04",
+          title: "Review & Approve Marks",
+          description:
+            "Inspect AI-graded scripts across multiple choice, cloze, and theory, adjust marks if needed, and approve.",
+          image: "/images/landing/step-04-review-approve.svg",
+          illustrationType: "orders",
+        },
+        {
+          id: "step-05",
+          stepNumber: "05",
+          title: "Export & Share Feedback",
+          description:
+            "Download structured broadsheets and share personalized, helpful answer feedback whenever you are ready.",
+          image: "/images/landing/step-05-export-share.svg",
           illustrationType: "orders",
         },
       ] satisfies HowItWorksStepItem[],
       perks: [
         {
           id: "perk-onboarding",
-          label: "Personalized & School-Owned CBT",
+          label: "AI Lesson-to-Exam Generation",
           iconType: "onboarding",
         },
         {
           id: "perk-dashboard",
-          label: "Offline-Ready + Online Sync",
+          label: "Copy-Paste & Tab-Switch Lock",
           iconType: "dashboard",
         },
         {
           id: "perk-support",
-          label: "Power-Drop Exam Resumption",
+          label: "Review & Adjust Before Export",
           iconType: "support",
         },
       ] satisfies HowItWorksPerkItem[],
-      ctaLabel: "Onboard Your School",
-      ctaHref: "#join",
+      ctaLabel: "Reclaim Your Time",
+      ctaHref: "/login",
     },
     coverage: {
-      badge: "Unlimited Classes · Primary 1–6 & JSS 1–SSS 3",
-      headline: "Assess Every Class Effortlessly",
-      highlightWords: ["Every", "Class"],
+      badge: "7 Question Formats · Unlimited Classes",
+      headline: "One Unified Platform for Every Class",
+      highlightWords: ["Unified", "Platform"],
       subtitle:
-        "Examinify adapts to your school's termly calendar—running smoothly through weak or lost internet, syncing online seamlessly, and giving you a CBT customized just for your school with full software ownership.",
+        "From Primary 1–6 to JSS 1–SSS 3, Examinify replaces fragmented tools with one reliable, school-owned system—supporting multiple choice, fill-in-the-blank, theory, essay, mathematics, case studies, and diagrams.",
     },
     faqs: {
       headline: "Got Questions ?",
       subtitle:
-        "Everything school proprietors, principals, and teachers need to know about offline-resilient CBT exams, online sync, and full software ownership.",
+        "Everything school proprietors, principals, and teachers need to know about AI question generation, malpractice control, auto-grading, and full software ownership.",
       moreCta: "See More",
       items: [
         {
           id: "artisan-faq-1",
-          question: "How does Examinify handle weak or no internet during exams?",
+          question: "How fast can teachers turn lesson notes into exam questions?",
           answer:
-            "Students can start and complete tests even when internet is slow, unstable, or unavailable. Every answer saves safely and syncs online automatically once a connection returns.",
+            "In seconds! Upload or paste your lesson notes into the Smart Question Studio to generate structured multiple choice, fill-in-the-gap, theory, or essay items—then edit and customize every question freely.",
         },
         {
           id: "artisan-faq-2",
-          question: "Is the CBT customized for our school, and do we truly own the entire software?",
+          question: "How does Examinify prevent exam malpractice during live tests?",
           answer:
-            "Yes! Examinify is personalized and customized just for your school—matching your school's branding, classes, and workflow—and your school owns the entire software with zero vendor lock-in.",
+            "Anti-Malpractice Lockdown blocks copying, pasting, and tab switching while an examination is underway, paired with randomized question order and timed, autosaving distraction-free test rooms.",
         },
         {
           id: "artisan-faq-3",
-          question: "How do administrators control who takes an exam and when?",
+          question: "Which question formats and grading modes are supported?",
           answer:
-            "Exam Activation Control lets administrators activate or deactivate specific exams at any moment and control exactly which students or classes are authorized to attempt each test.",
+            "Create Multiple Choice, Fill in the Blank (Cloze), Theory, Essay, Mathematics, Case Study, and Diagram questions. Hundreds of scripts are graded automatically in minutes, and teachers can review and adjust scores before sharing.",
         },
         {
           id: "artisan-faq-4",
-          question: "Can teachers inspect student scripts and question performance after exams?",
+          question: "Do students receive personalized feedback on their answers?",
           answer:
-            "Yes! Administrators can open and review complete student answer scripts for every subject after exams, alongside detailed performance and question analysis to spot strengths and weaknesses.",
+            "Yes! Once results are approved, each learner receives clear, constructive automatic feedback tailored specifically to their answers—highlighting strengths and areas to improve.",
         },
         {
           id: "artisan-faq-5",
-          question: "What happens if electricity or internet drops mid-exam?",
+          question: "Does Examinify still work if internet drops mid-exam, and do we own the software?",
           answer:
-            "Examinify's Exam Resumption ensures students pick up right where they stopped with all previous answers and remaining time intact, then syncs completed work online once reconnected.",
+            "Yes! Timed exams autosave continuously even on weak or lost internet and sync online once reconnected. Best of all, your CBT is customized for your school with full software ownership.",
         },
       ] satisfies FaqItemData[],
     },
@@ -1175,7 +1219,7 @@ export const landingContent = {
     headline: "Got Questions ?",
     highlightWords: ["Questions"],
     subtitle:
-      "Everything you need to know about offline-resilient CBT exams, online syncing, and full school software ownership on Examinify.",
+      "Everything students, teachers, and schools need to know about our unified exam platform, AI question generation, malpractice control, and automated grading.",
     categories: [
       {
         id: "customers",
@@ -1185,25 +1229,25 @@ export const landingContent = {
             id: "cust-faq-1",
             question: "What is Examinify?",
             answer:
-              "Examinify is an offline-resilient Computer-Based Testing (CBT) platform built for schools to run seamless 1st CA, 2nd CA, and termly exams—even on poor or unavailable internet—with automatic online sync.",
+              "Examinify is an all-in-one, offline-resilient Computer-Based Testing (CBT) platform built for schools—combining AI question creation, distraction-free timed exams, anti-malpractice protection, and personalized feedback in one reliable system.",
           },
           {
             id: "cust-faq-2",
-            question: "Can students take exams when internet is poor or unavailable?",
+            question: "What kind of feedback do students receive after an exam?",
             answer:
-              "Yes! Students can take tests smoothly with slow, intermittent, or no internet on lab desktops, laptops, Chromebooks, or tablets. Answers save safely and sync online once connectivity returns.",
+              "When teachers release results, each student receives clear, helpful automatic feedback personalized to their exact answers—making it easy to understand mistakes and improve faster.",
           },
           {
             id: "cust-faq-3",
-            question: "Can students use keyboard shortcuts to answer faster?",
+            question: "What does the distraction-free exam environment feel like?",
             answer:
-              "Yes! Keyboard Navigation lets students pick options and move between questions quickly using keyboard shortcuts, making timed tests smoother and faster.",
+              "Students work inside a clean, standard timed exam room that autosaves every answer in real time—with zero pop-ups or distractions, and full keyboard navigation support.",
           },
           {
             id: "cust-faq-4",
-            question: "How do students log in to start a CA or exam?",
+            question: "Can students take exams when internet is poor or unavailable?",
             answer:
-              "Each student logs in with their school-issued Student ID for tests activated by the administrator—no personal email signup required.",
+              "Yes! Students can take tests smoothly with slow, intermittent, or no internet on lab desktops, laptops, Chromebooks, or tablets. Answers save safely and sync online once connectivity returns.",
           },
           {
             id: "cust-faq-5",
@@ -1221,13 +1265,13 @@ export const landingContent = {
             id: "cust-faq-7",
             question: "Do students see their scores immediately?",
             answer:
-              "Schools control result visibility. Your school can show instant scores upon submission or hold results until administrators review scripts and publish broadsheets.",
+              "Teachers stay in full control. Your school can show instant scores and personalized feedback upon submission or review and adjust marks first before sharing.",
           },
           {
             id: "cust-faq-8",
-            question: "Does Examinify help students prepare for WAEC, NECO, and BECE?",
+            question: "Which question formats will students see during tests?",
             answer:
-              "Yes! Secondary students practice in an authentic CBT environment—complete with keyboard navigation, countdown timers, and randomized questions.",
+              "Depending on the subject, exams can include Multiple Choice, Fill in the Blank (Cloze), Structured Theory, Essay, Mathematics equations, Case Studies, and Labeled Diagrams.",
           },
         ],
       },
@@ -1237,33 +1281,33 @@ export const landingContent = {
         items: [
           {
             id: "pro-faq-1",
-            question: "How many classes, subjects, and questions can we create?",
+            question: "How does the Smart Question Studio turn lesson notes into exams?",
             answer:
-              "Unlimited! Create unlimited classes, add unlimited subjects across Primary 1–6 and JSS 1–SSS 3, and build unlimited questions inside the personalized CBT software your school owns.",
+              "Paste or upload your lesson notes and generate ready-made exam questions in seconds. You can edit wording, adjust marks, and customize every question before publishing.",
           },
           {
             id: "pro-faq-2",
-            question: "Can teachers view student answer scripts after exams?",
+            question: "Which question types can teachers include in a single exam?",
             answer:
-              "Yes! View Student Scripts lets administrators and teachers open and review complete student answer scripts across all subjects after exams conclude.",
+              "All seven core formats are built right in: Multiple Choice, Fill in the Blank, Theory, Essay, Mathematics, Case Study, and Diagram questions.",
           },
           {
             id: "pro-faq-3",
-            question: "What kind of performance analytics does Examinify provide?",
+            question: "How fast is automatic grading across objective and theory scripts?",
             answer:
-              "Performance Analysis delivers detailed student score breakdowns and question-by-question item analysis so teachers can quickly spot each student's strengths and weaknesses.",
+              "Hundreds of scripts across multiple choice, cloze (fill-in-the-gap), and written theory questions are graded in minutes—and you can always review and fine-tune marks before approving.",
           },
           {
             id: "pro-faq-4",
-            question: "Can I add diagrams, comprehension passages, and math formulas?",
+            question: "How does Examinify prevent copying, pasting, and tab switching?",
             answer:
-              "Yes! Teachers can attach science diagrams, maps, comprehension passages, and formatted mathematical equations directly inside the question bank.",
+              "Anti-Malpractice Lockdown disables copy-paste actions and blocks tab switching while an examination is live, paired with seat-by-seat question shuffling and strict countdown timers.",
           },
           {
             id: "pro-faq-5",
-            question: "Can I randomize questions so students sitting together don't copy?",
+            question: "Can teachers review and adjust scores before exporting results?",
             answer:
-              "Yes! Examinify prevents cheating with browser lockdown, per-student question randomization, and strict automatic time limits.",
+              "Yes! Step 04 of our workflow lets you inspect AI-graded responses, make final mark adjustments, approve results, and then export organized broadsheets in one click.",
           },
           {
             id: "pro-faq-6",
@@ -1279,9 +1323,9 @@ export const landingContent = {
         items: [
           {
             id: "biz-faq-1",
-            question: "How does Examinify work when our internet is poor or down?",
+            question: "Why use Examinify instead of separate tools for creation, testing, and grading?",
             answer:
-              "Students can take tests and exams smoothly even with weak, patchy, or no internet. Responses are saved safely during the session and synced online automatically once connectivity returns.",
+              "Examinify brings lesson-to-question AI generation, student group management, malpractice-locked exam delivery, automatic grading, personalized feedback, and broadsheet exports into one reliable, school-owned platform.",
           },
           {
             id: "biz-faq-2",
@@ -1291,9 +1335,9 @@ export const landingContent = {
           },
           {
             id: "biz-faq-3",
-            question: "How does Exam Activation Control work?",
+            question: "How does the 5-step exam workflow save staff hours every term?",
             answer:
-              "Administrators can activate or deactivate any exam with a single click and strictly control which students or classes are permitted to attempt specific tests.",
+              "Teachers simply (01) create or AI-generate an exam, (02) organize student groups, (03) publish live access, (04) review and approve AI-graded scores, and (05) export organized results with personalized feedback.",
           },
           {
             id: "biz-faq-4",
@@ -1305,19 +1349,19 @@ export const landingContent = {
             id: "biz-faq-5",
             question: "How are broadsheets and performance insights exported?",
             answer:
-              "Export clean Excel/CSV broadsheets per class or subject, alongside detailed performance analytics and question-level breakdowns.",
+              "Download organized Excel/CSV broadsheets per class or subject anytime after final review and approval, alongside question-level performance analytics.",
           },
           {
             id: "biz-faq-6",
-            question: "How is software ownership structured for Nigerian schools?",
+            question: "How does Examinify work when our internet is poor or down?",
             answer:
-              "Schools receive a CBT personalized and customized just for their campus, with full ownership of the entire software and straightforward pricing in Naira (₦)—starting with a guided pilot walkthrough.",
+              "Timed exams autosave continuously even with weak, patchy, or no internet and sync completed scripts online automatically once connectivity returns.",
           },
           {
             id: "biz-faq-7",
             question: "How secure is the exam environment?",
             answer:
-              "Examinify enforces browser lockdown, question randomization, strict time limits, and exam activation controls so every assessment remains fair and tamper-proof.",
+              "Examinify blocks copy-paste and tab switching, enforces browser lockdown and question randomization, and gives admins one-click exam activation control.",
           },
         ],
       },
@@ -1326,38 +1370,38 @@ export const landingContent = {
   faqs: {
     headline: "Got Questions ?",
     subtitle:
-      "Everything schools need to know about offline-resilient CBT exams, online syncing, and owning the complete platform.",
+      "Everything schools need to know about our all-in-one exam workflow, malpractice control, automated grading, and owning the complete platform.",
     moreCta: "See More",
     items: [
       {
         id: "faq-1",
-        question: "Can students take exams when internet is poor or down?",
+        question: "How quickly can teachers generate exam questions from lesson notes?",
         answer:
-          "Yes! Students can sit tests and exams smoothly through weak, unstable, or unavailable internet—answers save safely and sync online automatically once connectivity returns.",
+          "Our Smart Question Studio turns lesson notes into ready-to-use Multiple Choice, Cloze, Theory, Essay, Math, Case Study, and Diagram questions in seconds—ready for you to edit and customize.",
       },
       {
         id: "faq-2",
-        question: "Is our CBT personalized for us, and does our school own the entire software?",
+        question: "How does Examinify stop students from copying, pasting, or switching tabs?",
         answer:
-          "Yes! Your Examinify CBT is personalized and customized just for your school, and your school owns the entire software with zero vendor lock-in.",
+          "Built-in Malpractice Control blocks copy-paste shortcuts and tab switching during active examinations, inside a distraction-free, timed, and autosaving test environment.",
       },
       {
         id: "faq-3",
-        question: "What happens if there is a power or network drop during an exam?",
+        question: "Does automatic grading cover theory and fill-in-the-gap questions too?",
         answer:
-          "With Exam Resumption, students pick up right where they stopped after a power outage or system restart—with zero lost answers.",
+          "Yes! Hundreds of exams across multiple choice, theory, and cloze (fill-in-the-gap) questions are graded in minutes—and teachers can always review and adjust scores before approving or exporting.",
       },
       {
         id: "faq-4",
-        question: "Can admins review student scripts and control exam access?",
+        question: "Do students get automatic feedback, and can we export organized results?",
         answer:
-          "Yes! Administrators can activate or deactivate exams, control which students can attempt specific tests, and view full student answer scripts for all subjects after exams.",
+          "Yes! Learners receive clear automatic feedback tailored to their answers once approved, while teachers can download clean, organized broadsheets anytime.",
       },
       {
         id: "faq-5",
-        question: "Are there limits on classes, subjects, or questions?",
+        question: "Is our CBT customized for our school, and does it work on weak internet?",
         answer:
-          "No limits—create unlimited classes, add unlimited subjects, and build unlimited questions inside your customized, school-owned CBT software, complete with detailed performance and question analysis.",
+          "Yes! Your Examinify CBT is personalized for your school with full software ownership, and timed exams autosave seamlessly even when internet drops, syncing online later.",
       },
     ] satisfies FaqItemData[],
   },

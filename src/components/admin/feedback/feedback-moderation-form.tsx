@@ -2,8 +2,8 @@
 
 import type { RefObject, FormEvent } from "react";
 import { Plus, Save } from "lucide-react";
+import { AdminModal } from "@/components/admin/ui/admin-modal";
 import {
-  AdminInlineForm,
   AdminSelectPills,
   AdminTextareaField,
   AdminTextField,
@@ -57,7 +57,7 @@ export function ReviewModerationForm({
 }: ReviewModerationFormProps) {
   return (
     <div className="mt-6">
-      <AdminInlineForm
+      <AdminModal
         formRef={formRef}
         eyebrow="Inline Exam Feedback & Rating Form"
         title={
@@ -148,7 +148,7 @@ export function ReviewModerationForm({
             </CtaButton>
           </div>
         </form>
-      </AdminInlineForm>
+      </AdminModal>
     </div>
   );
 }

@@ -19,13 +19,24 @@ export interface AdminHeroCtaConfig {
   trailingArrow?: boolean;
 }
 
+export interface AdminHeroMetric {
+  label: string;
+  value: string;
+}
+
 export interface AdminHeroBannerProps {
   eyebrow: string;
   eyebrowIcon?: "dot" | "shield" | "pin" | "none";
-  headline: string;
+  headline?: string;
+  title?: string;
   highlightWords?: readonly string[];
-  subtitle: string;
+  subtitle?: string;
+  description?: string;
   tone?: "blue" | "ink";
+  badgeLabel?: string;
+  badgeTone?: "emerald" | "amber" | "brand";
+  metrics?: ReadonlyArray<AdminHeroMetric>;
+  action?: React.ReactNode;
   primaryCta?: AdminHeroCtaConfig;
   secondaryCta?: AdminHeroCtaConfig;
   rightSlot?: React.ReactNode;
@@ -40,13 +51,51 @@ export function AdminHeroBanner({
   eyebrow,
   eyebrowIcon = "shield",
   headline,
+  title,
   highlightWords,
   subtitle,
+  description,
   tone = "blue",
+  badgeLabel,
+  metrics,
+  action,
   primaryCta,
   secondaryCta,
   rightSlot,
 }: AdminHeroBannerProps) {
+  const resolvedHeadline = headline ?? title ?? "";
+  const resolvedSubtitle = subtitle ?? description ?? "";
+  const resolvedRightSlot =
+    rightSlot ??
+    ((badgeLabel || (metrics && metrics.length > 0) || action) ? (
+      <div className="flex flex-col items-start xl:items-end gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {badgeLabel && (
+            <PillBadge tone="porcelain" icon="dot" className="px-3 py-1 text-[11px]">
+              {badgeLabel}
+            </PillBadge>
+          )}
+          {action}
+        </div>
+        {metrics && metrics.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {metrics.map((m) => (
+              <div
+                key={m.label}
+                className="rounded-xl border border-white/15 bg-brand-950/45 px-3 py-1.5 backdrop-blur-xs"
+              >
+                <span className="block text-[9px] font-bold uppercase tracking-wider text-brand-200">
+                  {m.label}
+                </span>
+                <span className="font-display text-xs sm:text-sm font-extrabold text-white">
+                  {m.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ) : undefined);
   return (
     <ScaleSlab
       priority
@@ -92,7 +141,7 @@ export function AdminHeroBanner({
               <AnimatedText
                 priority
                 as="h1"
-                text={headline}
+                text={resolvedHeadline}
                 highlightWords={highlightWords}
                 highlightClassName="text-accent-sky"
                 className="text-xl sm:text-2xl lg:text-3xl font-extrabold leading-[1.04] tracking-tight text-ink-on-blue drop-shadow-sm"
@@ -101,7 +150,7 @@ export function AdminHeroBanner({
 
             <Reveal priority delay={0.14}>
               <p className="mt-2 max-w-xl text-xs sm:text-[13px] font-semibold leading-relaxed text-ink-on-blue-muted">
-                {subtitle}
+                {resolvedSubtitle}
               </p>
             </Reveal>
 
@@ -139,9 +188,9 @@ export function AdminHeroBanner({
             )}
           </div>
 
-          {rightSlot && (
+          {resolvedRightSlot && (
             <Reveal priority delay={0.18} className="shrink-0">
-              {rightSlot}
+              {resolvedRightSlot}
             </Reveal>
           )}
         </div>

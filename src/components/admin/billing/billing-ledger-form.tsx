@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { Plus, Save } from "lucide-react";
+import { AdminModal } from "@/components/admin/ui/admin-modal";
 import {
-  AdminInlineForm,
   AdminSelectPills,
   AdminTextField,
 } from "@/components/admin/ui/admin-form-controls";
@@ -52,7 +52,7 @@ export function PaymentLedgerForm({
   const platformFee = Math.round(gross * 0.1);
 
   return (
-    <AdminInlineForm
+    <AdminModal
       formRef={formRef}
       eyebrow="Inline School Billing & License Form"
       title={
@@ -171,7 +171,7 @@ export function PaymentLedgerForm({
           </CtaButton>
         </div>
       </form>
-    </AdminInlineForm>
+    </AdminModal>
   );
 }
 

@@ -24,7 +24,7 @@ export function ServiceCard({ item }: { item: ServiceCategoryItem }) {
             alt={item.title}
             fill
             sizes="(max-width: 768px) 100vw, 400px"
-            className="object-contain p-3"
+            className={item.image.endsWith(".jpg") ? "object-cover" : "object-contain p-3"}
           />
           <div className="absolute top-3.5 left-3.5">
             <span className="inline-flex items-center gap-1.5 rounded-pill bg-surface-porcelain/95 px-3.5 py-1.5 text-xs font-display font-extrabold text-brand-700 border border-brand-100 shadow-gloss-card">
@@ -69,11 +69,11 @@ export function ServiceCard({ item }: { item: ServiceCategoryItem }) {
         <CtaButton
           variant="secondary"
           size="md"
-          href="#download"
+          href={item.ctaHref ?? "/login"}
           trailingArrow
           className="w-full"
         >
-          Explore {item.title.split(" ")[0]} CBT
+          {item.ctaLabel ?? "Get Started"}
         </CtaButton>
       </div>
     </motion.article>

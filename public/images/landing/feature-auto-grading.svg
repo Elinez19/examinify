@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" fill="none">
+  <defs>
+    <linearGradient id="bgPearl" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F6F9FF"/>
+      <stop offset="55%" stop-color="#EDF3FF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <radialGradient id="bgCobalt" cx="50%" cy="25%" r="80%">
+      <stop offset="0%" stop-color="#478BFF"/>
+      <stop offset="50%" stop-color="#0E46F5"/>
+      <stop offset="100%" stop-color="#05113D"/>
+    </radialGradient>
+    <linearGradient id="porcelain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="70%" stop-color="#F6F9FF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <linearGradient id="cobaltGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5CE1FF"/>
+      <stop offset="25%" stop-color="#478BFF"/>
+      <stop offset="75%" stop-color="#0E46F5"/>
+      <stop offset="100%" stop-color="#0A2999"/>
+    </linearGradient>
+    <linearGradient id="goldGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="50%" stop-color="#FFB800"/>
+      <stop offset="100%" stop-color="#CC8800"/>
+    </linearGradient>
+    <filter id="drop3d" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#05113D" flood-opacity="0.22"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0E46F5" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="600" rx="64" fill="url(#bgPearl)"/>
+  <circle cx="300" cy="300" r="210" fill="#FFFFFF" opacity="0.78"/>
+  <ellipse cx="300" cy="495" rx="165" ry="26" fill="#0E46F5" opacity="0.14"/>
+
+  <g filter="url(#drop3d)">
+    <!-- Stack of Student Exam Scripts -->
+    <rect x="165" y="135" width="270" height="330" rx="34" transform="rotate(-7 300 300)" fill="#DBE8FF" stroke="#FFFFFF" stroke-width="5"/>
+    <rect x="165" y="135" width="270" height="330" rx="34" transform="rotate(5 300 300)" fill="#EDF3FF" stroke="#FFFFFF" stroke-width="5"/>
+
+    <!-- Top Porcelain Exam Script Card -->
+    <rect x="150" y="128" width="280" height="344" rx="36" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="8"/>
+
+    <!-- Multi-Format Rows: MCQ, Cloze, Theory -->
+    <rect x="180" y="164" width="220" height="48" rx="16" fill="#EDF3FF"/>
+    <circle cx="206" cy="188" r="12" fill="#00C47E"/>
+    <path d="M200 188 L204 192 L212 183" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="230" y="181" width="145" height="14" rx="7" fill="#0E46F5" opacity="0.28"/>
+
+    <rect x="180" y="226" width="220" height="48" rx="16" fill="#EDF3FF"/>
+    <circle cx="206" cy="250" r="12" fill="#00C47E"/>
+    <path d="M200 250 L204 254 L212 245" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="230" y="243" width="120" height="14" rx="7" fill="#0E46F5" opacity="0.28"/>
+
+    <rect x="180" y="288" width="220" height="64" rx="16" fill="url(#bgCobalt)"/>
+    <rect x="200" y="306" width="140" height="10" rx="5" fill="#FFFFFF" opacity="0.9"/>
+    <rect x="200" y="326" width="170" height="10" rx="5" fill="#5CE1FF" opacity="0.85"/>
+
+    <!-- Glowing Automated Scanner Beam -->
+    <rect x="115" y="266" width="350" height="22" rx="11" fill="url(#cobaltGloss)" stroke="#FFFFFF" stroke-width="4"/>
+    <rect x="135" y="273" width="310" height="8" rx="4" fill="#5CE1FF"/>
+
+    <!-- Score Pill at Bottom of Script -->
+    <rect x="180" y="376" width="130" height="46" rx="23" fill="url(#goldGloss)" stroke="#FFFFFF" stroke-width="4"/>
+    <circle cx="208" cy="399" r="11" fill="#05113D"/>
+    <rect x="228" y="393" width="60" height="12" rx="6" fill="#05113D" opacity="0.8"/>
+
+    <!-- Floating Gold & Emerald Grading Speed Badge -->
+    <circle cx="445" cy="178" r="56" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="6"/>
+    <circle cx="445" cy="178" r="42" fill="url(#goldGloss)"/>
+    <path d="M450 150 L432 180 H447 L441 206 L462 174 H447 Z" fill="#05113D"/>
+
+    <circle cx="436" cy="402" r="50" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="6"/>
+    <circle cx="436" cy="402" r="36" fill="#00C47E"/>
+    <path d="M420 402 L431 413 L453 390" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

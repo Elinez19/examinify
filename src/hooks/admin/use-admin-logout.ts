@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAdminToast } from "@/components/admin/ui/admin-toast";
+import { clearPortalSessionCookie } from "@/lib/portal-auth";
 
 export interface UseAdminLogoutOptions {
   onBeforeRedirect?: () => void;
@@ -14,13 +14,12 @@ export interface UseAdminLogoutReturn {
 }
 
 /**
- * Signs out the active admin session via `/api/v1/auth/logout` and returns to `/`.
+ * Signs out the active admin session and returns to `/login`.
  */
 export function useAdminLogout({
   onBeforeRedirect,
 }: UseAdminLogoutOptions = {}): UseAdminLogoutReturn {
   const router = useRouter();
-  const toast = useAdminToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = useCallback(async () => {
@@ -28,31 +27,14 @@ export function useAdminLogout({
     setIsLoggingOut(true);
 
     try {
-      const response = await fetch("/api/v1/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        toast.error(
-          "Logout failed",
-          "Unable to end your session. Please try again."
-        );
-        setIsLoggingOut(false);
-        return;
-      }
-
+      clearPortalSessionCookie();
       onBeforeRedirect?.();
-      router.replace("/");
+      router.replace("/login");
       router.refresh();
-    } catch {
-      toast.error(
-        "Logout failed",
-        "Unable to reach the server. Please try again."
-      );
+    } finally {
       setIsLoggingOut(false);
     }
-  }, [isLoggingOut, onBeforeRedirect, router, toast]);
+  }, [isLoggingOut, onBeforeRedirect, router]);
 
   return { isLoggingOut, handleLogout };
 }

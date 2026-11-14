@@ -1,6 +1,5 @@
-import { BookingsDispatchWorkspace } from "@/components/admin/composites/exams-workspace";
-import { MOCK_BOOKINGS } from "@/components/admin/mock-data";
+import { ExamsWorkspace } from "@/components/admin/exams/exams-workspace";
 
-export default function AdminBookingsPage() {
-  return <BookingsDispatchWorkspace initialBookings={MOCK_BOOKINGS} />;
+export default function AdminExamsPage() {
+  return <ExamsWorkspace />;
 }

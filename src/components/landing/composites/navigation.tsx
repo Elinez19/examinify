@@ -92,7 +92,7 @@ function DesktopNavigationCtas({
         variant="secondary"
         size="md"
         leadingIcon="apple"
-        href="#download"
+        href="/login"
       >
         {secondaryCta}
       </CtaButton>
@@ -100,7 +100,7 @@ function DesktopNavigationCtas({
         variant="primary"
         size="md"
         leadingIcon="play"
-        href="#download"
+        href="/login"
       >
         {primaryCta}
       </CtaButton>

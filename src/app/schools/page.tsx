@@ -4,7 +4,10 @@ import {
   ArtisanHeroSection,
   HowItWorksSection,
 } from "@/components/landing/composites/school-page-sections";
-import { FaqSection } from "@/components/landing/composites/hero-and-sections";
+import {
+  FaqSection,
+  QuestionTypesSection,
+} from "@/components/landing/composites/hero-and-sections";
 import {
   LandingFooter,
   LandingNavbar,
@@ -32,10 +35,13 @@ export default function ArtisansLandingPage() {
         {/* 1. Dark Ink Hero Slab + Storefront Workshop Building */}
         <ArtisanHeroSection />
 
-        {/* 2. "How It Works" 3 Numbered Step Cards + Perks Strip + Primary CTA */}
+        {/* 2. "How Examinify Works" 5-Step Workflow + Perks Strip + /login CTA */}
         <HowItWorksSection />
 
-        {/* 3. "Reach More Ready Customers" Dotted Map + 6 OffsetRing Bubbles */}
+        {/* 3. "Every Question Format, Ready Immediately" 7 Question Types Showcase */}
+        <QuestionTypesSection />
+
+        {/* 4. "One Unified Platform for Every Class" Dotted Map + Bubbles */}
         <AbujaCoverageMap
           badge={coverage.badge}
           headline={coverage.headline}

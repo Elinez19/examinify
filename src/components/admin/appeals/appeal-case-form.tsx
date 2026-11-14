@@ -2,8 +2,8 @@
 
 import type { RefObject, FormEvent } from "react";
 import { Plus, Save } from "lucide-react";
+import { AdminModal } from "@/components/admin/ui/admin-modal";
 import {
-  AdminInlineForm,
   AdminSelectPills,
   AdminTextareaField,
   AdminTextField,
@@ -63,7 +63,7 @@ export function DisputeCaseForm({
 }: DisputeCaseFormProps) {
   return (
     <div className="mt-6">
-      <AdminInlineForm
+      <AdminModal
         formRef={formRef}
         eyebrow="Inline Result Appeal & Remark Form"
         title={
@@ -159,7 +159,7 @@ export function DisputeCaseForm({
             </CtaButton>
           </div>
         </form>
-      </AdminInlineForm>
+      </AdminModal>
     </div>
   );
 }

@@ -2,95 +2,81 @@
 
 import * as React from "react";
 import {
-  Award,
-  BookOpen,
-  ClipboardCheck,
+  BookOpenCheck,
+  GraduationCap,
   LayoutDashboard,
-  UserCheck,
+  Sparkles,
 } from "lucide-react";
-import { PortalShell, type PortalShellConfig } from "@/components/portal/portal-shell";
+import {
+  PortalShell,
+  type PortalNavItem,
+} from "@/components/portal/portal-shell";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { getInitials } from "@/lib/portal-auth";
 
 export function StudentShell({ children }: { children: React.ReactNode }) {
-  const { store, resetDemoData } = usePortalStore();
+  const { store, activeSessionTerm } = usePortalStore();
 
-  const liveOrUpcomingCount = store.exams.filter(
-    (e) => e.status === "live" || e.status === "scheduled"
+  const liveCount = store.exams.filter(
+    (exam) =>
+      exam.status === "live" &&
+      (exam.classLevel === store.student.classLevel ||
+        exam.classLevel.startsWith(store.student.classLevel.split(" ")[0] ?? ""))
   ).length;
-  const studentSubmissions = store.submissions.filter(
-    (s) => s.studentId === store.student.id
+
+  const navItems: PortalNavItem[] = [
+    {
+      href: "/student",
+      label: "Overview",
+      description: "Term summary & active assessments",
+      icon: LayoutDashboard,
+    },
+    {
+      href: "/student/class",
+      label: "Class",
+      description: "Class arm, subjects & peers",
+      icon: GraduationCap,
+    },
+    {
+      href: "/student/exams",
+      label: "Examinations",
+      description: "Active CBTs, schedule & results",
+      icon: BookOpenCheck,
+      badge: liveCount > 0 ? `${liveCount} Live` : undefined,
+    },
+    {
+      href: "/student/study-mode",
+      label: "Study Mode",
+      description: "Self-paced question bank practice",
+      icon: Sparkles,
+    },
+  ];
+
+  const activeTermLabel = activeSessionTerm
+    ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
+    : store.student.termLabel;
+
+  return (
+    <PortalShell
+      role="student"
+      roleLabel="Student Portal"
+      navItems={navItems}
+      userName={store.student.name}
+      userSublabel={`${store.student.classLevel} · ${store.student.admissionNo}`}
+      userInitials={getInitials(store.student.name)}
+      avatarUrl={store.student.avatarUrl}
+      profileHref="/student/profile"
+      brandTagline={activeTermLabel}
+      statusBadge="Offline Sync Ready"
+      alerts={store.broadcasts.map((item) => ({
+        id: item.id,
+        title: `Notice · ${item.senderName}`,
+        detail: item.message,
+        time: item.sentAt,
+        tone: item.urgency === "warning" ? "warning" : "info",
+      }))}
+    >
+      {children}
+    </PortalShell>
   );
-
-  const config: PortalShellConfig = {
-    portalLabel: "Student Portal",
-    badgeText: store.student.classLevel,
-    homeHref: "/student",
-    layoutIdPrefix: "student",
-    userName: store.student.name,
-    userMeta: `${store.student.regNo} · ${store.student.classLevel}`,
-    userInitials: store.student.name
-      .split(" ")
-      .map((p) => p[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase(),
-    quickStatusPill: "Offline Exam Pack Ready",
-    statusChips: [
-      { label: store.student.term, icon: "sparkles" },
-      { label: "Offline Sync", icon: "wifi" },
-      { label: "Seat Verified", icon: "lock" },
-    ],
-    navItems: [
-      {
-        label: "Overview",
-        subtitle: "Upcoming exams & term progress",
-        href: "/student",
-        icon: <LayoutDashboard className="h-3.5 w-3.5" />,
-      },
-      {
-        label: "My Exams",
-        subtitle: "Live hall, timetable & practice drills",
-        href: "/student/exams",
-        icon: <ClipboardCheck className="h-3.5 w-3.5" />,
-        badge: liveOrUpcomingCount,
-      },
-      {
-        label: "Results & Scripts",
-        subtitle: "Grades, review & remark appeals",
-        href: "/student/results",
-        icon: <Award className="h-3.5 w-3.5" />,
-        badge: studentSubmissions.length,
-      },
-      {
-        label: "Subjects",
-        subtitle: "Enrolled courses & topic mastery",
-        href: "/student/subjects",
-        icon: <BookOpen className="h-3.5 w-3.5" />,
-      },
-      {
-        label: "Profile & Prefs",
-        subtitle: "Candidate slip & accessibility",
-        href: "/student/profile",
-        icon: <UserCheck className="h-3.5 w-3.5" />,
-      },
-    ],
-    notifications: [
-      {
-        id: "st-notif-1",
-        title: "Live Exam Hall Open",
-        detail: "JSS 3 Mathematics 2nd CA CBT is live now (Access PIN: 3041).",
-        href: "/student/exams",
-      },
-      {
-        id: "st-notif-2",
-        title: "Result Published",
-        detail: "Basic Science Midterm CBT graded — view your script review.",
-        href: "/student/results",
-      },
-    ],
-    onResetDemo: resetDemoData,
-  };
-
-  return <PortalShell config={config}>{children}</PortalShell>;
 }
-

@@ -193,6 +193,52 @@ export function AdminTableHead({
   );
 }
 
+export type SortDirection = "asc" | "desc";
+
+export interface AdminSortableTableHeadProps<T extends string = string> {
+  label: string;
+  sortKey: T;
+  activeSortKey: T;
+  sortDirection: SortDirection;
+  onSort: (key: T) => void;
+  className?: string;
+}
+
+export function AdminSortableTableHead<T extends string = string>({
+  label,
+  sortKey,
+  activeSortKey,
+  sortDirection,
+  onSort,
+  className,
+}: AdminSortableTableHeadProps<T>) {
+  const isActive = activeSortKey === sortKey;
+  return (
+    <th
+      className={cn(
+        "h-9 px-3 sm:px-4 align-middle font-display text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-brand-800 whitespace-nowrap",
+        className
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={cn(
+          "inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-left transition-colors cursor-pointer",
+          isActive
+            ? "text-brand-950 bg-brand-100/70"
+            : "text-brand-700 hover:text-brand-950"
+        )}
+      >
+        <span>{label}</span>
+        <span className="text-[9px] font-black leading-none">
+          {isActive ? (sortDirection === "asc" ? "▲" : "▼") : "⇅"}
+        </span>
+      </button>
+    </th>
+  );
+}
+
 export function AdminTableCell({
   className,
   ...props

@@ -3,9 +3,11 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import { GraduationCap, Headset, LayoutGrid, School } from "lucide-react";
+import Image from "next/image";
 import { OffsetRing } from "@/components/brand/offset-ring";
 import { ToolPattern } from "@/components/brand/exam-pattern";
 import { CtaButton } from "@/components/landing/ui/cta-button";
+import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { SectionHeader, SectionSlab } from "@/components/landing/ui/section-slab";
 import { AnimatedText } from "@/components/motion/animated-text";
 import { Float } from "@/components/motion/float";
@@ -576,8 +578,9 @@ export function ArtisanHeroSection() {
             <CtaButton
               variant="secondary"
               size="lg"
-              leadingIcon="apple"
-              href="#how-it-works"
+              leadingIcon="sparkle"
+              trailingArrow
+              href="/login"
             >
               {hero.primaryCta}
             </CtaButton>
@@ -602,62 +605,68 @@ export function ArtisanHeroSection() {
 }
 
 /**
- * Section 2 (Artisans Page): "How It Works" (3 Numbered Step Cards + Perks Strip + CTA)
+ * Section 2 (Landing & Schools Page): "How Examinify Works"
+ * 5-Step Scroll-Through Exam Workflow + Perks Strip + /login CTA
  */
 export function HowItWorksSection() {
   const { howItWorks } = landingContent.artisanPage;
+
+  const getStepGridClass = (index: number) => {
+    if (index === 3) {
+      return "lg:col-span-2 lg:col-start-2";
+    }
+    if (index === 4) {
+      return "lg:col-span-2 lg:col-start-4 md:col-span-2 md:max-w-md md:mx-auto lg:max-w-none lg:mx-0";
+    }
+    return "lg:col-span-2";
+  };
 
   return (
     <SectionSlab id="how-it-works" tone="pearl">
       <SectionHeader
         tone="on-light"
+        eyebrow={
+          <PillBadge tone="porcelain" icon="dot">
+            {howItWorks.eyebrow}
+          </PillBadge>
+        }
         headline={howItWorks.headline}
-        highlightWords={["Works"]}
+        highlightWords={["Examinify", "Works"]}
         subtitle={howItWorks.subtitle}
       />
 
-      {/* 3 Step Cards Grid with Overlapping Top Number Pills & Dashed Connectors */}
+      {/* 5 Step Cards Grid with Overlapping Top Number Pills & Bespoke Step Artwork */}
       <div className="relative mt-16">
-        {/* Desktop Curved Dashed Connector Arrows Between Step 01 -> 02 -> 03 */}
-        <svg
-          viewBox="0 0 1200 120"
-          fill="none"
-          className="pointer-events-none absolute top-1/2 left-0 z-0 hidden h-28 w-full -translate-y-1/2 lg:block"
-          aria-hidden="true"
-        >
-          <path
-            d="M350 70 Q 400 40, 450 70"
-            stroke={tokens.colors.brand[300]}
-            strokeWidth="2.5"
-            strokeDasharray="6 6"
-            strokeLinecap="round"
-          />
-          <path
-            d="M750 70 Q 800 95, 850 70"
-            stroke={tokens.colors.brand[300]}
-            strokeWidth="2.5"
-            strokeDasharray="6 6"
-            strokeLinecap="round"
-          />
-        </svg>
-
-        <Stagger className="relative z-10 grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-9">
-          {howItWorks.steps.map((step) => (
-            <StaggerItem key={step.id} className="relative pt-6">
+        <Stagger className="relative z-10 grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-6 lg:gap-8">
+          {howItWorks.steps.map((step, index) => (
+            <StaggerItem
+              key={step.id}
+              className={`relative pt-6 ${getStepGridClass(index)}`}
+            >
               <motion.article
                 variants={cardHoverMotion}
                 initial="rest"
                 whileHover="hover"
                 className="surface-gloss-card relative flex h-full flex-col items-center px-7 pt-12 pb-10 text-center"
               >
-                {/* Overlapping Top Number Badge (01, 02, 03) */}
+                {/* Overlapping Top Number Badge (01–05) */}
                 <span className="absolute -top-6 left-1/2 grid h-12 w-12 -translate-x-1/2 place-items-center rounded-pill border-2 border-brand-100 bg-surface-porcelain font-display text-lg font-extrabold text-brand-600 shadow-gloss-card">
                   {step.stepNumber}
                 </span>
 
                 {/* Circular Illustration Halo */}
-                <div className="grid h-40 w-40 place-items-center rounded-pill border-2 border-brand-100 bg-surface-mist">
-                  <StepIllustration type={step.illustrationType} />
+                <div className="relative grid h-36 w-36 place-items-center overflow-hidden rounded-pill border-2 border-brand-100 bg-surface-mist p-2">
+                  {step.image ? (
+                    <Image
+                      src={step.image}
+                      alt={step.title}
+                      width={128}
+                      height={128}
+                      className="h-full w-full rounded-pill object-contain"
+                    />
+                  ) : (
+                    <StepIllustration type={step.illustrationType ?? "store"} />
+                  )}
                 </div>
 
                 {/* Step Title & Description */}
@@ -673,7 +682,7 @@ export function HowItWorksSection() {
         </Stagger>
       </div>
 
-      {/* Horizontal Perks Strip ("Quick Onboarding · Easy Job Management · 24/7 Partner Support") */}
+      {/* Horizontal Perks Strip */}
       <Reveal
         delay={0.18}
         className="mt-14 border-t border-surface-frost pt-10"
@@ -692,7 +701,7 @@ export function HowItWorksSection() {
         </div>
       </Reveal>
 
-      {/* Bottom Centered Primary CTA Button ("Become a Partner ->") */}
+      {/* Bottom Centered Primary CTA Button ("Reclaim Your Time ->" linking to /login) */}
       <Reveal delay={0.25} className="mt-10 text-center">
         <CtaButton
           variant="primary"

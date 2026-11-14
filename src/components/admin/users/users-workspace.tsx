@@ -1,495 +1,1309 @@
 "use client";
 
 import * as React from "react";
-import { Plus } from "lucide-react";
 import {
-  AdminHeroBanner,
-  AdminWorkspaceSlab,
-} from "@/components/admin/ui/admin-hero-banner";
-import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
-import { AdminSegmentedTabs } from "@/components/admin/ui/admin-segmented-tabs";
+  CheckCircle2,
+  Edit3,
+  GraduationCap,
+  KeyRound,
+  Plus,
+  Power,
+  Shield,
+  Trash2,
+  UserCheck,
+  Users,
+} from "lucide-react";
+import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
+import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
+import {
+  AdminSearchInput,
+  AdminTextField,
+} from "@/components/admin/ui/admin-form-controls";
+import {
+  AdminSortableTableHead,
+  AdminTableCell,
+  AdminTableHead,
+  type SortDirection,
+} from "@/components/admin/ui/admin-data-table";
+import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
+import { AdminModal } from "@/components/admin/ui/admin-modal";
 import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
-import { useAdminToast } from "@/components/admin/ui/admin-toast";
+import { AvatarBadge } from "@/components/portal/avatar-badge";
+import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import type {
+  AccountStatus,
+  StaffProfile,
+  StudentProfile,
+  TeacherProfile,
+} from "@/data/portal-mock-data";
 import { cn } from "@/lib/utils";
-import type { ArtisanRow, UserRow } from "@/components/admin/mock-data";
-import type { AdminRecord, UserViewFilter } from "./types";
-import { useArtisansKyc } from "@/hooks/admin/use-users-management";
-import { useUserForm } from "@/hooks/admin/use-user-form";
-import { useUserManagementFilters } from "@/hooks/admin/use-user-management-filters";
-import { AdminsTable } from "./admins-table";
-import { ArtisanUserForm } from "./user-management-form";
-import { ArtisansKpiSummary } from "./users-kpi-summary";
-import { ArtisansTable } from "./teachers-table";
-import { CustomersTable } from "./students-table";
 
-export function ArtisansKycWorkspace({
-  initialArtisans,
-  initialUsers = [],
-  initialBookingCounts = {},
-  defaultTab = "artisans_all",
-}: {
-  initialArtisans: ArtisanRow[];
-  initialUsers?: UserRow[];
-  initialBookingCounts?: Record<string, number>;
-  defaultTab?: UserViewFilter;
-}) {
+type UserDirectoryTab = "students" | "teachers" | "staff";
+type UserSortKey = "name" | "email" | "detail" | "status";
+
+export function UsersWorkspace() {
   const {
-    artisans,
-    setArtisans,
-    customers,
-    setCustomers,
-    admins,
-    setAdmins,
-    busyId,
-    saving,
-    savedBanner,
-    notifySaved,
-    updateArtisanKyc,
-    toggleArtisanOnline,
-    deleteArtisan,
-    toggleCustomerStatus,
-    deleteCustomer,
-    toggleAdminStatus,
-    softDeleteAdmin,
-    deleteAdmin,
-    revokeUserSessions,
-    resetUserPassword,
-    resendAdminInvite,
-    saveUser,
-    batchVerifyArtisans,
-    batchDeleteArtisans,
-    batchDeleteCustomers,
-    batchDeleteAdmins,
-    counts,
-  } = useArtisansKyc(initialArtisans, initialUsers, initialBookingCounts);
+    store,
+    activeSessionTerm,
+    saveStudentAccount,
+    setStudentStatus,
+    assignStudentClass,
+    deleteStudentAccount,
+    saveTeacherAccount,
+    setTeacherStatus,
+    assignTeacherAssignments,
+    deleteTeacherAccount,
+    saveStaffAccount,
+    setStaffStatus,
+    deleteStaffAccount,
+  } = usePortalStore();
 
-  const toast = useAdminToast();
-  const [confirmingAdminUpdate, setConfirmingAdminUpdate] = React.useState(false);
-  const [confirmingSoftDelete, setConfirmingSoftDelete] =
-    React.useState<AdminRecord | null>(null);
-  const [confirmingHardDelete, setConfirmingHardDelete] =
-    React.useState<AdminRecord | null>(null);
-  const [confirmingReactivate, setConfirmingReactivate] =
-    React.useState<AdminRecord | null>(null);
+  const [activeTab, setActiveTab] = React.useState<UserDirectoryTab>("students");
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
+  const [sortKey, setSortKey] = React.useState<UserSortKey>("name");
+  const [sortDir, setSortDir] = React.useState<SortDirection>("asc");
 
-  const {
-    filter,
-    setFilter,
-    search,
-    setSearch,
-    selectedIds,
-    setSelectedIds,
-    tabOptions,
-    filteredArtisans,
-    filteredCustomers,
-    filteredAdmins,
-    toggleSelectAllArtisans,
-    toggleSelectOne,
-    clearSelection,
-  } = useUserManagementFilters({
-    artisans,
-    customers,
-    admins,
-    counts,
-    defaultTab,
+  // Student contextual modals
+  const [studentModalOpen, setStudentModalOpen] = React.useState(false);
+  const [studentForm, setStudentForm] = React.useState({
+    id: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    admissionNo: "",
+    classArmId: store.classArms[0]?.id ?? "arm_jss3a",
+    password: "Student@2026",
+    status: "active" as AccountStatus,
+  });
+  const [assignClassTarget, setAssignClassTarget] =
+    React.useState<StudentProfile | null>(null);
+  const [selectedClassArmId, setSelectedClassArmId] = React.useState("");
+
+  // Teacher contextual modals
+  const [teacherModalOpen, setTeacherModalOpen] = React.useState(false);
+  const [teacherForm, setTeacherForm] = React.useState({
+    id: "",
+    firstName: "",
+    lastName: "",
+    displayPrefix: "Mr.",
+    email: "",
+    phone: "",
+    staffId: "",
+    department: "",
+    password: "Teacher@2026",
+    status: "active" as AccountStatus,
+    assignedClasses: [] as string[],
+    assignedSubjectIds: [] as string[],
+  });
+  const [assignTeacherTarget, setAssignTeacherTarget] =
+    React.useState<TeacherProfile | null>(null);
+  const [teacherClassesDraft, setTeacherClassesDraft] = React.useState<string[]>([]);
+  const [teacherSubjectsDraft, setTeacherSubjectsDraft] = React.useState<string[]>([]);
+
+  // Staff/Admin contextual modal
+  const [staffModalOpen, setStaffModalOpen] = React.useState(false);
+  const [staffForm, setStaffForm] = React.useState({
+    id: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    roleTitle: "",
+    adminScope: "kyc_moderator" as StaffProfile["adminScope"],
+    permissions: "",
+    password: "Admin@2026",
+    status: "active" as AccountStatus,
   });
 
-  const {
-    formOpen,
-    setFormOpen,
-    formRef,
-    formData,
-    updateField,
-    setFormGroup,
-    scrollToForm,
-    resetForm,
-    loadArtisanIntoForm,
-    loadCustomerIntoForm,
-    loadAdminIntoForm,
-  } = useUserForm();
+  // Delete confirmation
+  const [deleteTarget, setDeleteTarget] = React.useState<{
+    kind: UserDirectoryTab;
+    id: string;
+    label: string;
+  } | null>(null);
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.formGroup === "admin" && formData.editingId) {
-      if (
-        formData.password &&
-        formData.password.trim().length > 0 &&
-        formData.password.trim().length < 8
-      ) {
-        toast.error(
-          "Validation Error",
-          "New password must be at least 8 characters long."
-        );
-        return;
-      }
-      setConfirmingAdminUpdate(true);
-      return;
-    }
-    const ok = await saveUser(formData);
-    if (ok) {
-      resetForm(formData.formGroup);
+  const toggleSort = (key: UserSortKey) => {
+    if (sortKey === key) setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir("asc");
     }
   };
 
-  const handleConfirmAdminUpdate = async () => {
-    const ok = await saveUser(formData);
-    if (ok) {
-      toast.success(
-        "Administrator Updated",
-        `Details for ${formData.name} were successfully saved.`
-      );
-      setConfirmingAdminUpdate(false);
-      resetForm("admin");
-    } else {
-      toast.error(
-        "Update Failed",
-        `Failed to update administrator ${formData.name}.`
-      );
-    }
-  };
+  const termLabel = activeSessionTerm
+    ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
+    : store.student.termLabel;
 
-  const handleConfirmSoftDelete = async () => {
-    if (!confirmingSoftDelete) return;
-    const admin = confirmingSoftDelete;
-    const ok = await softDeleteAdmin(admin.id);
-    if (ok) {
-      toast.success("Deleted successfully", `Administrator ${admin.name} access revoked.`);
-      setConfirmingSoftDelete(null);
-    } else {
-      toast.error("Failed to soft delete administrator");
-    }
-  };
-
-  const handleConfirmHardDelete = async () => {
-    if (!confirmingHardDelete) return;
-    const admin = confirmingHardDelete;
-    await deleteAdmin(admin.id, () => {
-      if (formData.editingId === admin.id) {
-        resetForm("admin");
-      }
+  // Student handlers
+  const openAddStudent = () => {
+    setStudentForm({
+      id: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      admissionNo: `EXM/2026/${String(store.students.length + 45).padStart(3, "0")}`,
+      classArmId: store.classArms[0]?.id ?? "arm_jss3a",
+      password: "Student@2026",
+      status: "active",
     });
-    toast.success("Deleted successfully", `Administrator ${admin.name} permanently removed.`);
-    setConfirmingHardDelete(null);
+    setStudentModalOpen(true);
   };
 
-  const handleConfirmReactivate = async () => {
-    if (!confirmingReactivate) return;
-    const admin = confirmingReactivate;
-    await toggleAdminStatus(admin.id);
-    toast.success("Administrator reactivated", `Administrator ${admin.name} access restored.`);
-    setConfirmingReactivate(null);
+  const openEditStudent = (stu: StudentProfile) => {
+    setStudentForm({
+      id: stu.id,
+      firstName: stu.firstName,
+      lastName: stu.lastName,
+      email: stu.email,
+      phone: stu.phone,
+      admissionNo: stu.admissionNo,
+      classArmId: stu.classArmId,
+      password: stu.password,
+      status: stu.status,
+    });
+    setStudentModalOpen(true);
   };
 
-  const handleAddNewUserClick = () => {
-    resetForm(
-      filter === "customers"
-        ? "customer"
-        : filter === "admins"
-          ? "admin"
-          : "artisan"
-    );
-    scrollToForm();
+  const handleSaveStudent = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!studentForm.firstName.trim() || !studentForm.email.trim()) return;
+    const arm =
+      store.classArms.find((a) => a.id === studentForm.classArmId) ??
+      store.classArms[0];
+    const fullName =
+      `${studentForm.firstName.trim()} ${studentForm.lastName.trim()}`.trim();
+    saveStudentAccount({
+      id: studentForm.id || `stu_${Date.now()}`,
+      firstName: studentForm.firstName.trim(),
+      lastName: studentForm.lastName.trim(),
+      name: fullName,
+      email: studentForm.email.trim().toLowerCase(),
+      phone: studentForm.phone.trim(),
+      admissionNo: studentForm.admissionNo.trim(),
+      classArmId: arm?.id ?? "arm_jss3a",
+      classLevel: arm?.name ?? "JSS 3A",
+      wing: arm?.arm ?? "General",
+      termLabel,
+      schoolName: store.student.schoolName,
+      avatarUrl: "avatar-1",
+      password: studentForm.password || "Student@2026",
+      status: studentForm.status,
+    });
+    setStudentModalOpen(false);
   };
+
+  // Teacher handlers
+  const openAddTeacher = () => {
+    setTeacherForm({
+      id: "",
+      firstName: "",
+      lastName: "",
+      displayPrefix: "Mr.",
+      email: "",
+      phone: "",
+      staffId: `STF/TCH/${String(store.teachers.length + 31).padStart(3, "0")}`,
+      department: "Sciences",
+      password: "Teacher@2026",
+      status: "active",
+      assignedClasses: store.classArms[0] ? [store.classArms[0].name] : [],
+      assignedSubjectIds: store.subjects[0] ? [store.subjects[0].id] : [],
+    });
+    setTeacherModalOpen(true);
+  };
+
+  const openEditTeacher = (tch: TeacherProfile) => {
+    setTeacherForm({
+      id: tch.id,
+      firstName: tch.firstName,
+      lastName: tch.lastName,
+      displayPrefix: tch.name.startsWith("Mrs.")
+        ? "Mrs."
+        : tch.name.startsWith("Ms.")
+          ? "Ms."
+          : "Mr.",
+      email: tch.email,
+      phone: tch.phone,
+      staffId: tch.staffId,
+      department: tch.department,
+      password: tch.password,
+      status: tch.status,
+      assignedClasses: tch.assignedClasses,
+      assignedSubjectIds: tch.assignedSubjectIds,
+    });
+    setTeacherModalOpen(true);
+  };
+
+  const handleSaveTeacher = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!teacherForm.firstName.trim() || !teacherForm.email.trim()) return;
+    const prefix = teacherForm.displayPrefix ? `${teacherForm.displayPrefix} ` : "";
+    const fullName =
+      `${prefix}${teacherForm.firstName.trim()} ${teacherForm.lastName.trim()}`.trim();
+    saveTeacherAccount({
+      id: teacherForm.id || `tch_${Date.now()}`,
+      firstName: teacherForm.firstName.trim(),
+      lastName: teacherForm.lastName.trim(),
+      name: fullName,
+      email: teacherForm.email.trim().toLowerCase(),
+      phone: teacherForm.phone.trim(),
+      staffId: teacherForm.staffId.trim(),
+      department: teacherForm.department.trim(),
+      assignedClasses: teacherForm.assignedClasses,
+      assignedSubjectIds: teacherForm.assignedSubjectIds,
+      termLabel,
+      schoolName: store.teacher.schoolName,
+      avatarUrl: "avatar-5",
+      password: teacherForm.password || "Teacher@2026",
+      status: teacherForm.status,
+    });
+    setTeacherModalOpen(false);
+  };
+
+  // Staff handlers
+  const openAddStaff = () => {
+    setStaffForm({
+      id: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      roleTitle: "Examinations Officer",
+      adminScope: "kyc_moderator",
+      permissions: "Exam scheduling, PIN management & result moderation",
+      password: "Admin@2026",
+      status: "active",
+    });
+    setStaffModalOpen(true);
+  };
+
+  const openEditStaff = (staff: StaffProfile) => {
+    setStaffForm({
+      id: staff.id,
+      firstName: staff.firstName,
+      lastName: staff.lastName,
+      email: staff.email,
+      phone: staff.phone,
+      roleTitle: staff.roleTitle,
+      adminScope: staff.adminScope,
+      permissions: staff.permissions,
+      password: staff.password,
+      status: staff.status,
+    });
+    setStaffModalOpen(true);
+  };
+
+  const handleSaveStaff = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!staffForm.firstName.trim() || !staffForm.email.trim()) return;
+    const fullName =
+      `${staffForm.firstName.trim()} ${staffForm.lastName.trim()}`.trim();
+    saveStaffAccount({
+      id: staffForm.id || `adm_${Date.now()}`,
+      firstName: staffForm.firstName.trim(),
+      lastName: staffForm.lastName.trim(),
+      name: fullName,
+      email: staffForm.email.trim().toLowerCase(),
+      phone: staffForm.phone.trim(),
+      roleTitle: staffForm.roleTitle.trim() || "Staff Administrator",
+      adminScope: staffForm.adminScope,
+      permissions: staffForm.permissions.trim(),
+      avatarUrl: "avatar-2",
+      password: staffForm.password || "Admin@2026",
+      status: staffForm.status,
+      lastActive: "Updated now",
+    });
+    setStaffModalOpen(false);
+  };
+
+  const q = searchQuery.trim().toLowerCase();
+
+  const filteredStudents = React.useMemo(() => {
+    const list = store.students.filter((item) => {
+      if (statusFilter !== "ALL" && item.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        (item.name ?? "").toLowerCase().includes(q) ||
+        (item.email ?? "").toLowerCase().includes(q) ||
+        (item.admissionNo ?? "").toLowerCase().includes(q) ||
+        (item.classLevel ?? "").toLowerCase().includes(q)
+      );
+    });
+    return [...list].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "name") cmp = (a.name ?? "").localeCompare(b.name ?? "");
+      else if (sortKey === "email")
+        cmp = (a.email ?? "").localeCompare(b.email ?? "");
+      else if (sortKey === "detail")
+        cmp = (a.classLevel ?? "").localeCompare(b.classLevel ?? "");
+      else if (sortKey === "status")
+        cmp = (a.status ?? "").localeCompare(b.status ?? "");
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [q, sortDir, sortKey, statusFilter, store.students]);
+
+  const filteredTeachers = React.useMemo(() => {
+    const list = store.teachers.filter((item) => {
+      if (statusFilter !== "ALL" && item.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        (item.name ?? "").toLowerCase().includes(q) ||
+        (item.email ?? "").toLowerCase().includes(q) ||
+        (item.department ?? "").toLowerCase().includes(q)
+      );
+    });
+    return [...list].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "name") cmp = (a.name ?? "").localeCompare(b.name ?? "");
+      else if (sortKey === "email")
+        cmp = (a.email ?? "").localeCompare(b.email ?? "");
+      else if (sortKey === "detail")
+        cmp = (a.department ?? "").localeCompare(b.department ?? "");
+      else if (sortKey === "status")
+        cmp = (a.status ?? "").localeCompare(b.status ?? "");
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [q, sortDir, sortKey, statusFilter, store.teachers]);
+
+  const filteredStaff = React.useMemo(() => {
+    const list = store.staff.filter((item) => {
+      if (statusFilter !== "ALL" && item.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        (item.name ?? "").toLowerCase().includes(q) ||
+        (item.email ?? "").toLowerCase().includes(q) ||
+        (item.roleTitle ?? "").toLowerCase().includes(q)
+      );
+    });
+    return [...list].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "name") cmp = (a.name ?? "").localeCompare(b.name ?? "");
+      else if (sortKey === "email")
+        cmp = (a.email ?? "").localeCompare(b.email ?? "");
+      else if (sortKey === "detail")
+        cmp = (a.roleTitle ?? "").localeCompare(b.roleTitle ?? "");
+      else if (sortKey === "status")
+        cmp = (a.status ?? "").localeCompare(b.status ?? "");
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [q, sortDir, sortKey, statusFilter, store.staff]);
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-6">
       <AdminHeroBanner
-        eyebrow="Students · Teachers · Administrators"
-        eyebrowIcon="shield"
-        headline="School User & Verification Desk."
-        highlightWords={["User", "Verification"]}
-        subtitle="Enroll and manage student profiles, verify teacher and invigilator credentials, and configure school administrator roles using the inline form below."
-        primaryCta={{
-          label: "Add New User",
-          onClick: handleAddNewUserClick,
-          variant: "primary",
-          icon: <Plus className="h-4 w-4" />,
-        }}
-        secondaryCta={{
-          label: "CBT Exam Sessions",
-          href: "/admin/exams",
-          variant: "secondary",
-          trailingArrow: true,
-        }}
+        eyebrow={`School Directory · ${termLabel}`}
+        title="Users, Classes & Access Control"
+        description="Register students, teachers, and staff; assign teachers to classes and subjects; assign class arms to students; and activate or deactivate portal access."
+        badgeLabel="Full Admin Control"
+        badgeTone="brand"
+        metrics={[
+          { label: "Students", value: `${store.students.length}` },
+          { label: "Teachers", value: `${store.teachers.length}` },
+          { label: "Staff & Admins", value: `${store.staff.length}` },
+        ]}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={openAddStudent}
+              className="cta-surface-secondary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold transition-colors cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Student
+            </button>
+            <button
+              type="button"
+              onClick={openAddTeacher}
+              className="inline-flex items-center gap-1.5 rounded-pill border border-surface-porcelain/35 bg-surface-porcelain/15 px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue transition-colors hover:bg-surface-porcelain/25 cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Teacher
+            </button>
+            <button
+              type="button"
+              onClick={openAddStaff}
+              className="inline-flex items-center gap-1.5 rounded-pill border border-surface-porcelain/35 bg-surface-porcelain/15 px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue transition-colors hover:bg-surface-porcelain/25 cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Staff
+            </button>
+          </div>
+        }
       />
 
-      <AdminWorkspaceSlab tone="pearl" withPearlAsset>
-        {/* KPI Metric Summary Cards */}
-        <ArtisansKpiSummary
-          counts={counts}
-          customersCount={customers.length}
-          adminsCount={admins.length}
-        />
-
-        {/* Inline Form to Add, Edit, and Manage Users */}
-        <div className="mt-6">
-          <ArtisanUserForm
-            formRef={formRef}
-            open={formOpen}
-            onOpenChange={setFormOpen}
-            formData={formData}
-            onUpdateField={updateField}
-            onSetFormGroup={setFormGroup}
-            onReset={() => resetForm(formData.formGroup)}
-            onSubmit={handleFormSubmit}
-            saving={saving}
-            savedMessage={savedBanner}
-          />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              {
+                id: "students",
+                label: `Students (${store.students.length})`,
+                icon: GraduationCap,
+              },
+              {
+                id: "teachers",
+                label: `Teachers (${store.teachers.length})`,
+                icon: Users,
+              },
+              {
+                id: "staff",
+                label: `Staff & Admins (${store.staff.length})`,
+                icon: Shield,
+              },
+            ] as const
+          ).map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold transition-colors cursor-pointer",
+                  activeTab === tab.id
+                    ? "cta-surface-primary text-ink-on-blue"
+                    : "border-2 border-brand-100 bg-surface-porcelain text-brand-800 shadow-gloss-card hover:bg-surface-mist"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Filter & Search Bar */}
-        <div className="mt-6 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-          <AdminSegmentedTabs
-            options={tabOptions}
-            value={filter}
-            onChange={(val) => {
-              setFilter(val);
-              clearSelection();
-            }}
-            ariaLabel="Filter users by role and verification status"
-            layoutId="artisans-kyc-tab-pill"
-          />
-
-          <AdminSearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search students, teachers, or admins..."
-          />
-        </div>
-
-        {/* Directory Table Views */}
-        <div className="mt-4">
-          {filter === "customers" ? (
-            <CustomersTable
-              filteredCustomers={filteredCustomers}
-              selectedIds={selectedIds}
-              onToggleSelectAll={(checked) => {
-                if (checked) {
-                  setSelectedIds(filteredCustomers.map((c) => c.id));
-                } else {
-                  clearSelection();
-                }
-              }}
-              onToggleSelectOne={toggleSelectOne}
-              onClearSelection={clearSelection}
-              onBatchDelete={async () => {
-                const ids = [...selectedIds];
-                await batchDeleteCustomers(ids);
-                clearSelection();
-              }}
-              onAddNewCustomer={() => {
-                resetForm("customer");
-                scrollToForm();
-              }}
-              onEditCustomer={loadCustomerIntoForm}
-              onToggleStatus={toggleCustomerStatus}
-              onRevokeSessions={revokeUserSessions}
-              onResetPassword={resetUserPassword}
-              onDeleteCustomer={deleteCustomer}
-            />
-          ) : filter === "admins" ? (
-            <AdminsTable
-              filteredAdmins={filteredAdmins}
-              selectedIds={selectedIds}
-              onToggleSelectAll={(checked) => {
-                if (checked) {
-                  setSelectedIds(filteredAdmins.map((a) => a.id));
-                } else {
-                  clearSelection();
-                }
-              }}
-              onToggleSelectOne={toggleSelectOne}
-              onClearSelection={clearSelection}
-              onBatchDelete={async () => {
-                const ids = [...selectedIds];
-                await batchDeleteAdmins(ids);
-                clearSelection();
-              }}
-              onAddNewAdmin={() => {
-                resetForm("admin");
-                scrollToForm();
-              }}
-              onEditAdmin={(adm) => {
-                loadAdminIntoForm(adm);
-                toast.info("Editing Administrator", `Loaded ${adm.name} into focused edit form.`);
-              }}
-              onToggleStatus={toggleAdminStatus}
-              onSoftDeleteAdmin={(adm) => setConfirmingSoftDelete(adm)}
-              onHardDeleteAdmin={(adm) => setConfirmingHardDelete(adm)}
-              onReactivateAdmin={(adm) => setConfirmingReactivate(adm)}
-              onRevokeSessions={revokeUserSessions}
-              onResetPassword={resetUserPassword}
-              onResendInvite={resendAdminInvite}
-              onDeleteAdmin={(id) => {
-                const found = admins.find((a) => a.id === id);
-                if (found) setConfirmingHardDelete(found);
-                else deleteAdmin(id);
-              }}
-            />
-          ) : (
-            <ArtisansTable
-              filteredArtisans={filteredArtisans}
-              selectedIds={selectedIds}
-              busyId={busyId}
-              onToggleSelectAll={toggleSelectAllArtisans}
-              onToggleSelectOne={toggleSelectOne}
-              onClearSelection={clearSelection}
-              onBatchVerify={() => {
-                const ids = [...selectedIds];
-                batchVerifyArtisans(ids);
-                clearSelection();
-              }}
-              onBatchDelete={() => {
-                const ids = [...selectedIds];
-                batchDeleteArtisans(ids);
-                clearSelection();
-              }}
-              onResetFilters={() => {
-                setFilter("artisans_all");
-                setSearch("");
-              }}
-              onAddNewArtisan={() => {
-                resetForm("artisan");
-                scrollToForm();
-              }}
-              onEditArtisan={loadArtisanIntoForm}
-              onUpdateKyc={updateArtisanKyc}
-              onToggleOnline={toggleArtisanOnline}
-              onDeleteArtisan={(id) => {
-                deleteArtisan(id, () => {
-                  if (formData.editingId === id) resetForm("artisan");
-                });
-              }}
-            />
-          )}
-        </div>
-      </AdminWorkspaceSlab>
-
-      {/* 1. Modal: Edit Administrator Details Confirmation */}
-      <AdminDialogModal
-        open={confirmingAdminUpdate}
-        onOpenChange={setConfirmingAdminUpdate}
-        eyebrow="Confirm Administrator Update"
-        title={`Save Changes to ${formData.name || "Administrator"}?`}
-        description="Please review the modified administrator details before applying them."
-        confirmLabel="Save changes"
-        cancelLabel="Review & Edit"
-        variant="primary"
-        confirmLoading={saving}
-        onConfirm={handleConfirmAdminUpdate}
+      <AdminSectionCard
+        title={
+          activeTab === "students"
+            ? "Student Accounts & Class Assignment"
+            : activeTab === "teachers"
+              ? "Teacher Accounts & Subject/Class Allocations"
+              : "Administrative & Support Staff"
+        }
+        description="Every registration, class assignment, subject link, and activation toggle runs in a focused contextual modal."
       >
-        <div className="space-y-2.5 rounded-2xl border-2 border-brand-100 bg-white/90 p-4">
-          <div className="flex justify-between items-center py-1.5 border-b border-surface-frost">
-            <span className="font-semibold text-ink-secondary text-xs">Full Legal Name</span>
-            <span className="font-extrabold text-brand-950 text-xs sm:text-sm">{formData.name}</span>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="w-full sm:w-72">
+            <AdminSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search name, email, ID..."
+            />
           </div>
-          <div className="flex justify-between items-center py-1.5 border-b border-surface-frost">
-            <span className="font-semibold text-ink-secondary text-xs">Email Address</span>
-            <span className="font-extrabold text-brand-950 text-xs sm:text-sm">{formData.email}</span>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            aria-label="Filter account status"
+            className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-900"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
+          <table className="w-full text-left text-xs">
+            <thead className="border-b-2 border-brand-100 bg-surface-pearl">
+              <tr>
+                <AdminSortableTableHead
+                  label="User"
+                  sortKey="name"
+                  activeSortKey={sortKey}
+                  sortDirection={sortDir}
+                  onSort={toggleSort}
+                />
+                <AdminSortableTableHead
+                  label="Email"
+                  sortKey="email"
+                  activeSortKey={sortKey}
+                  sortDirection={sortDir}
+                  onSort={toggleSort}
+                />
+                <AdminSortableTableHead
+                  label={
+                    activeTab === "students"
+                      ? "Class Arm"
+                      : activeTab === "teachers"
+                        ? "Classes & Subjects"
+                        : "Role Title"
+                  }
+                  sortKey="detail"
+                  activeSortKey={sortKey}
+                  sortDirection={sortDir}
+                  onSort={toggleSort}
+                />
+                <AdminSortableTableHead
+                  label="Status"
+                  sortKey="status"
+                  activeSortKey={sortKey}
+                  sortDirection={sortDir}
+                  onSort={toggleSort}
+                />
+                <AdminTableHead className="text-right">Actions</AdminTableHead>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-brand-100 bg-white">
+              {activeTab === "students" &&
+                filteredStudents.map((stu) => (
+                  <tr key={stu.id} className="hover:bg-surface-mist/50 transition-colors">
+                    <AdminTableCell>
+                      <div className="flex items-center gap-2.5">
+                        <AvatarBadge
+                          name={stu.name}
+                          avatarUrl={stu.avatarUrl}
+                          size="sm"
+                        />
+                        <div>
+                          <p className="font-extrabold text-brand-950">
+                            {stu.name}
+                          </p>
+                          <p className="text-[11px] font-mono text-ink-secondary">
+                            {stu.admissionNo}
+                          </p>
+                        </div>
+                      </div>
+                    </AdminTableCell>
+                    <AdminTableCell className="font-medium text-brand-800">
+                      {stu.email}
+                    </AdminTableCell>
+                    <AdminTableCell>
+                      <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-extrabold text-brand-900">
+                        {stu.classLevel}
+                      </span>
+                    </AdminTableCell>
+                    <AdminTableCell>
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
+                          stu.status === "active"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-rose-100 text-rose-800"
+                        )}
+                      >
+                        {stu.status}
+                      </span>
+                    </AdminTableCell>
+                    <AdminTableCell className="text-right">
+                      <AdminActionMenu
+                        ariaLabel={`Actions for ${stu.name}`}
+                        items={[
+                          {
+                            id: "edit-stu",
+                            label: "Edit Student Details",
+                            icon: <Edit3 className="h-3.5 w-3.5" />,
+                            onClick: () => openEditStudent(stu),
+                          },
+                          {
+                            id: "assign-cls",
+                            label: "Assign Class Arm",
+                            icon: <GraduationCap className="h-3.5 w-3.5" />,
+                            variant: "primary",
+                            onClick: () => {
+                              setSelectedClassArmId(stu.classArmId);
+                              setAssignClassTarget(stu);
+                            },
+                          },
+                          {
+                            id: "toggle-stu",
+                            label:
+                              stu.status === "active"
+                                ? "Deactivate Account"
+                                : "Activate Account",
+                            icon: <Power className="h-3.5 w-3.5" />,
+                            onClick: () =>
+                              setStudentStatus(
+                                stu.id,
+                                stu.status === "active" ? "inactive" : "active"
+                              ),
+                          },
+                          {
+                            id: "del-stu",
+                            label: "Remove Student",
+                            icon: <Trash2 className="h-3.5 w-3.5" />,
+                            variant: "danger",
+                            dividerBefore: true,
+                            onClick: () =>
+                              setDeleteTarget({
+                                kind: "students",
+                                id: stu.id,
+                                label: stu.name,
+                              }),
+                          },
+                        ]}
+                      />
+                    </AdminTableCell>
+                  </tr>
+                ))}
+
+              {activeTab === "teachers" &&
+                filteredTeachers.map((tch) => (
+                  <tr key={tch.id} className="hover:bg-surface-mist/50 transition-colors">
+                    <AdminTableCell>
+                      <div className="flex items-center gap-2.5">
+                        <AvatarBadge
+                          name={tch.name}
+                          avatarUrl={tch.avatarUrl}
+                          size="sm"
+                        />
+                        <div>
+                          <p className="font-extrabold text-brand-950">
+                            {tch.name}
+                          </p>
+                          <p className="text-[11px] text-ink-secondary">
+                            {tch.staffId} · {tch.department}
+                          </p>
+                        </div>
+                      </div>
+                    </AdminTableCell>
+                    <AdminTableCell className="font-medium text-brand-800">
+                      {tch.email}
+                    </AdminTableCell>
+                    <AdminTableCell>
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-bold text-brand-950">
+                          Classes: {tch.assignedClasses.join(", ") || "None"}
+                        </p>
+                        <p className="text-[11px] font-medium text-ink-secondary">
+                          Subjects:{" "}
+                          {tch.assignedSubjectIds
+                            .map(
+                              (sid) =>
+                                store.subjects.find((s) => s.id === sid)?.title ??
+                                sid
+                            )
+                            .join(", ") || "None"}
+                        </p>
+                      </div>
+                    </AdminTableCell>
+                    <AdminTableCell>
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
+                          tch.status === "active"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-rose-100 text-rose-800"
+                        )}
+                      >
+                        {tch.status}
+                      </span>
+                    </AdminTableCell>
+                    <AdminTableCell className="text-right">
+                      <AdminActionMenu
+                        ariaLabel={`Actions for ${tch.name}`}
+                        items={[
+                          {
+                            id: "edit-tch",
+                            label: "Edit Teacher Profile",
+                            icon: <Edit3 className="h-3.5 w-3.5" />,
+                            onClick: () => openEditTeacher(tch),
+                          },
+                          {
+                            id: "assign-tch",
+                            label: "Assign Classes & Subjects",
+                            icon: <UserCheck className="h-3.5 w-3.5" />,
+                            variant: "primary",
+                            onClick: () => {
+                              setTeacherClassesDraft(tch.assignedClasses);
+                              setTeacherSubjectsDraft(tch.assignedSubjectIds);
+                              setAssignTeacherTarget(tch);
+                            },
+                          },
+                          {
+                            id: "toggle-tch",
+                            label:
+                              tch.status === "active"
+                                ? "Deactivate Account"
+                                : "Activate Account",
+                            icon: <Power className="h-3.5 w-3.5" />,
+                            onClick: () =>
+                              setTeacherStatus(
+                                tch.id,
+                                tch.status === "active" ? "inactive" : "active"
+                              ),
+                          },
+                          {
+                            id: "del-tch",
+                            label: "Remove Teacher",
+                            icon: <Trash2 className="h-3.5 w-3.5" />,
+                            variant: "danger",
+                            dividerBefore: true,
+                            onClick: () =>
+                              setDeleteTarget({
+                                kind: "teachers",
+                                id: tch.id,
+                                label: tch.name,
+                              }),
+                          },
+                        ]}
+                      />
+                    </AdminTableCell>
+                  </tr>
+                ))}
+
+              {activeTab === "staff" &&
+                filteredStaff.map((stf) => (
+                  <tr key={stf.id} className="hover:bg-surface-mist/50 transition-colors">
+                    <AdminTableCell>
+                      <div className="flex items-center gap-2.5">
+                        <AvatarBadge
+                          name={stf.name}
+                          avatarUrl={stf.avatarUrl}
+                          size="sm"
+                        />
+                        <div>
+                          <p className="font-extrabold text-brand-950">
+                            {stf.name}
+                          </p>
+                          <p className="text-[11px] text-ink-secondary">
+                            {stf.lastActive}
+                          </p>
+                        </div>
+                      </div>
+                    </AdminTableCell>
+                    <AdminTableCell className="font-medium text-brand-800">
+                      {stf.email}
+                    </AdminTableCell>
+                    <AdminTableCell>
+                      <p className="font-bold text-brand-950">{stf.roleTitle}</p>
+                      <p className="text-[11px] text-ink-secondary line-clamp-1">
+                        {stf.permissions}
+                      </p>
+                    </AdminTableCell>
+                    <AdminTableCell>
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
+                          stf.status === "active"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-rose-100 text-rose-800"
+                        )}
+                      >
+                        {stf.status}
+                      </span>
+                    </AdminTableCell>
+                    <AdminTableCell className="text-right">
+                      <AdminActionMenu
+                        ariaLabel={`Actions for ${stf.name}`}
+                        items={[
+                          {
+                            id: "edit-stf",
+                            label: "Edit Staff Account",
+                            icon: <Edit3 className="h-3.5 w-3.5" />,
+                            onClick: () => openEditStaff(stf),
+                          },
+                          {
+                            id: "toggle-stf",
+                            label:
+                              stf.status === "active"
+                                ? "Deactivate Access"
+                                : "Activate Access",
+                            icon: <Power className="h-3.5 w-3.5" />,
+                            onClick: () =>
+                              setStaffStatus(
+                                stf.id,
+                                stf.status === "active" ? "inactive" : "active"
+                              ),
+                          },
+                          {
+                            id: "del-stf",
+                            label: "Remove Staff",
+                            icon: <Trash2 className="h-3.5 w-3.5" />,
+                            variant: "danger",
+                            dividerBefore: true,
+                            onClick: () =>
+                              setDeleteTarget({
+                                kind: "staff",
+                                id: stf.id,
+                                label: stf.name,
+                              }),
+                          },
+                        ]}
+                      />
+                    </AdminTableCell>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </AdminSectionCard>
+
+      {/* Contextual Student Registration / Edit Modal */}
+      <AdminModal
+        open={studentModalOpen}
+        onOpenChange={setStudentModalOpen}
+        eyebrow="Student Registration"
+        title={studentForm.id ? "Edit Student Account" : "Register New Student"}
+        size="md"
+      >
+        <form onSubmit={handleSaveStudent} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AdminTextField
+              label="First Name"
+              value={studentForm.firstName}
+              onChange={(e) =>
+                setStudentForm((p) => ({ ...p, firstName: e.target.value }))
+              }
+              required
+            />
+            <AdminTextField
+              label="Last Name"
+              value={studentForm.lastName}
+              onChange={(e) =>
+                setStudentForm((p) => ({ ...p, lastName: e.target.value }))
+              }
+              required
+            />
           </div>
-          <div className="flex justify-between items-center py-1.5 border-b border-surface-frost">
-            <span className="font-semibold text-ink-secondary text-xs">Phone Number</span>
-            <span className="font-extrabold text-brand-950 text-xs sm:text-sm">{formData.phone}</span>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AdminTextField
+              label="Student Email"
+              type="email"
+              value={studentForm.email}
+              onChange={(e) =>
+                setStudentForm((p) => ({ ...p, email: e.target.value }))
+              }
+              required
+            />
+            <AdminTextField
+              label="Admission Number"
+              value={studentForm.admissionNo}
+              onChange={(e) =>
+                setStudentForm((p) => ({ ...p, admissionNo: e.target.value }))
+              }
+              required
+            />
           </div>
-          <div className="flex justify-between items-center py-1.5 border-b border-surface-frost">
-            <span className="font-semibold text-ink-secondary text-xs">Password Rotation</span>
-            <span
-              className={cn(
-                "font-extrabold text-xs px-2.5 py-0.5 rounded-pill",
-                formData.password && formData.password.trim().length >= 8
-                  ? "bg-amber-100 text-amber-900 border border-amber-300"
-                  : "bg-surface-mist text-ink-secondary"
-              )}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
+                Assign Class Arm
+              </label>
+              <select
+                value={studentForm.classArmId}
+                onChange={(e) =>
+                  setStudentForm((p) => ({ ...p, classArmId: e.target.value }))
+                }
+                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
+              >
+                {store.classArms.map((arm) => (
+                  <option key={arm.id} value={arm.id}>
+                    {arm.name} ({arm.arm})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <AdminTextField
+              label="Portal Password"
+              value={studentForm.password}
+              onChange={(e) =>
+                setStudentForm((p) => ({ ...p, password: e.target.value }))
+              }
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setStudentModalOpen(false)}
+              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
             >
-              {formData.password && formData.password.trim().length >= 8
-                ? "Password will be rotated"
-                : "Password unchanged"}
-            </span>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+            >
+              {studentForm.id ? "Save Student" : "Register Student"}
+            </button>
           </div>
-          <div className="flex justify-between items-center py-1.5">
-            <span className="font-semibold text-ink-secondary text-xs">Clearance Scope</span>
-            <span className="font-extrabold text-brand-950 text-xs capitalize">
-              {formData.adminScope.replace("_", " ")}
-            </span>
-          </div>
-        </div>
-      </AdminDialogModal>
+        </form>
+      </AdminModal>
 
-      {/* 2. Modal: Soft Delete Confirmation */}
-      <AdminDialogModal
-        open={Boolean(confirmingSoftDelete)}
-        onOpenChange={(op) => {
-          if (!op) setConfirmingSoftDelete(null);
+      {/* Contextual Assign Student to Class Arm Modal */}
+      <AdminModal
+        open={Boolean(assignClassTarget)}
+        onOpenChange={(open) => {
+          if (!open) setAssignClassTarget(null);
         }}
-        eyebrow="Soft Delete Administrator"
-        title="Confirm Soft Delete (Suspend Account)?"
-        description={`Are you sure you want to soft delete and suspend ${confirmingSoftDelete?.name} (${confirmingSoftDelete?.email})?`}
-        confirmLabel="Soft Delete Admin"
-        cancelLabel="Cancel"
-        variant="warning"
-        confirmLoading={busyId === confirmingSoftDelete?.id}
-        onConfirm={handleConfirmSoftDelete}
+        eyebrow="Class Allocation"
+        title={
+          assignClassTarget
+            ? `Assign Class · ${assignClassTarget.name}`
+            : "Assign Class"
+        }
+        size="sm"
       >
-        <div className="rounded-2xl border-2 border-amber-200 bg-amber-50/80 p-4 space-y-2 text-xs text-amber-950">
-          <p className="font-bold">
-            What happens when an administrator is soft deleted:
-          </p>
-          <ul className="list-disc list-inside space-y-1 text-ink-primary font-medium">
-            <li>All active login sessions are revoked immediately across all devices.</li>
-            <li>The administrator will be blocked from logging into the portal.</li>
-            <li>All historical audit logs and actions remain intact for compliance.</li>
-            <li>You can restore and reactivate this administrator account at any time.</li>
-          </ul>
-        </div>
-      </AdminDialogModal>
+        {assignClassTarget && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              assignStudentClass(assignClassTarget.id, selectedClassArmId);
+              setAssignClassTarget(null);
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
+                Select Class Arm
+              </label>
+              <select
+                value={selectedClassArmId}
+                onChange={(e) => setSelectedClassArmId(e.target.value)}
+                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
+              >
+                {store.classArms.map((arm) => (
+                  <option key={arm.id} value={arm.id}>
+                    {arm.name} · {arm.arm}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setAssignClassTarget(null)}
+                className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+              >
+                Confirm Class
+              </button>
+            </div>
+          </form>
+        )}
+      </AdminModal>
 
-      {/* 3. Modal: Hard Delete Confirmation */}
-      <AdminDialogModal
-        open={Boolean(confirmingHardDelete)}
-        onOpenChange={(op) => {
-          if (!op) setConfirmingHardDelete(null);
+      {/* Contextual Teacher Registration / Edit Modal */}
+      <AdminModal
+        open={teacherModalOpen}
+        onOpenChange={setTeacherModalOpen}
+        eyebrow="Faculty Registration"
+        title={teacherForm.id ? "Edit Teacher Account" : "Register New Teacher"}
+        size="md"
+      >
+        <form onSubmit={handleSaveTeacher} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
+                Title
+              </label>
+              <select
+                value={teacherForm.displayPrefix}
+                onChange={(e) =>
+                  setTeacherForm((p) => ({
+                    ...p,
+                    displayPrefix: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-xs font-bold text-ink-primary"
+              >
+                <option value="Mr.">Mr.</option>
+                <option value="Mrs.">Mrs.</option>
+                <option value="Ms.">Ms.</option>
+                <option value="Dr.">Dr.</option>
+              </select>
+            </div>
+            <AdminTextField
+              label="First Name"
+              value={teacherForm.firstName}
+              onChange={(e) =>
+                setTeacherForm((p) => ({ ...p, firstName: e.target.value }))
+              }
+              required
+            />
+            <AdminTextField
+              label="Last Name"
+              value={teacherForm.lastName}
+              onChange={(e) =>
+                setTeacherForm((p) => ({ ...p, lastName: e.target.value }))
+              }
+              required
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AdminTextField
+              label="Teacher Email"
+              type="email"
+              value={teacherForm.email}
+              onChange={(e) =>
+                setTeacherForm((p) => ({ ...p, email: e.target.value }))
+              }
+              required
+            />
+            <AdminTextField
+              label="Staff ID"
+              value={teacherForm.staffId}
+              onChange={(e) =>
+                setTeacherForm((p) => ({ ...p, staffId: e.target.value }))
+              }
+              required
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AdminTextField
+              label="Department"
+              value={teacherForm.department}
+              onChange={(e) =>
+                setTeacherForm((p) => ({ ...p, department: e.target.value }))
+              }
+              required
+            />
+            <AdminTextField
+              label="Portal Password"
+              value={teacherForm.password}
+              onChange={(e) =>
+                setTeacherForm((p) => ({ ...p, password: e.target.value }))
+              }
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setTeacherModalOpen(false)}
+              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+            >
+              {teacherForm.id ? "Save Teacher" : "Register Teacher"}
+            </button>
+          </div>
+        </form>
+      </AdminModal>
+
+      {/* Contextual Assign Teacher Classes & Subjects Modal */}
+      <AdminModal
+        open={Boolean(assignTeacherTarget)}
+        onOpenChange={(open) => {
+          if (!open) setAssignTeacherTarget(null);
         }}
-        eyebrow="Permanent Hard Deletion"
-        title="Permanently Delete Administrator?"
-        description={`This action will completely erase the administrator record for ${confirmingHardDelete?.name} (${confirmingHardDelete?.email}).`}
-        confirmLabel="Hard Delete Admin"
-        cancelLabel="Cancel"
+        eyebrow="Teaching Assignments"
+        title={
+          assignTeacherTarget
+            ? `Assign Classes & Subjects · ${assignTeacherTarget.name}`
+            : "Teaching Assignments"
+        }
+        size="md"
+      >
+        {assignTeacherTarget && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              assignTeacherAssignments(
+                assignTeacherTarget.id,
+                teacherClassesDraft,
+                teacherSubjectsDraft
+              );
+              setAssignTeacherTarget(null);
+            }}
+            className="space-y-5"
+          >
+            <div>
+              <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
+                Assign Class Arms
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {store.classArms.map((arm) => {
+                  const selected = teacherClassesDraft.includes(arm.name);
+                  return (
+                    <button
+                      key={arm.id}
+                      type="button"
+                      onClick={() =>
+                        setTeacherClassesDraft((prev) =>
+                          selected
+                            ? prev.filter((item) => item !== arm.name)
+                            : [...prev, arm.name]
+                        )
+                      }
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 font-display text-xs font-extrabold transition-colors cursor-pointer",
+                        selected
+                          ? "cta-surface-primary text-ink-on-blue"
+                          : "border-2 border-brand-100 bg-surface-porcelain text-brand-800 hover:bg-surface-mist"
+                      )}
+                    >
+                      {selected && <CheckCircle2 className="h-3 w-3" />}
+                      {arm.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
+                Assign Subjects
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {store.subjects.map((sub) => {
+                  const selected = teacherSubjectsDraft.includes(sub.id);
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() =>
+                        setTeacherSubjectsDraft((prev) =>
+                          selected
+                            ? prev.filter((item) => item !== sub.id)
+                            : [...prev, sub.id]
+                        )
+                      }
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors cursor-pointer",
+                        selected
+                          ? "bg-emerald-700 text-white"
+                          : "border border-brand-200 bg-white text-brand-800"
+                      )}
+                    >
+                      {selected && <CheckCircle2 className="h-3 w-3" />}
+                      {sub.title} ({sub.code})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setAssignTeacherTarget(null)}
+                className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+              >
+                Save Assignments
+              </button>
+            </div>
+          </form>
+        )}
+      </AdminModal>
+
+      {/* Contextual Staff / Admin Modal */}
+      <AdminModal
+        open={staffModalOpen}
+        onOpenChange={setStaffModalOpen}
+        eyebrow="Staff Administration"
+        title={staffForm.id ? "Edit Staff Account" : "Register New Staff / Admin"}
+        size="md"
+      >
+        <form onSubmit={handleSaveStaff} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AdminTextField
+              label="First Name"
+              value={staffForm.firstName}
+              onChange={(e) =>
+                setStaffForm((p) => ({ ...p, firstName: e.target.value }))
+              }
+              required
+            />
+            <AdminTextField
+              label="Last Name"
+              value={staffForm.lastName}
+              onChange={(e) =>
+                setStaffForm((p) => ({ ...p, lastName: e.target.value }))
+              }
+              required
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AdminTextField
+              label="Staff Email"
+              type="email"
+              value={staffForm.email}
+              onChange={(e) =>
+                setStaffForm((p) => ({ ...p, email: e.target.value }))
+              }
+              required
+            />
+            <AdminTextField
+              label="Role Title"
+              value={staffForm.roleTitle}
+              onChange={(e) =>
+                setStaffForm((p) => ({ ...p, roleTitle: e.target.value }))
+              }
+              required
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AdminTextField
+              label="Permissions Summary"
+              value={staffForm.permissions}
+              onChange={(e) =>
+                setStaffForm((p) => ({ ...p, permissions: e.target.value }))
+              }
+            />
+            <AdminTextField
+              label="Portal Password"
+              value={staffForm.password}
+              onChange={(e) =>
+                setStaffForm((p) => ({ ...p, password: e.target.value }))
+              }
+              required
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setStaffModalOpen(false)}
+              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              {staffForm.id ? "Save Staff" : "Register Staff"}
+            </button>
+          </div>
+        </form>
+      </AdminModal>
+
+      <AdminDialogModal
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
         variant="danger"
-        confirmLoading={busyId === confirmingHardDelete?.id}
-        onConfirm={handleConfirmHardDelete}
-      >
-        <div className="rounded-2xl border-2 border-rose-200 bg-rose-50/80 p-4 space-y-2 text-xs text-rose-950">
-          <p className="font-bold">
-            Warning: This action is permanent and cannot be undone!
-          </p>
-          <ul className="list-disc list-inside space-y-1 text-ink-primary font-medium">
-            <li>The administrator profile and authentication credentials will be removed.</li>
-            <li>The account cannot be recovered once hard deleted.</li>
-            <li>If you want to temporarily revoke access while preserving records, use Soft Delete instead.</li>
-          </ul>
-        </div>
-      </AdminDialogModal>
-
-      {/* 4. Modal: Reactivate Confirmation */}
-      <AdminDialogModal
-        open={Boolean(confirmingReactivate)}
-        onOpenChange={(op) => {
-          if (!op) setConfirmingReactivate(null);
+        title="Remove User Account?"
+        description={
+          deleteTarget
+            ? `Permanently delete ${deleteTarget.label} from the school portal.`
+            : undefined
+        }
+        confirmLabel="Remove User"
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          if (deleteTarget.kind === "students")
+            deleteStudentAccount(deleteTarget.id);
+          else if (deleteTarget.kind === "teachers")
+            deleteTeacherAccount(deleteTarget.id);
+          else deleteStaffAccount(deleteTarget.id);
+          setDeleteTarget(null);
         }}
-        eyebrow="Restore Administrator Access"
-        title={`Reactivate ${confirmingReactivate?.name}?`}
-        description={`This will restore administrator privileges and portal login access for ${confirmingReactivate?.email}.`}
-        confirmLabel="Reactivate Administrator"
-        cancelLabel="Cancel"
-        variant="success"
-        confirmLoading={busyId === confirmingReactivate?.id}
-        onConfirm={handleConfirmReactivate}
-      >
-        <p className="text-xs text-ink-secondary">
-          The administrator will be able to sign in with their active credentials and resume operations corresponding to their clearance scope.
-        </p>
-      </AdminDialogModal>
+      />
     </div>
   );
 }
-

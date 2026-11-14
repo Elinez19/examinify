@@ -8,403 +8,237 @@ import {
   BookOpen,
   CalendarClock,
   CheckCircle2,
-  ClipboardCheck,
   Clock,
-  KeyRound,
   Play,
-  Radio,
-  Wifi,
+  Sparkles,
 } from "lucide-react";
-import {
-  AdminHeroBanner,
-  AdminWorkspaceSlab,
-} from "@/components/admin/ui/admin-hero-banner";
+import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminKpiCard } from "@/components/admin/ui/admin-kpi-card";
-import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
-import { CtaButton } from "@/components/landing/ui/cta-button";
-import { PillBadge } from "@/components/landing/ui/pill-badge";
-import { OffsetRing } from "@/components/brand/offset-ring";
-import { Float } from "@/components/motion/float";
+import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 
 export function StudentOverviewWorkspace() {
-  const { store } = usePortalStore();
-  const { student, exams, subjects, submissions } = store;
+  const { store, activeSessionTerm } = usePortalStore();
 
-  const mySubmissions = submissions.filter((s) => s.studentId === student.id);
-  const publishedResults = mySubmissions.filter(
-    (s) => s.gradingStatus === "published" || s.gradingStatus === "auto_graded"
+  const mySubjects = store.subjects.filter(
+    (subject) =>
+      subject.status === "active" &&
+      (subject.assignedClasses.length === 0 ||
+        subject.assignedClasses.includes(store.student.classLevel))
   );
+
+  const myExams = store.exams.filter(
+    (exam) =>
+      exam.classLevel === store.student.classLevel ||
+      exam.classLevel.startsWith(store.student.classLevel.split(" ")[0] ?? "")
+  );
+
+  const liveExams = myExams.filter((exam) => exam.status === "live");
+  const upcomingExams = myExams.filter((exam) => exam.status === "scheduled");
+
+  const mySubmissions = store.submissions.filter(
+    (sub) => sub.studentId === store.student.id
+  );
+  const publishedSubs = mySubmissions.filter(
+    (sub) => sub.gradingStatus === "published"
+  );
+
   const avgScore =
-    publishedResults.length > 0
+    publishedSubs.length > 0
       ? Math.round(
-          publishedResults.reduce((sum, s) => sum + s.percentage, 0) /
-            publishedResults.length
+          publishedSubs.reduce((acc, sub) => {
+            const total = sub.objectiveTotal + sub.theoryTotal;
+            const earned = sub.objectiveEarned + sub.theoryEarned;
+            return acc + (total > 0 ? (earned / total) * 100 : 0);
+          }, 0) / publishedSubs.length
         )
       : 0;
 
-  const liveExams = exams.filter((e) => e.status === "live");
-  const primaryExam = liveExams[0] ?? exams.find((e) => e.status === "scheduled");
-  const upcomingAndPractice = exams.filter(
-    (e) => e.status === "live" || e.status === "scheduled" || e.status === "practice"
-  );
+  const termLabel = activeSessionTerm
+    ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
+    : store.student.termLabel;
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-6">
       <AdminHeroBanner
-        eyebrow={`${student.schoolName} · ${student.term}`}
-        eyebrowIcon="dot"
-        headline={`Welcome back, ${student.name}.`}
-        highlightWords={[student.name]}
-        subtitle={`Candidate ${student.regNo} (${student.classLevel}). Your offline-ready CBT packs are synced. Enter live assessments, drill practice papers, or review published scripts.`}
-        primaryCta={
-          primaryExam
-            ? {
-                label:
-                  primaryExam.status === "live"
-                    ? "Enter Live Exam Hall"
-                    : "View Scheduled Exams",
-                href:
-                  primaryExam.status === "live"
-                    ? `/exam/${primaryExam.id}`
-                    : "/student/exams",
-                variant: "primary",
-                icon: <Play className="h-3.5 w-3.5" />,
-                trailingArrow: true,
-              }
-            : {
-                label: "Browse Practice Drills",
-                href: "/student/exams",
-                variant: "primary",
-                trailingArrow: true,
-              }
-        }
-        secondaryCta={{
-          label: "Results & Scripts",
-          href: "/student/results",
-          variant: "secondary",
-        }}
-        rightSlot={
-          <div className="hidden xl:flex items-center gap-3.5 pr-1">
-            <Float amplitude={5} duration={4.8}>
-              <OffsetRing size="md" faceTone="ink" className="h-20 w-20 text-xs">
-                <div className="space-y-0.5 leading-tight">
-                  <span className="block text-accent-sky text-lg font-extrabold">
-                    {avgScore}%
-                  </span>
-                  <span className="block text-[9px] font-bold text-ink-on-blue-muted">
-                    Term Avg
-                  </span>
-                </div>
-              </OffsetRing>
-            </Float>
-            <Float amplitude={6} duration={5.4} delay={0.3}>
-              <OffsetRing
-                size="sm"
-                faceTone="porcelain"
-                className="h-15 w-15 text-[10px]"
-              >
-                <div className="space-y-0.5 leading-tight">
-                  <span className="block text-brand-700 text-xs font-extrabold">
-                    {liveExams.length} Live
-                  </span>
-                  <span className="block text-[8px] font-bold text-ink-secondary">
-                    Exam Hall
-                  </span>
-                </div>
-              </OffsetRing>
-            </Float>
-          </div>
+        eyebrow={`${store.student.schoolName} · ${termLabel}`}
+        title={`Welcome back, ${store.student.firstName}`}
+        description={`Track your ${store.student.classLevel} subjects, enter live computer-based examinations, or practice in Study Mode.`}
+        badgeLabel="Offline Sync Active"
+        badgeTone="emerald"
+        metrics={[
+          { label: "Class Arm", value: store.student.classLevel },
+          { label: "Enrolled Subjects", value: `${mySubjects.length}` },
+          { label: "Live CBTs", value: `${liveExams.length}` },
+        ]}
+        action={
+          liveExams[0] ? (
+            <Link
+              href={`/exam/${liveExams[0].id}`}
+              className="cta-surface-secondary inline-flex items-center gap-2 rounded-pill px-5 py-2.5 font-display text-xs font-extrabold transition-colors"
+            >
+              <Play className="h-3.5 w-3.5" />
+              Enter Live Exam
+            </Link>
+          ) : (
+            <Link
+              href="/student/study-mode"
+              className="cta-surface-secondary inline-flex items-center gap-2 rounded-pill px-5 py-2.5 font-display text-xs font-extrabold transition-colors"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Open Study Mode
+            </Link>
+          )
         }
       />
 
-      <AdminWorkspaceSlab tone="pearl" withPearlAsset>
-        {/* 4 KPI Cards */}
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-          <AdminKpiCard
-            label="Live & Upcoming Exams"
-            value={String(
-              exams.filter((e) => e.status === "live" || e.status === "scheduled")
-                .length
-            )}
-            numericValue={
-              exams.filter((e) => e.status === "live" || e.status === "scheduled")
-                .length
-            }
-            badgeText={`${liveExams.length} Live Right Now`}
-            badgeTone="blue"
-            badgeIcon="dot"
-            icon={<ClipboardCheck className="h-4 w-4 text-accent-gold" />}
-            tone="ink"
-          />
-          <AdminKpiCard
-            label="Completed Papers"
-            value={String(mySubmissions.length)}
-            numericValue={mySubmissions.length}
-            badgeText="All Scripts Synced"
-            badgeTone="sky"
-            icon={<CheckCircle2 className="h-4 w-4 text-accent-success" />}
-          />
-          <AdminKpiCard
-            label="Published Average"
-            value={`${avgScore}%`}
-            numericValue={avgScore}
-            suffix="%"
-            badgeText="First Term Standing"
-            badgeTone="porcelain"
-            icon={<Award className="h-4 w-4 text-brand-600" />}
-          />
-          <AdminKpiCard
-            label="Enrolled Subjects"
-            value={String(subjects.length)}
-            numericValue={subjects.length}
-            badgeText="Offline Drills Cached"
-            badgeTone="sky"
-            icon={<BookOpen className="h-4 w-4 text-brand-600" />}
-          />
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminKpiCard
+          label="Live Examinations"
+          value={String(liveExams.length)}
+          badgeText={liveExams.length > 0 ? "Live Now" : "Clear"}
+          badgeTone="sky"
+          tone={liveExams.length > 0 ? "ink" : "gloss"}
+          icon={<Play className="h-5 w-5" />}
+        />
+        <AdminKpiCard
+          label="Scheduled Upcoming"
+          value={String(upcomingExams.length)}
+          badgeText="Confirmed"
+          badgeTone="blue"
+          tone="gloss"
+          icon={<CalendarClock className="h-5 w-5" />}
+        />
+        <AdminKpiCard
+          label="Class Subjects"
+          value={String(mySubjects.length)}
+          badgeText={store.student.classLevel}
+          badgeTone="blue"
+          tone="gloss"
+          icon={<BookOpen className="h-5 w-5" />}
+        />
+        <AdminKpiCard
+          label="Published Average"
+          value={publishedSubs.length > 0 ? `${avgScore}%` : "—"}
+          badgeText={`${publishedSubs.length} script${publishedSubs.length === 1 ? "" : "s"}`}
+          badgeTone="porcelain"
+          tone="ink"
+          icon={<Award className="h-5 w-5" />}
+        />
+      </div>
 
-        {/* Main Grid: Live & Upcoming Exams + Recent Results */}
-        <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-12">
-          <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="font-display text-lg font-extrabold text-brand-950">
-                  Exam Hall & Practice Queue
-                </h2>
-                <p className="text-xs font-medium text-ink-secondary">
-                  Launch live CBT sittings or sharpen speed with offline practice drills.
-                </p>
-              </div>
-              <Link
-                href="/student/exams"
-                className="inline-flex items-center gap-1 font-display text-xs font-extrabold text-brand-600 hover:text-brand-800"
-              >
-                All Exams <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-
-            <div className="space-y-3">
-              {upcomingAndPractice.slice(0, 3).map((exam) => {
-                const isLive = exam.status === "live";
-                const alreadySubmitted = mySubmissions.some(
-                  (s) => s.examId === exam.id && exam.status !== "practice"
-                );
-
-                return (
-                  <article
-                    key={exam.id}
-                    className={
-                      isLive
-                        ? "surface-slab-ink rounded-card border-2 border-brand-600 p-4 sm:p-5 text-ink-on-blue"
-                        : "surface-gloss-card p-4 sm:p-5"
-                    }
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1.5 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {isLive ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-pill bg-accent-gold px-2.5 py-0.5 font-display text-[10px] font-extrabold text-brand-950">
-                              <Radio className="h-3 w-3 animate-pulse" />
-                              LIVE NOW
-                            </span>
-                          ) : (
-                            <AdminStatusPill
-                              status={
-                                exam.status === "practice"
-                                  ? "active"
-                                  : "pending"
-                              }
-                            />
-                          )}
-                          <span
-                            className={
-                              isLive
-                                ? "font-mono text-[11px] font-bold text-accent-sky"
-                                : "font-mono text-[11px] font-bold text-brand-600"
-                            }
-                          >
-                            {exam.code}
-                          </span>
-                          {exam.offlineReady && (
-                            <span
-                              className={
-                                isLive
-                                  ? "inline-flex items-center gap-1 rounded-pill bg-brand-950/60 px-2 py-0.5 text-[10px] font-bold text-ink-on-blue-muted"
-                                  : "inline-flex items-center gap-1 rounded-pill bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-700 border border-brand-100"
-                              }
-                            >
-                              <Wifi className="h-2.5 w-2.5 text-accent-success" />
-                              Offline Ready
-                            </span>
-                          )}
-                        </div>
-
-                        <h3
-                          className={
-                            isLive
-                              ? "font-display text-base sm:text-lg font-extrabold text-ink-on-blue"
-                              : "font-display text-base sm:text-lg font-extrabold text-brand-950"
-                          }
-                        >
-                          {exam.title}
-                        </h3>
-
-                        <div
-                          className={
-                            isLive
-                              ? "flex flex-wrap items-center gap-3 text-xs font-semibold text-ink-on-blue-muted"
-                              : "flex flex-wrap items-center gap-3 text-xs font-semibold text-ink-secondary"
-                          }
-                        >
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5" />
-                            {exam.durationMinutes} mins
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <CalendarClock className="h-3.5 w-3.5" />
-                            {exam.scheduledDate} · {exam.scheduledTime}
-                          </span>
-                          <span>{exam.questionIds.length} Questions</span>
-                          {exam.accessPin && (
-                            <span className="inline-flex items-center gap-1 rounded-pill bg-brand-950/50 px-2 py-0.5 font-mono text-[10px] text-accent-gold">
-                              <KeyRound className="h-2.5 w-2.5" />
-                              PIN: {exam.accessPin}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="shrink-0">
-                        {alreadySubmitted ? (
-                          <CtaButton
-                            variant="secondary"
-                            size="xs"
-                            href="/student/results"
-                          >
-                            Submitted · View Status
-                          </CtaButton>
-                        ) : (
-                          <CtaButton
-                            variant={isLive ? "primary" : "secondary"}
-                            size="xs"
-                            href={`/exam/${exam.id}`}
-                            trailingArrow
-                          >
-                            {isLive
-                              ? "Start Exam"
-                              : exam.status === "practice"
-                                ? "Start Practice"
-                                : "Preview Lobby"}
-                          </CtaButton>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right 5 Cols: Subject Mastery + Latest Result */}
-          <div className="lg:col-span-5 space-y-4">
-            <div className="surface-gloss-card p-4 sm:p-5 space-y-4">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <h2 className="font-display text-base font-extrabold text-brand-950">
-                    Subject Readiness
-                  </h2>
-                  <p className="text-xs font-medium text-ink-secondary">
-                    Mastery across your enrolled {student.classLevel} subjects
-                  </p>
-                </div>
-                <PillBadge tone="sky" className="px-2.5 py-0.5 text-[10px]">
-                  {subjects.length} Active
-                </PillBadge>
-              </div>
-
-              <div className="space-y-3">
-                {subjects.map((sub) => (
-                  <div
-                    key={sub.id}
-                    className="rounded-2xl border border-brand-100 bg-surface-pearl/70 p-3 space-y-1.5"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <p className="font-display text-xs font-extrabold text-brand-950">
-                          {sub.title}
-                        </p>
-                        <p className="text-[11px] font-medium text-ink-secondary">
-                          {sub.teacherName} · {sub.nextAssessment}
-                        </p>
-                      </div>
-                      <span className="font-display text-xs font-extrabold text-brand-700">
-                        {sub.masteryPercent}%
+      <div className="grid gap-6 lg:grid-cols-3">
+        <AdminSectionCard
+          title="Active & Upcoming Examinations"
+          description="Verify your exam pass code with your invigilator before starting."
+          className="lg:col-span-2"
+          action={
+            <Link
+              href="/student/exams"
+              className="inline-flex items-center gap-1 text-xs font-extrabold text-brand-700 hover:text-brand-950"
+            >
+              View All
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          }
+        >
+          <div className="space-y-3">
+            {myExams.slice(0, 4).map((exam) => {
+              const submitted = mySubmissions.find(
+                (sub) => sub.examId === exam.id
+              );
+              return (
+                <div
+                  key={exam.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-brand-100 bg-surface-pearl p-4"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[10px] font-extrabold text-brand-900">
+                        {exam.subjectCode}
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${
+                          exam.status === "live"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : exam.status === "scheduled"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-slate-100 text-slate-700"
+                        }`}
+                      >
+                        {exam.status}
                       </span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-pill bg-brand-100">
-                      <div
-                        className="h-full rounded-pill bg-brand-600 transition-all"
-                        style={{ width: `${sub.masteryPercent}%` }}
-                      />
-                    </div>
+                    <p className="font-display text-sm sm:text-base font-extrabold text-brand-950">
+                      {exam.title}
+                    </p>
+                    <p className="flex flex-wrap items-center gap-3 text-xs font-medium text-ink-secondary">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-brand-500" />
+                        {exam.durationMinutes} mins · {exam.totalMarks} marks
+                      </span>
+                      <span>{exam.scheduledFor}</span>
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Recent Results Snapshot */}
-            <div className="surface-gloss-card p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="font-display text-base font-extrabold text-brand-950">
-                  Recent Submissions
-                </h2>
+                  <div>
+                    {submitted ? (
+                      <Link
+                        href="/student/exams"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-extrabold text-emerald-800"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Submitted
+                      </Link>
+                    ) : exam.status === "live" ? (
+                      <Link
+                        href={`/exam/${exam.id}`}
+                        className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue transition-colors"
+                      >
+                        <Play className="h-3.5 w-3.5" />
+                        Start CBT
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center rounded-xl border border-brand-200 bg-white px-3 py-1.5 text-xs font-bold text-brand-700">
+                        {exam.scheduledFor}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </AdminSectionCard>
+
+        <AdminSectionCard
+          title="Quick Study & Class Access"
+          description="Jump straight into your class subjects or self-paced revision."
+        >
+          <div className="space-y-3">
+            {mySubjects.map((subject) => (
+              <div
+                key={subject.id}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-brand-100 bg-white p-3.5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-display text-sm font-extrabold text-brand-950">
+                    {subject.title}
+                  </p>
+                  <p className="truncate text-[11px] font-medium text-ink-secondary">
+                    {subject.code} · {subject.teacherName}
+                  </p>
+                </div>
                 <Link
-                  href="/student/results"
-                  className="font-display text-xs font-extrabold text-brand-600 hover:text-brand-800"
+                  href={`/student/study-mode?subject=${encodeURIComponent(subject.code)}`}
+                  className="cta-surface-secondary shrink-0 rounded-pill px-3.5 py-1.5 font-display text-[11px] font-extrabold transition-colors"
                 >
-                  View All
+                  Practice
                 </Link>
               </div>
-
-              {mySubmissions.length === 0 ? (
-                <p className="text-xs font-medium text-ink-secondary">
-                  No scripts submitted yet this term.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {mySubmissions.slice(0, 3).map((sub) => (
-                    <div
-                      key={sub.id}
-                      className="flex items-center justify-between gap-2 rounded-2xl border border-brand-100 bg-surface-pearl/70 px-3 py-2.5"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate font-display text-xs font-extrabold text-brand-950">
-                          {sub.examTitle}
-                        </p>
-                        <p className="text-[11px] font-medium text-ink-secondary">
-                          {sub.receiptCode} ·{" "}
-                          {sub.gradingStatus === "pending_theory"
-                            ? `Obj ${sub.objectiveScore}/${sub.objectiveMax} (Awaiting theory)`
-                            : `${sub.totalScore}/${sub.totalMax} (${sub.percentage}%)`}
-                        </p>
-                      </div>
-                      <AdminStatusPill
-                        status={
-                          sub.gradingStatus === "pending_theory"
-                            ? "pending"
-                            : "completed"
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            ))}
           </div>
-        </div>
-      </AdminWorkspaceSlab>
+        </AdminSectionCard>
+      </div>
     </div>
   );
 }
-

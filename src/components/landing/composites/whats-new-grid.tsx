@@ -388,7 +388,19 @@ export function WhatsNewCard({
       <div>
         {/* Top Inset Rounded Visual Stage */}
         <Link href={resolvedHref} className="block focus:outline-none">
-          <WhatsNewVisual type={item.visualType} />
+          {item.image ? (
+            <div className="relative h-56 sm:h-60 w-full overflow-hidden rounded-2xl border border-brand-700/60 bg-surface-mist">
+              <Image
+                src={item.image}
+                alt={item.title}
+                fill
+                sizes="(max-width: 1024px) 100vw, 420px"
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <WhatsNewVisual type={item.visualType} />
+          )}
         </Link>
 
         {/* Category + Read Time Pill Row */}

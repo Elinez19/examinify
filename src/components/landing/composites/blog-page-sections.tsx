@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 import {
   BookOpenCheck,
   Calculator,
@@ -217,9 +218,27 @@ export function GoodStuffCatalogSection() {
  */
 function BlogDetailHeroStage({
   type,
+  image,
+  title,
 }: {
   type: WhatsNewItem["visualType"];
+  image?: string;
+  title?: string;
 }) {
+  if (image) {
+    return (
+      <div className="relative mx-auto h-76 sm:h-96 lg:h-[410px] w-full overflow-hidden rounded-card border-2 border-brand-400/40 bg-surface-mist shadow-gloss-float">
+        <Image
+          src={image}
+          alt={title ?? "Examinify feature visual"}
+          fill
+          sizes="(max-width: 1024px) 100vw, 768px"
+          className="object-cover"
+        />
+      </div>
+    );
+  }
+
   if (type === "dashboards") {
     return (
       <div className="relative flex h-76 sm:h-96 lg:h-[410px] w-full items-end justify-center gap-4 sm:gap-6 overflow-hidden rounded-card border-2 border-brand-400/40 bg-brand-950 px-4 sm:px-8 pt-8 shadow-gloss-float select-none">
@@ -489,7 +508,11 @@ export function BlogDetailHeroSection({ article }: { article: WhatsNewItem }) {
 
           {/* Large Featured Hero Visual Stage Framed Inside Bottom of Slab */}
           <Reveal delay={0.3} className="mx-auto mt-10 sm:mt-12 max-w-3xl">
-            <BlogDetailHeroStage type={article.visualType} />
+            <BlogDetailHeroStage
+              type={article.visualType}
+              image={article.image}
+              title={article.title}
+            />
           </Reveal>
         </div>
       </ScaleSlab>

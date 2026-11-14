@@ -125,7 +125,7 @@ export function MobileNavigationMenu({
                 variant="secondary"
                 size="lg"
                 leadingIcon="apple"
-                href="#download"
+                href="/login"
                 onClick={onClose}
                 className="w-full"
               >
@@ -135,7 +135,7 @@ export function MobileNavigationMenu({
                 variant="primary"
                 size="lg"
                 leadingIcon="play"
-                href="#download"
+                href="/login"
                 onClick={onClose}
                 className="w-full"
               >

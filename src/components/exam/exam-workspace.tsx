@@ -192,7 +192,10 @@ export function ExamWorkspace({ examId }: { examId: string }) {
                 Candidate Instructions & Rules
               </h2>
               <ul className="space-y-2.5">
-                {exam.instructions.map((rule, idx) => (
+                {(Array.isArray(exam.instructions)
+                  ? exam.instructions
+                  : exam.instructions.split("\n").filter(Boolean)
+                ).map((rule, idx) => (
                   <li
                     key={idx}
                     className="flex items-start gap-2.5 text-xs sm:text-sm font-medium text-ink-secondary"
@@ -353,7 +356,7 @@ export function ExamWorkspace({ examId }: { examId: string }) {
                 Time Spent
               </span>
               <span className="mt-0.5 block font-display text-xs font-extrabold text-brand-950">
-                {formatClock(sub.timeSpentSeconds)}
+                {formatClock(sub.timeSpentSeconds ?? sub.timeSpentMinutes * 60)}
               </span>
             </div>
             <div className="rounded-2xl border border-brand-100 bg-surface-pearl p-3">
@@ -713,11 +716,13 @@ export function ExamWorkspace({ examId }: { examId: string }) {
                   fontScaleClass
                 )}
               >
-                {currentQ.stem}
+                {currentQ.stem || currentQ.prompt}
               </div>
 
               {/* Answer Input by Question Type */}
-              {(currentQ.type === "mcq" || currentQ.type === "true_false") &&
+              {(currentQ.type === "mcq" ||
+                currentQ.type === "objective" ||
+                currentQ.type === "true_false") &&
                 currentQ.options && (
                   <div className="space-y-2.5 pt-1">
                     {currentQ.options.map((opt) => {
@@ -752,7 +757,7 @@ export function ExamWorkspace({ examId }: { examId: string }) {
                               fontScaleClass
                             )}
                           >
-                            {opt.text}
+                            {opt.text || opt.label}
                           </span>
                         </button>
                       );
@@ -760,7 +765,7 @@ export function ExamWorkspace({ examId }: { examId: string }) {
                   </div>
                 )}
 
-              {currentQ.type === "short_answer" && (
+              {(currentQ.type === "short_answer" || currentQ.type === "fill_blank") && (
                 <div className="space-y-2 pt-1 max-w-md">
                   <label className="block font-display text-xs font-extrabold text-brand-700">
                     Your Short Answer

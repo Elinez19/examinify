@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F6F9FF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <linearGradient id="porcelain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#DBE8FF"/>
+    </linearGradient>
+    <linearGradient id="cobalt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5CE1FF"/>
+      <stop offset="40%" stop-color="#0E46F5"/>
+      <stop offset="100%" stop-color="#0A2999"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="60%" stop-color="#FFB800"/>
+      <stop offset="100%" stop-color="#CC8800"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#05113D" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <rect width="400" height="400" rx="56" fill="url(#bg)"/>
+  <g filter="url(#s)">
+    <!-- Live Workspace Board -->
+    <rect x="75" y="100" width="250" height="205" rx="30" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="6"/>
+    <rect x="98" y="124" width="204" height="86" rx="20" fill="url(#cobalt)"/>
+    <!-- Live Signal Wave Rings -->
+    <circle cx="150" cy="167" r="22" fill="#00C47E" stroke="#FFFFFF" stroke-width="4"/>
+    <path d="M142 167 L157 167 M151 159 L159 167 L151 175" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="188" y="152" width="94" height="12" rx="6" fill="#FFFFFF" opacity="0.92"/>
+    <rect x="188" y="174" width="66" height="10" rx="5" fill="#5CE1FF"/>
+
+    <!-- Share Link Pill + Go Live Toggle -->
+    <rect x="98" y="230" width="136" height="44" rx="22" fill="#EDF3FF"/>
+    <rect x="116" y="246" width="100" height="12" rx="6" fill="#0E46F5" opacity="0.28"/>
+
+    <rect x="244" y="230" width="58" height="44" rx="22" fill="url(#gold)"/>
+    <circle cx="282" cy="252" r="14" fill="#FFFFFF"/>
+
+    <!-- Floating Rocket / Launch Badge -->
+    <circle cx="298" cy="112" r="38" fill="url(#porcelain)" stroke="#FFFFFF" stroke-width="5"/>
+    <circle cx="298" cy="112" r="28" fill="#05113D"/>
+    <path d="M286 122 L298 96 L310 122 L298 115 Z" fill="#FFB800"/>
+  </g>
+</svg>

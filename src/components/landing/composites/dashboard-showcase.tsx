@@ -602,7 +602,7 @@ export function DashboardShowcaseSection() {
       <SectionHeader
         tone="on-light"
         headline={appShowcase.headline}
-        highlightWords={["Every", "School"]}
+        highlightWords={["Reliable", "System.", "Zero"]}
         subtitle={appShowcase.subtitle}
       />
 
@@ -625,10 +625,10 @@ export function DashboardShowcaseSection() {
           delay={0.2}
           className="mt-12 flex flex-wrap items-center justify-center gap-4"
         >
-          <CtaButton variant="primary" size="lg" leadingIcon="apple" href="#download">
+          <CtaButton variant="primary" size="lg" leadingIcon="sparkle" trailingArrow href="/login">
             {appShowcase.primaryCta}
           </CtaButton>
-          <CtaButton variant="secondary" size="lg" leadingIcon="play" href="#download">
+          <CtaButton variant="secondary" size="lg" leadingIcon="play" href="#how-it-works">
             {appShowcase.secondaryCta}
           </CtaButton>
         </Reveal>
@@ -678,10 +678,10 @@ export function FannedDashboardsShowcase() {
         delay={0.2}
         className="mt-9 flex flex-wrap items-center justify-center gap-4"
       >
-        <CtaButton variant="secondary" size="lg" leadingIcon="apple" href="#download">
+        <CtaButton variant="secondary" size="lg" leadingIcon="sparkle" trailingArrow href="/login">
           {everythingYouNeed.primaryCta}
         </CtaButton>
-        <CtaButton variant="primary" size="lg" leadingIcon="play" href="#download">
+        <CtaButton variant="primary" size="lg" leadingIcon="play" href="#how-it-works">
           {everythingYouNeed.secondaryCta}
         </CtaButton>
       </Reveal>

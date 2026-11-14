@@ -1,11 +1,5 @@
-import { ArtisansKycWorkspace } from "@/components/admin/composites/users-workspace";
-import { MOCK_ARTISANS } from "@/components/admin/mock-data";
+import { UsersWorkspace } from "@/components/admin/users/users-workspace";
 
-export default function AdminArtisansPage() {
-  return (
-    <ArtisansKycWorkspace
-      initialArtisans={MOCK_ARTISANS}
-      defaultTab="artisans_all"
-    />
-  );
+export default function AdminTeachersPage() {
+  return <UsersWorkspace />;
 }

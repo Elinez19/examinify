@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  Award,
   CheckCircle2,
   Clock,
   FileSearch,
@@ -14,10 +13,11 @@ import {
 import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import { AdminModal } from "@/components/admin/ui/admin-modal";
-import { AdminTextareaField } from "@/components/admin/ui/admin-form-controls";
+import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 import type { ExamSubmission } from "@/data/portal-mock-data";
 import { cn } from "@/lib/utils";
+import { ScriptAppealForm } from "./script-appeal-form";
 
 type ExamFilterTab = "all" | "live" | "scheduled" | "results";
 
@@ -30,6 +30,12 @@ export function StudentExamsWorkspace() {
     React.useState<ExamSubmission | null>(null);
   const [appealReason, setAppealReason] = React.useState("");
   const [appealNotice, setAppealNotice] = React.useState<string | null>(null);
+  const [feedbackDialog, setFeedbackDialog] = React.useState<{
+    variant: "success" | "warning";
+    title: string;
+    description: string;
+  } | null>(null);
+  const appealFormRef = React.useRef<HTMLDivElement | null>(null);
 
   const myExams = store.exams.filter(
     (exam) =>
@@ -50,13 +56,27 @@ export function StudentExamsWorkspace() {
 
   const handleAppealSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!appealTarget || !appealReason.trim()) return;
+    if (!appealTarget) return;
+    if (!appealReason.trim()) {
+      setFeedbackDialog({
+        variant: "warning",
+        title: "Appeal Reason Required",
+        description:
+          "Please describe the question number and marking point you want reviewed.",
+      });
+      return;
+    }
+    const examTitle = appealTarget.examTitle;
     submitAppeal(appealTarget.id, appealReason.trim());
-    setAppealNotice(
-      `Remark appeal submitted for ${appealTarget.examTitle}. Your subject teacher will review it.`
-    );
+    const message = `Remark appeal submitted for ${examTitle}. Your subject teacher will review it.`;
+    setAppealNotice(message);
     setAppealTarget(null);
     setAppealReason("");
+    setFeedbackDialog({
+      variant: "success",
+      title: "Remark Appeal Submitted",
+      description: message,
+    });
   };
 
   return (
@@ -214,10 +234,20 @@ export function StudentExamsWorkspace() {
       )}
 
       {(activeTab === "all" || activeTab === "results") && (
-        <AdminSectionCard
-          title="Submitted Scripts & Published Results"
-          description="Inspect question-by-question feedback or submit a contextual remark appeal."
-        >
+        <div className="space-y-6">
+          <ScriptAppealForm
+            formRef={appealFormRef}
+            target={appealTarget}
+            onClose={() => setAppealTarget(null)}
+            reason={appealReason}
+            setReason={setAppealReason}
+            onSubmit={handleAppealSubmit}
+          />
+
+          <AdminSectionCard
+            title="Submitted Scripts & Published Results"
+            description="Inspect question-by-question feedback or submit an inline remark appeal."
+          >
           {mySubmissions.length === 0 ? (
             <p className="py-6 text-center text-sm font-medium text-ink-secondary">
               You have not submitted any examination scripts yet.
@@ -290,6 +320,12 @@ export function StudentExamsWorkspace() {
                             onClick={() => {
                               setAppealTarget(sub);
                               setAppealReason("");
+                              window.requestAnimationFrame(() => {
+                                appealFormRef.current?.scrollIntoView({
+                                  behavior: "smooth",
+                                  block: "start",
+                                });
+                              });
                             }}
                             className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-extrabold text-amber-900 hover:bg-amber-100 transition-colors cursor-pointer"
                           >
@@ -303,7 +339,8 @@ export function StudentExamsWorkspace() {
               })}
             </div>
           )}
-        </AdminSectionCard>
+          </AdminSectionCard>
+        </div>
       )}
 
       {/* Contextual Script Review Modal */}
@@ -336,13 +373,16 @@ export function StudentExamsWorkspace() {
               {store.questions
                 .filter((question) =>
                   Object.prototype.hasOwnProperty.call(
-                    reviewSubmission.answers,
+                    reviewSubmission.answers ?? {},
                     question.id
                   )
                 )
                 .map((question, idx) => {
-                  const ans = reviewSubmission.answers[question.id];
-                  const theoryEntry = reviewSubmission.theoryScores[question.id];
+                  const ans = reviewSubmission.answers?.[question.id];
+                  const theoryEntry = (
+                    reviewSubmission.theoryScores ??
+                    reviewSubmission.theoryScoresByQuestion
+                  )?.[question.id];
                   return (
                     <div
                       key={question.id}
@@ -383,48 +423,21 @@ export function StudentExamsWorkspace() {
         )}
       </AdminModal>
 
-      {/* Contextual Appeal Modal */}
-      <AdminModal
-        open={Boolean(appealTarget)}
+      <AdminDialogModal
+        open={Boolean(feedbackDialog)}
         onOpenChange={(open) => {
-          if (!open) setAppealTarget(null);
+          if (!open) setFeedbackDialog(null);
         }}
-        eyebrow="Score Clarification"
-        title="Request Script Remark"
-        description={
-          appealTarget
-            ? `Submit a focused remark request for ${appealTarget.examTitle}.`
-            : undefined
+        variant={feedbackDialog?.variant ?? "success"}
+        eyebrow={
+          feedbackDialog?.variant === "warning"
+            ? "Validation"
+            : "Appeal Submitted"
         }
-        size="md"
-      >
-        <form onSubmit={handleAppealSubmit} className="space-y-4">
-          <AdminTextareaField
-            label="Reason for Appeal"
-            value={appealReason}
-            onChange={(event) => setAppealReason(event.target.value)}
-            placeholder="Specify the question number and marking point you would like reviewed..."
-            rows={4}
-            required
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setAppealTarget(null)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 hover:bg-brand-50 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              <Award className="h-3.5 w-3.5" />
-              Submit Appeal
-            </button>
-          </div>
-        </form>
-      </AdminModal>
+        title={feedbackDialog?.title ?? ""}
+        description={feedbackDialog?.description}
+        cancelLabel="Done"
+      />
     </div>
   );
 }

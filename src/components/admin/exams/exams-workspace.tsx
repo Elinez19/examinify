@@ -9,7 +9,6 @@ import {
   Megaphone,
   Play,
   Plus,
-  RefreshCw,
   ShieldAlert,
   ShieldCheck,
   Trash2,
@@ -19,22 +18,28 @@ import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import {
   AdminSearchInput,
   AdminSelectField,
-  AdminTextField,
-  AdminTextareaField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
   AdminTableCell,
   AdminTableHead,
 } from "@/components/admin/ui/admin-data-table";
 import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
-import { AdminModal } from "@/components/admin/ui/admin-modal";
-import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
+import {
+  AdminDialogModal,
+  type ModalVariant,
+} from "@/components/admin/ui/admin-dialog-modal";
 import {
   generateExamPassCode,
   usePortalStore,
 } from "@/hooks/portal/use-portal-store";
 import type { PortalExam } from "@/data/portal-mock-data";
 import { cn } from "@/lib/utils";
+import {
+  ExamScheduleForm,
+  type ExamScheduleFormState,
+} from "./exam-schedule-form";
+import { ExamPasscodeForm } from "./exam-passcode-form";
+import { ProctorBroadcastForm } from "./proctor-broadcast-form";
 
 type AdminExamsTab = "scheduling" | "proctoring";
 
@@ -57,9 +62,19 @@ export function ExamsWorkspace() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("ALL");
 
-  // Schedule/Edit modal
-  const [examModalOpen, setExamModalOpen] = React.useState(false);
-  const [examForm, setExamForm] = React.useState({
+  const examFormRef = React.useRef<HTMLDivElement | null>(null);
+  const pinFormRef = React.useRef<HTMLDivElement | null>(null);
+  const broadcastFormRef = React.useRef<HTMLDivElement | null>(null);
+
+  const scrollToForm = (ref: React.RefObject<HTMLDivElement | null>) => {
+    setTimeout(() => {
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
+
+  // Schedule/Edit inline form
+  const [examFormOpen, setExamFormOpen] = React.useState(false);
+  const [examForm, setExamForm] = React.useState<ExamScheduleFormState>({
     id: "",
     title: "",
     subjectCode: store.subjects[0]?.code ?? "MTH-301",
@@ -67,23 +82,29 @@ export function ExamsWorkspace() {
     scheduledFor: "Tue, Nov 24 · 09:00 AM",
     durationMinutes: 45,
     passCode: "",
-    status: "scheduled" as PortalExam["status"],
+    status: "scheduled",
     proctoringEnabled: true,
     instructions: "Keep your CBT tab focused. Offline sync is active.",
   });
 
-  // Pass code PIN modal
+  // Pass code PIN inline form
   const [pinTarget, setPinTarget] = React.useState<PortalExam | null>(null);
   const [pinDraft, setPinDraft] = React.useState("");
 
-  // Broadcast modal
-  const [broadcastModalOpen, setBroadcastModalOpen] = React.useState(false);
+  // Broadcast inline form
+  const [broadcastFormOpen, setBroadcastFormOpen] = React.useState(false);
   const [broadcastMsg, setBroadcastMsg] = React.useState("");
 
-  // Delete confirmation
+  // Feedback & Delete confirmation modals
+  const [feedbackModal, setFeedbackModal] = React.useState<{
+    variant: ModalVariant;
+    eyebrow: string;
+    title: string;
+    description: string;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<PortalExam | null>(null);
 
-  const openCreateModal = () => {
+  const resetExamForm = () => {
     setExamForm({
       id: "",
       title: "",
@@ -96,10 +117,19 @@ export function ExamsWorkspace() {
       proctoringEnabled: true,
       instructions: "Keep your CBT tab focused. Offline sync is active.",
     });
-    setExamModalOpen(true);
   };
 
-  const openEditModal = (exam: PortalExam) => {
+  const openCreateForm = () => {
+    setActiveTab("scheduling");
+    setPinTarget(null);
+    resetExamForm();
+    setExamFormOpen(true);
+    scrollToForm(examFormRef);
+  };
+
+  const openEditForm = (exam: PortalExam) => {
+    setActiveTab("scheduling");
+    setPinTarget(null);
     setExamForm({
       id: exam.id,
       title: exam.title,
@@ -114,24 +144,36 @@ export function ExamsWorkspace() {
         ? exam.instructions.join("\n")
         : String(exam.instructions || ""),
     });
-    setExamModalOpen(true);
+    setExamFormOpen(true);
+    scrollToForm(examFormRef);
   };
 
-  const handleSaveExam = (e: React.FormEvent) => {
+  const handleSaveExam = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!examForm.title.trim()) return;
+    if (!examForm.title.trim()) {
+      setFeedbackModal({
+        variant: "danger",
+        eyebrow: "Validation Error",
+        title: "Examination Title Required",
+        description: "Please provide a clear title for the examination schedule.",
+      });
+      return;
+    }
+
     const sub = store.subjects.find((s) => s.code === examForm.subjectCode);
     const existing = store.exams.find((item) => item.id === examForm.id);
-    const qIds =
-      existing?.questionIds.length
-        ? existing.questionIds
-        : store.questions
-            .filter((q) => q.subjectCode === examForm.subjectCode)
-            .map((q) => q.id);
+    const qIds = existing?.questionIds.length
+      ? existing.questionIds
+      : store.questions
+          .filter((q) => q.subjectCode === examForm.subjectCode)
+          .map((q) => q.id);
+
+    const savedTitle = examForm.title.trim();
+    const wasEditing = Boolean(examForm.id);
 
     saveExam({
       id: examForm.id || `exam_${Date.now()}`,
-      title: examForm.title.trim(),
+      title: savedTitle,
       subjectCode: examForm.subjectCode,
       subjectTitle: sub?.title ?? examForm.subjectCode,
       classLevel: examForm.classLevel,
@@ -150,7 +192,14 @@ export function ExamsWorkspace() {
         .filter(Boolean),
       questionIds: qIds,
     });
-    setExamModalOpen(false);
+    setExamFormOpen(false);
+    resetExamForm();
+    setFeedbackModal({
+      variant: "success",
+      eyebrow: "Exam Schedule Saved",
+      title: wasEditing ? "Examination Updated" : "Examination Scheduled",
+      description: `"${savedTitle}" has been saved for ${examForm.classLevel}.`,
+    });
   };
 
   const q = searchQuery.trim().toLowerCase();
@@ -191,7 +240,7 @@ export function ExamsWorkspace() {
         action={
           <button
             type="button"
-            onClick={openCreateModal}
+            onClick={openCreateForm}
             className="cta-surface-secondary inline-flex items-center gap-1.5 rounded-pill px-5 py-2.5 font-display text-xs font-extrabold cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -228,490 +277,346 @@ export function ExamsWorkspace() {
       </div>
 
       {activeTab === "scheduling" ? (
-        <AdminSectionCard
-          title="Examination Schedule & Pass Codes"
-          description="Issue 6-digit pass codes / PINs, toggle proctoring rules, or adjust timetable windows."
-        >
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="w-full sm:w-72">
-              <AdminSearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search exam title, code, or PIN..."
+        <div className="space-y-4">
+          <ExamScheduleForm
+            formRef={examFormRef}
+            open={examFormOpen}
+            onOpenChange={setExamFormOpen}
+            formState={examForm}
+            setFormState={setExamForm}
+            subjects={store.subjects}
+            classArms={store.classArms}
+            onReset={resetExamForm}
+            onSubmit={handleSaveExam}
+          />
+
+          <ExamPasscodeForm
+            formRef={pinFormRef}
+            target={pinTarget}
+            pinDraft={pinDraft}
+            setPinDraft={setPinDraft}
+            onGeneratePin={generateExamPassCode}
+            onCancel={() => setPinTarget(null)}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!pinTarget) return;
+              rotateExamPassCode(pinTarget.id, pinDraft);
+              const examTitle = pinTarget.title;
+              setPinTarget(null);
+              setFeedbackModal({
+                variant: "success",
+                eyebrow: "Access PIN Updated",
+                title: "Exam Pass Code Saved",
+                description: `Updated CBT access PIN for "${examTitle}".`,
+              });
+            }}
+          />
+
+          <AdminSectionCard
+            title="Examination Schedule & Pass Codes"
+            description="Issue 6-digit pass codes / PINs, toggle proctoring rules, or adjust timetable windows."
+          >
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="w-full sm:w-72">
+                <AdminSearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Search exam title, code, or PIN..."
+                />
+              </div>
+
+              <AdminSelectField
+                variant="filter"
+                aria-label="Filter status"
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { id: "ALL", label: "All Statuses" },
+                  { id: "live", label: "Live" },
+                  { id: "scheduled", label: "Scheduled" },
+                  { id: "completed", label: "Completed" },
+                  { id: "draft", label: "Draft" },
+                ]}
               />
             </div>
 
-            <AdminSelectField
-              variant="filter"
-              aria-label="Filter status"
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={[
-                { id: "ALL", label: "All Statuses" },
-                { id: "live", label: "Live" },
-                { id: "scheduled", label: "Scheduled" },
-                { id: "completed", label: "Completed" },
-                { id: "draft", label: "Draft" },
-              ]}
-            />
-          </div>
-
-          <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-                <tr>
-                  <AdminTableHead>Examination</AdminTableHead>
-                  <AdminTableHead>Class Arm</AdminTableHead>
-                  <AdminTableHead>Schedule</AdminTableHead>
-                  <AdminTableHead>Pass Code / PIN</AdminTableHead>
-                  <AdminTableHead>Proctoring</AdminTableHead>
-                  <AdminTableHead>Status</AdminTableHead>
-                  <AdminTableHead className="text-right">Actions</AdminTableHead>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-100 bg-white">
-                {filteredExams.map((exam) => (
-                  <tr key={exam.id} className="hover:bg-surface-mist/50 transition-colors">
-                    <AdminTableCell>
-                      <p className="font-extrabold text-brand-950">
-                        {exam.title}
-                      </p>
-                      <p className="text-[11px] font-medium text-ink-secondary">
-                        {exam.subjectCode} · {exam.durationMinutes} mins
-                      </p>
-                    </AdminTableCell>
-                    <AdminTableCell className="font-bold text-brand-900">
-                      {exam.classLevel}
-                    </AdminTableCell>
-                    <AdminTableCell className="font-medium text-ink-primary">
-                      {exam.scheduledFor}
-                    </AdminTableCell>
-                    <AdminTableCell>
-                      <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-brand-100 bg-surface-pearl px-2.5 py-1 font-mono font-extrabold text-brand-950">
-                        <KeyRound className="h-3 w-3 text-brand-600" />
-                        {exam.passCode || "—"}
-                      </span>
-                    </AdminTableCell>
-                    <AdminTableCell>
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
-                          exam.proctoringEnabled
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-slate-100 text-slate-700"
-                        )}
-                      >
-                        <ShieldCheck className="h-3 w-3" />
-                        {exam.proctoringEnabled ? "Enforced" : "Off"}
-                      </span>
-                    </AdminTableCell>
-                    <AdminTableCell>
-                      <span
-                        className={cn(
-                          "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
-                          exam.status === "live"
-                            ? "bg-emerald-100 text-emerald-800"
-                            : exam.status === "scheduled"
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-slate-100 text-slate-700"
-                        )}
-                      >
-                        {exam.status}
-                      </span>
-                    </AdminTableCell>
-                    <AdminTableCell className="text-right">
-                      <AdminActionMenu
-                        ariaLabel={`Manage ${exam.title}`}
-                        items={[
-                          {
-                            id: "pin",
-                            label: "Manage Pass Code / PIN",
-                            icon: <KeyRound className="h-3.5 w-3.5" />,
-                            variant: "primary",
-                            onClick: () => {
-                              setPinDraft(
-                                exam.passCode || generateExamPassCode()
-                              );
-                              setPinTarget(exam);
-                            },
-                          },
-                          {
-                            id: "edit",
-                            label: "Edit Schedule & Rules",
-                            icon: <Edit3 className="h-3.5 w-3.5" />,
-                            onClick: () => openEditModal(exam),
-                          },
-                          {
-                            id: "proctor-toggle",
-                            label: exam.proctoringEnabled
-                              ? "Disable Proctoring"
-                              : "Enable Proctoring",
-                            icon: <ShieldCheck className="h-3.5 w-3.5" />,
-                            onClick: () => toggleExamProctoring(exam.id),
-                          },
-                          {
-                            id: "status-toggle",
-                            label:
-                              exam.status === "live"
-                                ? "Close Live Window"
-                                : "Open Live Window",
-                            icon: <Play className="h-3.5 w-3.5" />,
-                            onClick: () =>
-                              updateExamStatus(
-                                exam.id,
-                                exam.status === "live" ? "completed" : "live"
-                              ),
-                          },
-                          {
-                            id: "delete",
-                            label: "Delete Exam",
-                            icon: <Trash2 className="h-3.5 w-3.5" />,
-                            variant: "danger",
-                            dividerBefore: true,
-                            onClick: () => setDeleteTarget(exam),
-                          },
-                        ]}
-                      />
-                    </AdminTableCell>
+            <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b-2 border-brand-100 bg-surface-pearl">
+                  <tr>
+                    <AdminTableHead>Examination</AdminTableHead>
+                    <AdminTableHead>Class Arm</AdminTableHead>
+                    <AdminTableHead>Schedule</AdminTableHead>
+                    <AdminTableHead>Pass Code / PIN</AdminTableHead>
+                    <AdminTableHead>Proctoring</AdminTableHead>
+                    <AdminTableHead>Status</AdminTableHead>
+                    <AdminTableHead className="text-right">Actions</AdminTableHead>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </AdminSectionCard>
-      ) : (
-        <AdminSectionCard
-          title="Proctoring Telemetry & Live Seats"
-          description="Monitor focus-loss flags, adjust candidate timers, or broadcast school-wide alerts."
-          action={
-            <button
-              type="button"
-              onClick={() => setBroadcastModalOpen(true)}
-              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              <Megaphone className="h-3.5 w-3.5" />
-              Broadcast Alert
-            </button>
-          }
-        >
-          <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-                <tr>
-                  <AdminTableHead>Candidate</AdminTableHead>
-                  <AdminTableHead>Seat</AdminTableHead>
-                  <AdminTableHead>Integrity Switches</AdminTableHead>
-                  <AdminTableHead>Time Remaining</AdminTableHead>
-                  <AdminTableHead>Status</AdminTableHead>
-                  <AdminTableHead className="text-right">Actions</AdminTableHead>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-100 bg-white">
-                {store.liveCandidates.map((cand) => (
-                  <tr key={cand.id} className="hover:bg-surface-mist/50 transition-colors">
-                    <AdminTableCell>
-                      <p className="font-extrabold text-brand-950">
-                        {cand.studentName}
-                      </p>
-                      <p className="text-[11px] font-mono text-ink-secondary">
-                        {cand.admissionNo}
-                      </p>
-                    </AdminTableCell>
-                    <AdminTableCell className="font-mono font-bold text-brand-800">
-                      {cand.seatLabel}
-                    </AdminTableCell>
-                    <AdminTableCell className="font-bold">
-                      {cand.tabSwitchCount} switch(es)
-                    </AdminTableCell>
-                    <AdminTableCell className="font-bold text-brand-900">
-                      {cand.timeRemainingMinutes} mins
-                    </AdminTableCell>
-                    <AdminTableCell>
-                      <span
-                        className={cn(
-                          "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
-                          cand.status === "flagged"
-                            ? "bg-rose-100 text-rose-800"
-                            : cand.status === "active"
+                </thead>
+                <tbody className="divide-y divide-brand-100 bg-white">
+                  {filteredExams.map((exam) => (
+                    <tr
+                      key={exam.id}
+                      className="hover:bg-surface-mist/50 transition-colors"
+                    >
+                      <AdminTableCell>
+                        <p className="font-extrabold text-brand-950">
+                          {exam.title}
+                        </p>
+                        <p className="text-[11px] font-medium text-ink-secondary">
+                          {exam.subjectCode} · {exam.durationMinutes} mins
+                        </p>
+                      </AdminTableCell>
+                      <AdminTableCell className="font-bold text-brand-900">
+                        {exam.classLevel}
+                      </AdminTableCell>
+                      <AdminTableCell className="font-medium text-ink-primary">
+                        {exam.scheduledFor}
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-brand-100 bg-surface-pearl px-2.5 py-1 font-mono font-extrabold text-brand-950">
+                          <KeyRound className="h-3 w-3 text-brand-600" />
+                          {exam.passCode || "—"}
+                        </span>
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
+                            exam.proctoringEnabled
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-slate-100 text-slate-700"
-                        )}
-                      >
-                        {cand.status}
-                      </span>
-                    </AdminTableCell>
-                    <AdminTableCell className="text-right">
-                      <AdminActionMenu
-                        ariaLabel={`Proctor ${cand.studentName}`}
-                        items={[
-                          {
-                            id: "extend",
-                            label: "Grant +5 Mins Extra Time",
-                            icon: <Clock className="h-3.5 w-3.5" />,
-                            disabled: cand.status === "submitted",
-                            onClick: () => extendCandidateTime(cand.id, 5),
-                          },
-                          {
-                            id: "flag",
-                            label:
-                              cand.status === "flagged"
-                                ? "Clear Proctor Flag"
-                                : "Flag Integrity Breach",
-                            icon: <Flag className="h-3.5 w-3.5" />,
-                            onClick: () => flagCandidateSession(cand.id),
-                          },
-                          {
-                            id: "terminate",
-                            label: "Force Submit Session",
-                            icon: <ShieldAlert className="h-3.5 w-3.5" />,
-                            variant: "danger",
-                            dividerBefore: true,
-                            disabled: cand.status === "submitted",
-                            onClick: () => forceSubmitCandidate(cand.id),
-                          },
-                        ]}
-                      />
-                    </AdminTableCell>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </AdminSectionCard>
-      )}
-
-      {/* Contextual Schedule / Edit Exam Modal */}
-      <AdminModal
-        open={examModalOpen}
-        onOpenChange={setExamModalOpen}
-        eyebrow="Exam Scheduler"
-        title={examForm.id ? "Edit Exam Schedule & Proctoring" : "Schedule New Exam"}
-        size="lg"
-      >
-        <form onSubmit={handleSaveExam} className="space-y-4">
-          <AdminTextField
-            label="Examination Title"
-            value={examForm.title}
-            onChange={(e) =>
-              setExamForm((p) => ({ ...p, title: e.target.value }))
-            }
-            placeholder="e.g. JSS 3 Mathematics Final CBT"
-            required
-          />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <AdminSelectField
-              label="Subject"
-              value={examForm.subjectCode}
-              onChange={(val) =>
-                setExamForm((p) => ({ ...p, subjectCode: val }))
-              }
-              options={store.subjects.map((sub) => ({
-                id: sub.code,
-                label: `${sub.title} (${sub.code})`,
-              }))}
-            />
-            <AdminSelectField
-              label="Class Arm"
-              value={examForm.classLevel}
-              onChange={(val) =>
-                setExamForm((p) => ({ ...p, classLevel: val }))
-              }
-              options={store.classArms.map((arm) => ({
-                id: arm.name,
-                label: arm.name,
-              }))}
-            />
-            <AdminTextField
-              label="Duration (mins)"
-              type="number"
-              min={5}
-              value={String(examForm.durationMinutes)}
-              onChange={(e) =>
-                setExamForm((p) => ({
-                  ...p,
-                  durationMinutes: Number(e.target.value) || 30,
-                }))
-              }
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <AdminTextField
-              label="Date & Time Slot"
-              value={examForm.scheduledFor}
-              onChange={(e) =>
-                setExamForm((p) => ({ ...p, scheduledFor: e.target.value }))
-              }
-            />
-            <AdminTextField
-              label="Pass Code / PIN"
-              value={examForm.passCode}
-              onChange={(e) =>
-                setExamForm((p) => ({ ...p, passCode: e.target.value }))
-              }
-              required
-            />
-            <AdminSelectField<PortalExam["status"]>
-              label="Status"
-              value={examForm.status}
-              onChange={(val) => setExamForm((p) => ({ ...p, status: val }))}
-              options={[
-                { id: "scheduled", label: "Scheduled" },
-                { id: "live", label: "Live Now" },
-                { id: "draft", label: "Draft" },
-                { id: "completed", label: "Completed" },
-              ]}
-            />
-          </div>
-
-          <label className="flex items-center gap-2 text-xs font-bold text-brand-900 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={examForm.proctoringEnabled}
-              onChange={(e) =>
-                setExamForm((p) => ({
-                  ...p,
-                  proctoringEnabled: e.target.checked,
-                }))
-              }
-              className="h-4 w-4 accent-brand-700"
-            />
-            Enforce focus-switch proctoring alerts during exam
-          </label>
-
-          <AdminTextareaField
-            label="Candidate Instructions"
-            value={examForm.instructions}
-            onChange={(e) =>
-              setExamForm((p) => ({ ...p, instructions: e.target.value }))
-            }
-            rows={2}
-          />
-
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setExamModalOpen(false)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              Save Schedule
-            </button>
-          </div>
-        </form>
-      </AdminModal>
-
-      {/* Contextual Pass Code / PIN Modal */}
-      <AdminModal
-        open={Boolean(pinTarget)}
-        onOpenChange={(open) => {
-          if (!open) setPinTarget(null);
-        }}
-        eyebrow="Exam Access Control"
-        title={
-          pinTarget ? `Exam Pass Code · ${pinTarget.subjectCode}` : "Exam PIN"
-        }
-        description={pinTarget?.title}
-        size="sm"
-      >
-        {pinTarget && (
-          <form
+                          )}
+                        >
+                          <ShieldCheck className="h-3 w-3" />
+                          {exam.proctoringEnabled ? "Enforced" : "Off"}
+                        </span>
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <span
+                          className={cn(
+                            "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
+                            exam.status === "live"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : exam.status === "scheduled"
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-slate-100 text-slate-700"
+                          )}
+                        >
+                          {exam.status}
+                        </span>
+                      </AdminTableCell>
+                      <AdminTableCell className="text-right">
+                        <AdminActionMenu
+                          ariaLabel={`Manage ${exam.title}`}
+                          items={[
+                            {
+                              id: "pin",
+                              label: "Manage Pass Code / PIN",
+                              icon: <KeyRound className="h-3.5 w-3.5" />,
+                              variant: "primary",
+                              onClick: () => {
+                                setExamFormOpen(false);
+                                setPinDraft(
+                                  exam.passCode || generateExamPassCode()
+                                );
+                                setPinTarget(exam);
+                                scrollToForm(pinFormRef);
+                              },
+                            },
+                            {
+                              id: "edit",
+                              label: "Edit Schedule & Rules",
+                              icon: <Edit3 className="h-3.5 w-3.5" />,
+                              onClick: () => openEditForm(exam),
+                            },
+                            {
+                              id: "proctor-toggle",
+                              label: exam.proctoringEnabled
+                                ? "Disable Proctoring"
+                                : "Enable Proctoring",
+                              icon: <ShieldCheck className="h-3.5 w-3.5" />,
+                              onClick: () => toggleExamProctoring(exam.id),
+                            },
+                            {
+                              id: "status-toggle",
+                              label:
+                                exam.status === "live"
+                                  ? "Close Live Window"
+                                  : "Open Live Window",
+                              icon: <Play className="h-3.5 w-3.5" />,
+                              onClick: () =>
+                                updateExamStatus(
+                                  exam.id,
+                                  exam.status === "live" ? "completed" : "live"
+                                ),
+                            },
+                            {
+                              id: "delete",
+                              label: "Delete Exam",
+                              icon: <Trash2 className="h-3.5 w-3.5" />,
+                              variant: "danger",
+                              dividerBefore: true,
+                              onClick: () => setDeleteTarget(exam),
+                            },
+                          ]}
+                        />
+                      </AdminTableCell>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </AdminSectionCard>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <ProctorBroadcastForm
+            formRef={broadcastFormRef}
+            open={broadcastFormOpen}
+            onOpenChange={setBroadcastFormOpen}
+            message={broadcastMsg}
+            setMessage={setBroadcastMsg}
             onSubmit={(e) => {
               e.preventDefault();
-              rotateExamPassCode(pinTarget.id, pinDraft);
-              setPinTarget(null);
+              if (!broadcastMsg.trim()) return;
+              const liveExamId =
+                store.exams.find((ex) => ex.status === "live")?.id ??
+                store.exams[0]?.id ??
+                "exam_mth_midterm";
+              sendBroadcast(liveExamId, broadcastMsg.trim(), "warning");
+              setBroadcastMsg("");
+              setBroadcastFormOpen(false);
+              setFeedbackModal({
+                variant: "success",
+                eyebrow: "Broadcast Delivered",
+                title: "Proctoring Notice Sent",
+                description:
+                  "Your announcement has been pushed to all active candidate exam sessions.",
+              });
             }}
-            className="space-y-4"
-          >
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <AdminTextField
-                  label="6-Digit Exam Pass Code / PIN"
-                  value={pinDraft}
-                  onChange={(e) => setPinDraft(e.target.value)}
-                  required
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setPinDraft(generateExamPassCode())}
-                className="cta-surface-secondary inline-flex h-10 items-center gap-1.5 rounded-xl px-3 font-display text-xs font-extrabold cursor-pointer"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Regenerate
-              </button>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setPinTarget(null)}
-                className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-              >
-                Save Pass Code
-              </button>
-            </div>
-          </form>
-        )}
-      </AdminModal>
-
-      {/* Contextual Proctor Broadcast Modal */}
-      <AdminModal
-        open={broadcastModalOpen}
-        onOpenChange={setBroadcastModalOpen}
-        eyebrow="School Proctoring Notice"
-        title="Send Proctoring Broadcast"
-        size="sm"
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!broadcastMsg.trim()) return;
-            const liveExamId =
-              store.exams.find((ex) => ex.status === "live")?.id ??
-              store.exams[0]?.id ??
-              "exam_mth_midterm";
-            sendBroadcast(liveExamId, broadcastMsg.trim(), "warning");
-            setBroadcastMsg("");
-            setBroadcastModalOpen(false);
-          }}
-          className="space-y-4"
-        >
-          <AdminTextareaField
-            label="Proctor Notice"
-            value={broadcastMsg}
-            onChange={(e) => setBroadcastMsg(e.target.value)}
-            placeholder="e.g. All candidates remain seated during sync..."
-            rows={3}
-            required
           />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setBroadcastModalOpen(false)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              Broadcast Now
-            </button>
-          </div>
-        </form>
-      </AdminModal>
+
+          <AdminSectionCard
+            title="Proctoring Telemetry & Live Seats"
+            description="Monitor focus-loss flags, adjust candidate timers, or broadcast school-wide alerts."
+            action={
+              <button
+                type="button"
+                onClick={() => {
+                  setBroadcastFormOpen(true);
+                  scrollToForm(broadcastFormRef);
+                }}
+                className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+              >
+                <Megaphone className="h-3.5 w-3.5" />
+                Broadcast Alert
+              </button>
+            }
+          >
+            <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b-2 border-brand-100 bg-surface-pearl">
+                  <tr>
+                    <AdminTableHead>Candidate</AdminTableHead>
+                    <AdminTableHead>Seat</AdminTableHead>
+                    <AdminTableHead>Integrity Switches</AdminTableHead>
+                    <AdminTableHead>Time Remaining</AdminTableHead>
+                    <AdminTableHead>Status</AdminTableHead>
+                    <AdminTableHead className="text-right">Actions</AdminTableHead>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-brand-100 bg-white">
+                  {store.liveCandidates.map((cand) => (
+                    <tr
+                      key={cand.id}
+                      className="hover:bg-surface-mist/50 transition-colors"
+                    >
+                      <AdminTableCell>
+                        <p className="font-extrabold text-brand-950">
+                          {cand.studentName}
+                        </p>
+                        <p className="text-[11px] font-mono text-ink-secondary">
+                          {cand.admissionNo}
+                        </p>
+                      </AdminTableCell>
+                      <AdminTableCell className="font-mono font-bold text-brand-800">
+                        {cand.seatLabel}
+                      </AdminTableCell>
+                      <AdminTableCell className="font-bold">
+                        {cand.tabSwitchCount} switch(es)
+                      </AdminTableCell>
+                      <AdminTableCell className="font-bold text-brand-900">
+                        {cand.timeRemainingMinutes} mins
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <span
+                          className={cn(
+                            "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
+                            cand.status === "flagged"
+                              ? "bg-rose-100 text-rose-800"
+                              : cand.status === "active"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-slate-100 text-slate-700"
+                          )}
+                        >
+                          {cand.status}
+                        </span>
+                      </AdminTableCell>
+                      <AdminTableCell className="text-right">
+                        <AdminActionMenu
+                          ariaLabel={`Proctor ${cand.studentName}`}
+                          items={[
+                            {
+                              id: "extend",
+                              label: "Grant +5 Mins Extra Time",
+                              icon: <Clock className="h-3.5 w-3.5" />,
+                              disabled: cand.status === "submitted",
+                              onClick: () => extendCandidateTime(cand.id, 5),
+                            },
+                            {
+                              id: "flag",
+                              label:
+                                cand.status === "flagged"
+                                  ? "Clear Proctor Flag"
+                                  : "Flag Integrity Breach",
+                              icon: <Flag className="h-3.5 w-3.5" />,
+                              onClick: () => flagCandidateSession(cand.id),
+                            },
+                            {
+                              id: "terminate",
+                              label: "Force Submit Session",
+                              icon: <ShieldAlert className="h-3.5 w-3.5" />,
+                              variant: "danger",
+                              dividerBefore: true,
+                              disabled: cand.status === "submitted",
+                              onClick: () => forceSubmitCandidate(cand.id),
+                            },
+                          ]}
+                        />
+                      </AdminTableCell>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </AdminSectionCard>
+        </div>
+      )}
+
+      <AdminDialogModal
+        open={Boolean(feedbackModal)}
+        onOpenChange={(open) => {
+          if (!open) setFeedbackModal(null);
+        }}
+        variant={feedbackModal?.variant ?? "primary"}
+        eyebrow={feedbackModal?.eyebrow}
+        title={feedbackModal?.title ?? ""}
+        description={feedbackModal?.description}
+        confirmLabel="OK"
+        cancelLabel="Close"
+        onConfirm={() => setFeedbackModal(null)}
+      />
 
       <AdminDialogModal
         open={Boolean(deleteTarget)}

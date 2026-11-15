@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  Activity,
   Award,
   CheckCircle2,
   Clock,
@@ -14,7 +13,6 @@ import {
   Megaphone,
   Play,
   Plus,
-  Send,
   ShieldAlert,
   Trash2,
 } from "lucide-react";
@@ -23,8 +21,6 @@ import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import {
   AdminSearchInput,
   AdminSelectField,
-  AdminTextField,
-  AdminTextareaField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
   AdminSortableTableHead,
@@ -33,7 +29,6 @@ import {
   type SortDirection,
 } from "@/components/admin/ui/admin-data-table";
 import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
-import { AdminModal } from "@/components/admin/ui/admin-modal";
 import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 import type {
@@ -42,23 +37,17 @@ import type {
   TheoryScoreEntry,
 } from "@/data/portal-mock-data";
 import { cn } from "@/lib/utils";
+import {
+  TeacherExamBuilderForm,
+  type TeacherExamFormState,
+} from "./teacher-exam-builder-form";
+import { TeacherBroadcastForm } from "./teacher-broadcast-form";
+import { ScriptGradingForm } from "./script-grading-form";
 
 type ExamHubTab = "exams" | "monitor" | "grading" | "broadsheets";
 type ExamSortKey = "title" | "subjectCode" | "classLevel" | "durationMinutes" | "status";
 type MonitorSortKey = "studentName" | "seatLabel" | "progressPercent" | "timeRemainingMinutes" | "status";
 type GradingSortKey = "studentName" | "examTitle" | "objectiveEarned" | "gradingStatus";
-
-interface ExamFormState {
-  id: string;
-  title: string;
-  subjectCode: string;
-  classLevel: string;
-  scheduledFor: string;
-  durationMinutes: number;
-  status: PortalExam["status"];
-  instructions: string;
-  questionIds: string[];
-}
 
 export function TeacherExamsWorkspace() {
   const {
@@ -96,7 +85,17 @@ export function TeacherExamsWorkspace() {
   const [examModalOpen, setExamModalOpen] = React.useState(false);
   const [deleteExamTarget, setDeleteExamTarget] =
     React.useState<PortalExam | null>(null);
-  const [examForm, setExamForm] = React.useState<ExamFormState>({
+  const [feedbackDialog, setFeedbackDialog] = React.useState<{
+    variant: "success" | "danger";
+    title: string;
+    description: string;
+  } | null>(null);
+
+  const examFormRef = React.useRef<HTMLDivElement | null>(null);
+  const broadcastFormRef = React.useRef<HTMLDivElement | null>(null);
+  const gradingFormRef = React.useRef<HTMLDivElement | null>(null);
+
+  const [examForm, setExamForm] = React.useState<TeacherExamFormState>({
     id: "",
     title: "",
     subjectCode: store.subjects[0]?.code ?? "MTH-301",
@@ -168,6 +167,12 @@ export function TeacherExamsWorkspace() {
     }
   };
 
+  const scrollToForm = (ref: React.RefObject<HTMLDivElement | null>) => {
+    window.requestAnimationFrame(() => {
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
   const openCreateExamModal = () => {
     const defaultSubject = store.subjects[0]?.code ?? "MTH-301";
     const defaultQuestionIds = store.questions
@@ -184,7 +189,9 @@ export function TeacherExamsWorkspace() {
       instructions: "Read all instructions carefully before beginning.",
       questionIds: defaultQuestionIds,
     });
+    setActiveTab("exams");
     setExamModalOpen(true);
+    scrollToForm(examFormRef);
   };
 
   const openEditExamModal = (exam: PortalExam) => {
@@ -201,12 +208,23 @@ export function TeacherExamsWorkspace() {
         : String(exam.instructions || ""),
       questionIds: exam.questionIds,
     });
+    setActiveTab("exams");
     setExamModalOpen(true);
+    scrollToForm(examFormRef);
   };
 
   const handleSaveExam = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!examForm.title.trim()) return;
+    if (!examForm.title.trim()) {
+      setFeedbackDialog({
+        variant: "danger",
+        title: "Missing Exam Title",
+        description: "Please enter an examination title before saving.",
+      });
+      return;
+    }
+    const isUpdate = Boolean(examForm.id);
+    const title = examForm.title.trim();
     const subject = store.subjects.find((s) => s.code === examForm.subjectCode);
     const chosenQuestions = store.questions.filter((q) =>
       examForm.questionIds.includes(q.id)
@@ -215,7 +233,7 @@ export function TeacherExamsWorkspace() {
 
     saveExam({
       id: examForm.id || `exam_${Date.now()}`,
-      title: examForm.title.trim(),
+      title,
       subjectCode: examForm.subjectCode,
       subjectTitle: subject?.title ?? examForm.subjectCode,
       classLevel: examForm.classLevel,
@@ -234,6 +252,11 @@ export function TeacherExamsWorkspace() {
       questionIds: examForm.questionIds,
     });
     setExamModalOpen(false);
+    setFeedbackDialog({
+      variant: "success",
+      title: isUpdate ? "Assessment Updated" : "Assessment Created",
+      description: `${title} (${examForm.classLevel}) has been saved to the examination registry.`,
+    });
   };
 
   const openGradingModal = (sub: ExamSubmission) => {
@@ -243,30 +266,52 @@ export function TeacherExamsWorkspace() {
       (q) => q.type === "theory" && (exam?.questionIds.includes(q.id) ?? false)
     );
     for (const q of theoryQuestions) {
-      initialScores[q.id] = sub.theoryScores[q.id] ?? {
-        score: 0,
-        maxScore: q.marks,
-        comment: "",
-      };
+      initialScores[q.id] =
+        (sub.theoryScores ?? sub.theoryScoresByQuestion)?.[q.id] ?? {
+          score: 0,
+          maxScore: q.marks,
+          comment: "",
+        };
     }
     setTheoryInputs(initialScores);
     setOverallFeedback(sub.overallFeedback ?? "");
+    setActiveTab("grading");
     setGradingTarget(sub);
+    scrollToForm(gradingFormRef);
   };
 
   const handleSaveGrading = (event: React.FormEvent) => {
     event.preventDefault();
     if (!gradingTarget) return;
+    const studentName = gradingTarget.studentName;
+    const examTitle = gradingTarget.examTitle;
     gradeSubmission(gradingTarget.id, theoryInputs, overallFeedback.trim(), true);
     setGradingTarget(null);
+    setFeedbackDialog({
+      variant: "success",
+      title: "Result Published",
+      description: `Theory scores and feedback for ${studentName} (${examTitle}) have been saved and published.`,
+    });
   };
 
   const handleBroadcastSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!broadcastMessage.trim() || !broadcastExamId) return;
+    if (!broadcastMessage.trim() || !broadcastExamId) {
+      setFeedbackDialog({
+        variant: "danger",
+        title: "Notice Incomplete",
+        description: "Select a target examination and enter a notice message to broadcast.",
+      });
+      return;
+    }
     sendBroadcast(broadcastExamId, broadcastMessage.trim(), broadcastUrgency);
     setBroadcastMessage("");
     setBroadcastModalOpen(false);
+    setFeedbackDialog({
+      variant: "success",
+      title: "Invigilation Notice Broadcast",
+      description: "Your notice has been delivered to active candidate workstations.",
+    });
   };
 
   const handleExportCsv = () => {
@@ -462,10 +507,24 @@ export function TeacherExamsWorkspace() {
       </div>
 
       {activeTab === "exams" && (
-        <AdminSectionCard
-          title="Assessments Table"
-          description="Sortable, filterable CBT assessments with contextual actions."
-        >
+        <div className="space-y-6">
+          <TeacherExamBuilderForm
+            formRef={examFormRef}
+            open={examModalOpen}
+            onOpenChange={setExamModalOpen}
+            formState={examForm}
+            setFormState={setExamForm}
+            subjects={store.subjects}
+            classArms={store.classArms}
+            questions={store.questions}
+            onReset={openCreateExamModal}
+            onSubmit={handleSaveExam}
+          />
+
+          <AdminSectionCard
+            title="Assessments Table"
+            description="Sortable, filterable CBT assessments with contextual actions."
+          >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="w-full sm:w-72">
               <AdminSearchInput
@@ -610,24 +669,43 @@ export function TeacherExamsWorkspace() {
               </tbody>
             </table>
           </div>
-        </AdminSectionCard>
+          </AdminSectionCard>
+        </div>
       )}
 
       {activeTab === "monitor" && (
-        <AdminSectionCard
-          title="Live Invigilation Monitor"
-          description="Track active workstations, extend candidate timing, and broadcast instructions."
-          action={
-            <button
-              type="button"
-              onClick={() => setBroadcastModalOpen(true)}
-              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              <Megaphone className="h-3.5 w-3.5" />
-              Send Notice
-            </button>
-          }
-        >
+        <div className="space-y-6">
+          <TeacherBroadcastForm
+            formRef={broadcastFormRef}
+            open={broadcastModalOpen}
+            onOpenChange={setBroadcastModalOpen}
+            exams={store.exams}
+            examId={broadcastExamId}
+            setExamId={setBroadcastExamId}
+            urgency={broadcastUrgency}
+            setUrgency={setBroadcastUrgency}
+            message={broadcastMessage}
+            setMessage={setBroadcastMessage}
+            onSubmit={handleBroadcastSubmit}
+          />
+
+          <AdminSectionCard
+            title="Live Invigilation Monitor"
+            description="Track active workstations, extend candidate timing, and broadcast instructions."
+            action={
+              <button
+                type="button"
+                onClick={() => {
+                  setBroadcastModalOpen(true);
+                  scrollToForm(broadcastFormRef);
+                }}
+                className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+              >
+                <Megaphone className="h-3.5 w-3.5" />
+                Send Notice
+              </button>
+            }
+          >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="w-full sm:w-72">
               <AdminSearchInput
@@ -775,15 +853,29 @@ export function TeacherExamsWorkspace() {
               </tbody>
             </table>
           </div>
-        </AdminSectionCard>
+          </AdminSectionCard>
+        </div>
       )}
 
       {activeTab === "grading" && (
-        <AdminSectionCard
-          title="Theory Grading Queue"
-          description="Score subjective answers and publish official results using the contextual grading modal."
-          action={<FileCheck2 className="h-4 w-4 text-brand-500" />}
-        >
+        <div className="space-y-6">
+          <ScriptGradingForm
+            formRef={gradingFormRef}
+            target={gradingTarget}
+            onClose={() => setGradingTarget(null)}
+            questions={store.questions}
+            theoryInputs={theoryInputs}
+            setTheoryInputs={setTheoryInputs}
+            overallFeedback={overallFeedback}
+            setOverallFeedback={setOverallFeedback}
+            onSubmit={handleSaveGrading}
+          />
+
+          <AdminSectionCard
+            title="Theory Grading Queue"
+            description="Score subjective answers and publish official results using the inline grading panel."
+            action={<FileCheck2 className="h-4 w-4 text-brand-500" />}
+          >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="w-full sm:w-72">
               <AdminSearchInput
@@ -898,7 +990,8 @@ export function TeacherExamsWorkspace() {
               </tbody>
             </table>
           </div>
-        </AdminSectionCard>
+          </AdminSectionCard>
+        </div>
       )}
 
       {activeTab === "broadsheets" && (
@@ -1004,307 +1097,6 @@ export function TeacherExamsWorkspace() {
         </AdminSectionCard>
       )}
 
-      {/* Contextual Create / Edit Exam Modal */}
-      <AdminModal
-        open={examModalOpen}
-        onOpenChange={setExamModalOpen}
-        eyebrow="Assessment Builder"
-        title={examForm.id ? "Edit Assessment" : "Create New Exam"}
-        description="Configure assessment details and select question items."
-        size="lg"
-      >
-        <form onSubmit={handleSaveExam} className="space-y-4">
-          <AdminTextField
-            label="Exam Title"
-            value={examForm.title}
-            onChange={(event) =>
-              setExamForm((prev) => ({ ...prev, title: event.target.value }))
-            }
-            placeholder="e.g. JSS 3 Mathematics First Term CBT"
-            required
-          />
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <AdminSelectField
-              label="Subject"
-              value={examForm.subjectCode}
-              onChange={(code) =>
-                setExamForm((prev) => ({
-                  ...prev,
-                  subjectCode: code,
-                  questionIds: store.questions
-                    .filter((q) => q.subjectCode === code)
-                    .map((q) => q.id),
-                }))
-              }
-              options={store.subjects.map((sub) => ({
-                id: sub.code,
-                label: `${sub.title} (${sub.code})`,
-              }))}
-            />
-
-            <AdminSelectField
-              label="Target Class Arm"
-              value={examForm.classLevel}
-              onChange={(val) =>
-                setExamForm((prev) => ({
-                  ...prev,
-                  classLevel: val,
-                }))
-              }
-              options={store.classArms.map((arm) => ({
-                id: arm.name,
-                label: arm.name,
-              }))}
-            />
-
-            <AdminTextField
-              label="Duration (Minutes)"
-              type="number"
-              min={5}
-              max={180}
-              value={String(examForm.durationMinutes)}
-              onChange={(event) =>
-                setExamForm((prev) => ({
-                  ...prev,
-                  durationMinutes: Number(event.target.value) || 30,
-                }))
-              }
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <AdminTextField
-              label="Schedule Label"
-              value={examForm.scheduledFor}
-              onChange={(event) =>
-                setExamForm((prev) => ({
-                  ...prev,
-                  scheduledFor: event.target.value,
-                }))
-              }
-              placeholder="e.g. Fri, Nov 20 · 09:00 AM"
-            />
-            <AdminSelectField<PortalExam["status"]>
-              label="Status"
-              value={examForm.status}
-              onChange={(val) =>
-                setExamForm((prev) => ({
-                  ...prev,
-                  status: val,
-                }))
-              }
-              options={[
-                { id: "scheduled", label: "Scheduled" },
-                { id: "live", label: "Live Now" },
-                { id: "draft", label: "Draft" },
-                { id: "completed", label: "Completed" },
-              ]}
-            />
-          </div>
-
-          <AdminTextareaField
-            label="Candidate Instructions"
-            value={examForm.instructions}
-            onChange={(event) =>
-              setExamForm((prev) => ({
-                ...prev,
-                instructions: event.target.value,
-              }))
-            }
-            rows={2}
-          />
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setExamModalOpen(false)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 hover:bg-brand-50 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              {examForm.id ? "Save Exam" : "Create Exam"}
-            </button>
-          </div>
-        </form>
-      </AdminModal>
-
-      {/* Contextual Broadcast Notice Modal */}
-      <AdminModal
-        open={broadcastModalOpen}
-        onOpenChange={setBroadcastModalOpen}
-        eyebrow="Live Invigilation Notice"
-        title="Send Notice to Active Candidates"
-        size="md"
-      >
-        <form onSubmit={handleBroadcastSubmit} className="space-y-4">
-          <AdminSelectField
-            label="Target Examination"
-            value={broadcastExamId}
-            onChange={setBroadcastExamId}
-            options={store.exams.map((exam) => ({
-              id: exam.id,
-              label: exam.title,
-            }))}
-          />
-
-          <AdminSelectField<"info" | "warning">
-            label="Notice Urgency"
-            value={broadcastUrgency}
-            onChange={setBroadcastUrgency}
-            options={[
-              { id: "info", label: "Standard Instruction" },
-              { id: "warning", label: "Urgent Reminder" },
-            ]}
-          />
-
-          <AdminTextareaField
-            label="Notice Message"
-            value={broadcastMessage}
-            onChange={(event) => setBroadcastMessage(event.target.value)}
-            placeholder="e.g. You have 10 minutes remaining..."
-            rows={3}
-            required
-          />
-
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setBroadcastModalOpen(false)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              <Send className="h-3.5 w-3.5" />
-              Broadcast Notice
-            </button>
-          </div>
-        </form>
-      </AdminModal>
-
-      {/* Contextual Theory Grading Modal */}
-      <AdminModal
-        open={Boolean(gradingTarget)}
-        onOpenChange={(open) => {
-          if (!open) setGradingTarget(null);
-        }}
-        eyebrow={gradingTarget?.admissionNo ?? "Theory Grading"}
-        title={
-          gradingTarget
-            ? `Grade Script · ${gradingTarget.studentName}`
-            : "Grade Script"
-        }
-        description={gradingTarget?.examTitle}
-        size="lg"
-      >
-        {gradingTarget && (
-          <form onSubmit={handleSaveGrading} className="space-y-4">
-            {Object.entries(theoryInputs).length === 0 ? (
-              <p className="rounded-2xl border-2 border-brand-100 bg-surface-pearl p-4 text-xs font-medium text-ink-secondary">
-                No subjective theory questions were present on this assessment. You can still attach overall feedback and publish.
-              </p>
-            ) : (
-              Object.entries(theoryInputs).map(([qId, entry]) => {
-                const question = store.questions.find((item) => item.id === qId);
-                const studentResp = gradingTarget.answers[qId];
-                return (
-                  <div
-                    key={qId}
-                    className="rounded-2xl border-2 border-brand-100 bg-surface-pearl p-4 space-y-3"
-                  >
-                    <p className="text-xs font-extrabold text-brand-950">
-                      {question?.prompt ?? "Theory Question"}
-                    </p>
-                    <div className="rounded-xl border border-brand-100 bg-white p-3 text-xs font-medium text-ink-primary">
-                      Candidate answer:{" "}
-                      <span className="font-bold">
-                        {Array.isArray(studentResp)
-                          ? studentResp.join(", ")
-                          : String(studentResp || "No response provided")}
-                      </span>
-                    </div>
-                    {question?.markingGuide && (
-                      <p className="text-[11px] font-semibold text-emerald-800">
-                        Guide: {question.markingGuide}
-                      </p>
-                    )}
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <AdminTextField
-                        label={`Score (Max ${entry.maxScore})`}
-                        type="number"
-                        min={0}
-                        max={entry.maxScore}
-                        value={String(entry.score)}
-                        onChange={(event) => {
-                          const raw = Number(event.target.value) || 0;
-                          const clamped = Math.max(
-                            0,
-                            Math.min(entry.maxScore, raw)
-                          );
-                          setTheoryInputs((prev) => ({
-                            ...prev,
-                            [qId]: { ...prev[qId], score: clamped },
-                          }));
-                        }}
-                      />
-                      <div className="sm:col-span-2">
-                        <AdminTextField
-                          label="Marker Remark"
-                          value={entry.comment}
-                          onChange={(event) =>
-                            setTheoryInputs((prev) => ({
-                              ...prev,
-                              [qId]: {
-                                ...prev[qId],
-                                comment: event.target.value,
-                              },
-                            }))
-                          }
-                          placeholder="Brief marking note..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-
-            <AdminTextareaField
-              label="Overall Script Feedback"
-              value={overallFeedback}
-              onChange={(event) => setOverallFeedback(event.target.value)}
-              rows={2}
-              placeholder="Summary feedback visible to the student..."
-            />
-
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setGradingTarget(null)}
-                className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-              >
-                <Activity className="h-3.5 w-3.5" />
-                Save & Publish Score
-              </button>
-            </div>
-          </form>
-        )}
-      </AdminModal>
-
       <AdminDialogModal
         open={Boolean(deleteExamTarget)}
         onOpenChange={(open) => {
@@ -1324,6 +1116,18 @@ export function TeacherExamsWorkspace() {
             setDeleteExamTarget(null);
           }
         }}
+      />
+
+      <AdminDialogModal
+        open={Boolean(feedbackDialog)}
+        onOpenChange={(open) => {
+          if (!open) setFeedbackDialog(null);
+        }}
+        variant={feedbackDialog?.variant === "danger" ? "warning" : "success"}
+        eyebrow={feedbackDialog?.variant === "danger" ? "Validation" : "Saved"}
+        title={feedbackDialog?.title ?? ""}
+        description={feedbackDialog?.description}
+        cancelLabel="Done"
       />
     </div>
   );

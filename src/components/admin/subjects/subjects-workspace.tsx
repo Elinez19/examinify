@@ -9,33 +9,37 @@ import {
   GraduationCap,
   Layers,
   Plus,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
-import {
-  AdminSearchInput,
-  AdminSelectField,
-  AdminTextField,
-  AdminTextareaField,
-} from "@/components/admin/ui/admin-form-controls";
+import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
   AdminTableCell,
   AdminTableHead,
 } from "@/components/admin/ui/admin-data-table";
 import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
-import { AdminModal } from "@/components/admin/ui/admin-modal";
-import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
+import {
+  AdminDialogModal,
+  type ModalVariant,
+} from "@/components/admin/ui/admin-dialog-modal";
+import {
+  QuestionBankForm,
+  type QuestionBankFormState,
+} from "@/components/forms";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 import type {
-  AcademicSessionTerm,
   ClassArm,
   QuestionItem,
-  QuestionType,
   SubjectEnrollment,
 } from "@/data/portal-mock-data";
 import { cn } from "@/lib/utils";
+import { SubjectForm, type SubjectFormState } from "./subject-form";
+import { ClassArmForm, type ClassArmFormState } from "./class-arm-form";
+import {
+  AcademicTermForm,
+  type AcademicTermFormState,
+} from "./academic-term-form";
 
 type AcademicsTab = "subjects" | "classes" | "terms" | "question_bank";
 
@@ -58,20 +62,31 @@ export function SubjectsWorkspace() {
   const [activeTab, setActiveTab] = React.useState<AcademicsTab>("subjects");
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  // Subject modal
-  const [subjectModalOpen, setSubjectModalOpen] = React.useState(false);
-  const [subjectForm, setSubjectForm] = React.useState({
+  const subjectFormRef = React.useRef<HTMLDivElement | null>(null);
+  const classFormRef = React.useRef<HTMLDivElement | null>(null);
+  const termFormRef = React.useRef<HTMLDivElement | null>(null);
+  const questionFormRef = React.useRef<HTMLDivElement | null>(null);
+
+  const scrollToForm = (ref: React.RefObject<HTMLDivElement | null>) => {
+    setTimeout(() => {
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
+
+  // Subject inline form
+  const [subjectFormOpen, setSubjectFormOpen] = React.useState(false);
+  const [subjectForm, setSubjectForm] = React.useState<SubjectFormState>({
     id: "",
     code: "",
     title: "",
     category: "Core",
-    assignedClasses: [] as string[],
-    assignedTeacherIds: [] as string[],
+    assignedClasses: [],
+    assignedTeacherIds: [],
   });
 
-  // Class arm modal
-  const [classModalOpen, setClassModalOpen] = React.useState(false);
-  const [classForm, setClassForm] = React.useState({
+  // Class arm inline form
+  const [classFormOpen, setClassFormOpen] = React.useState(false);
+  const [classForm, setClassForm] = React.useState<ClassArmFormState>({
     id: "",
     name: "",
     level: "JSS 3",
@@ -80,45 +95,54 @@ export function SubjectsWorkspace() {
     capacity: 40,
   });
 
-  // Term modal
-  const [termModalOpen, setTermModalOpen] = React.useState(false);
-  const [termForm, setTermForm] = React.useState({
+  // Term inline form
+  const [termFormOpen, setTermFormOpen] = React.useState(false);
+  const [termForm, setTermForm] = React.useState<AcademicTermFormState>({
     id: "",
     session: "2026/2027",
-    term: "First Term" as AcademicSessionTerm["term"],
+    term: "First Term",
     startsAt: "Sep 08, 2026",
     endsAt: "Dec 18, 2026",
     isActive: false,
   });
 
-  // Question modal
-  const [questionModalOpen, setQuestionModalOpen] = React.useState(false);
-  const [questionForm, setQuestionForm] = React.useState({
-    id: "",
-    subjectCode: store.subjects[0]?.code ?? "MTH-301",
-    topic: "",
-    classLevel: store.classArms[0]?.name ?? "JSS 3A",
-    type: "objective" as QuestionType,
-    difficulty: "Standard" as QuestionItem["difficulty"],
-    marks: 2,
-    prompt: "",
-    optionA: "",
-    optionB: "",
-    optionC: "",
-    optionD: "",
-    correctOptionId: "a",
-    acceptedAnswersText: "",
-    markingGuide: "",
-  });
+  // Question inline form
+  const [questionFormOpen, setQuestionFormOpen] = React.useState(false);
+  const [questionForm, setQuestionForm] =
+    React.useState<QuestionBankFormState>({
+      id: "",
+      subjectCode: store.subjects[0]?.code ?? "MTH-301",
+      topic: "",
+      classLevel: store.classArms[0]?.name ?? "JSS 3A",
+      type: "objective",
+      difficulty: "Standard",
+      marks: 2,
+      prompt: "",
+      optionA: "",
+      optionB: "",
+      optionC: "",
+      optionD: "",
+      correctOptionId: "a",
+      acceptedAnswersText: "",
+      markingGuide: "",
+      explanation: "",
+    });
 
-  // Delete confirmation
+  // Feedback & Delete confirmation modals
+  const [feedbackModal, setFeedbackModal] = React.useState<{
+    variant: ModalVariant;
+    eyebrow: string;
+    title: string;
+    description: string;
+  } | null>(null);
+
   const [deleteTarget, setDeleteTarget] = React.useState<{
     kind: "subject" | "class" | "term" | "question";
     id: string;
     label: string;
   } | null>(null);
 
-  const openAddSubject = () => {
+  const resetSubjectForm = () => {
     setSubjectForm({
       id: "",
       code: "",
@@ -127,10 +151,17 @@ export function SubjectsWorkspace() {
       assignedClasses: store.classArms[0] ? [store.classArms[0].name] : [],
       assignedTeacherIds: store.teachers[0] ? [store.teachers[0].id] : [],
     });
-    setSubjectModalOpen(true);
+  };
+
+  const openAddSubject = () => {
+    setActiveTab("subjects");
+    resetSubjectForm();
+    setSubjectFormOpen(true);
+    scrollToForm(subjectFormRef);
   };
 
   const openEditSubject = (sub: SubjectEnrollment) => {
+    setActiveTab("subjects");
     setSubjectForm({
       id: sub.id,
       code: sub.code,
@@ -139,20 +170,33 @@ export function SubjectsWorkspace() {
       assignedClasses: sub.assignedClasses,
       assignedTeacherIds: sub.assignedTeacherIds,
     });
-    setSubjectModalOpen(true);
+    setSubjectFormOpen(true);
+    scrollToForm(subjectFormRef);
   };
 
-  const handleSaveSubject = (e: React.FormEvent) => {
+  const handleSaveSubject = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!subjectForm.code.trim() || !subjectForm.title.trim()) return;
+    if (!subjectForm.code.trim() || !subjectForm.title.trim()) {
+      setFeedbackModal({
+        variant: "danger",
+        eyebrow: "Validation Error",
+        title: "Missing Subject Details",
+        description: "Please provide both a subject code and subject title.",
+      });
+      return;
+    }
+
     const primaryTeacher = store.teachers.find((t) =>
       subjectForm.assignedTeacherIds.includes(t.id)
     );
     const existing = store.subjects.find((s) => s.id === subjectForm.id);
+    const wasEditing = Boolean(subjectForm.id);
+    const title = subjectForm.title.trim();
+
     saveSubject({
       id: subjectForm.id || `sub_${Date.now()}`,
       code: subjectForm.code.trim().toUpperCase(),
-      title: subjectForm.title.trim(),
+      title,
       category: subjectForm.category.trim() || "Core",
       teacherName: primaryTeacher?.name ?? existing?.teacherName ?? "Unassigned",
       assignedClasses: subjectForm.assignedClasses,
@@ -166,10 +210,17 @@ export function SubjectsWorkspace() {
       passRate: existing?.passRate ?? 80,
       status: "active",
     });
-    setSubjectModalOpen(false);
+    setSubjectFormOpen(false);
+    resetSubjectForm();
+    setFeedbackModal({
+      variant: "success",
+      eyebrow: "Curriculum Updated",
+      title: wasEditing ? "Subject Updated" : "Subject Created",
+      description: `"${title}" has been saved with its class and teacher allocations.`,
+    });
   };
 
-  const openAddClassArm = () => {
+  const resetClassArmForm = () => {
     setClassForm({
       id: "",
       name: "",
@@ -178,10 +229,17 @@ export function SubjectsWorkspace() {
       classTeacherId: store.teachers[0]?.id ?? "",
       capacity: 40,
     });
-    setClassModalOpen(true);
+  };
+
+  const openAddClassArm = () => {
+    setActiveTab("classes");
+    resetClassArmForm();
+    setClassFormOpen(true);
+    scrollToForm(classFormRef);
   };
 
   const openEditClassArm = (arm: ClassArm) => {
+    setActiveTab("classes");
     setClassForm({
       id: arm.id,
       name: arm.name,
@@ -190,25 +248,45 @@ export function SubjectsWorkspace() {
       classTeacherId: arm.classTeacherId,
       capacity: arm.capacity,
     });
-    setClassModalOpen(true);
+    setClassFormOpen(true);
+    scrollToForm(classFormRef);
   };
 
-  const handleSaveClassArm = (e: React.FormEvent) => {
+  const handleSaveClassArm = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!classForm.name.trim()) return;
+    if (!classForm.name.trim()) {
+      setFeedbackModal({
+        variant: "danger",
+        eyebrow: "Validation Error",
+        title: "Class Arm Name Required",
+        description: "Please enter a name for the class arm.",
+      });
+      return;
+    }
+
+    const wasEditing = Boolean(classForm.id);
+    const armName = classForm.name.trim();
     saveClassArm({
       id: classForm.id || `arm_${Date.now()}`,
-      name: classForm.name.trim(),
+      name: armName,
       level: classForm.level.trim() || "JSS 3",
       arm: classForm.arm.trim() || "General",
       classTeacherId: classForm.classTeacherId,
       capacity: Number(classForm.capacity) || 40,
       status: "active",
     });
-    setClassModalOpen(false);
+    setClassFormOpen(false);
+    resetClassArmForm();
+    setFeedbackModal({
+      variant: "success",
+      eyebrow: "Class Directory Updated",
+      title: wasEditing ? "Class Arm Updated" : "Class Arm Created",
+      description: `"${armName}" is now configured in the school directory.`,
+    });
   };
 
   const openAddTerm = () => {
+    setActiveTab("terms");
     setTermForm({
       id: "",
       session: "2026/2027",
@@ -217,12 +295,21 @@ export function SubjectsWorkspace() {
       endsAt: "Jul 23, 2027",
       isActive: false,
     });
-    setTermModalOpen(true);
+    setTermFormOpen(true);
+    scrollToForm(termFormRef);
   };
 
-  const handleSaveTerm = (e: React.FormEvent) => {
+  const handleSaveTerm = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!termForm.session.trim()) return;
+    if (!termForm.session.trim()) {
+      setFeedbackModal({
+        variant: "danger",
+        eyebrow: "Validation Error",
+        title: "Session Required",
+        description: "Please enter an academic session (e.g. 2026/2027).",
+      });
+      return;
+    }
     saveAcademicTerm({
       id: termForm.id || `term_${Date.now()}`,
       session: termForm.session.trim(),
@@ -231,10 +318,16 @@ export function SubjectsWorkspace() {
       endsAt: termForm.endsAt.trim(),
       isActive: termForm.isActive,
     });
-    setTermModalOpen(false);
+    setTermFormOpen(false);
+    setFeedbackModal({
+      variant: "success",
+      eyebrow: "Academic Calendar Updated",
+      title: "Session / Term Saved",
+      description: `${termForm.term} · ${termForm.session} has been added to the academic calendar.`,
+    });
   };
 
-  const openAddQuestion = () => {
+  const resetQuestionForm = () => {
     setQuestionForm({
       id: "",
       subjectCode: store.subjects[0]?.code ?? "MTH-301",
@@ -251,11 +344,19 @@ export function SubjectsWorkspace() {
       correctOptionId: "a",
       acceptedAnswersText: "",
       markingGuide: "",
+      explanation: "",
     });
-    setQuestionModalOpen(true);
+  };
+
+  const openAddQuestion = () => {
+    setActiveTab("question_bank");
+    resetQuestionForm();
+    setQuestionFormOpen(true);
+    scrollToForm(questionFormRef);
   };
 
   const openEditQuestion = (q: QuestionItem) => {
+    setActiveTab("question_bank");
     const optMap = new Map((q.options ?? []).map((o) => [o.id, o.label]));
     setQuestionForm({
       id: q.id,
@@ -273,16 +374,28 @@ export function SubjectsWorkspace() {
       correctOptionId: q.correctOptionId ?? "a",
       acceptedAnswersText: (q.acceptedAnswers ?? []).join(", "),
       markingGuide: q.markingGuide ?? "",
+      explanation: q.explanation ?? "",
     });
-    setQuestionModalOpen(true);
+    setQuestionFormOpen(true);
+    scrollToForm(questionFormRef);
   };
 
-  const handleSaveQuestion = (e: React.FormEvent) => {
+  const handleSaveQuestion = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!questionForm.topic.trim() || !questionForm.prompt.trim()) return;
+    if (!questionForm.topic.trim() || !questionForm.prompt.trim()) {
+      setFeedbackModal({
+        variant: "danger",
+        eyebrow: "Validation Error",
+        title: "Incomplete Question Item",
+        description: "Please provide both a topic and question prompt.",
+      });
+      return;
+    }
     const subject = store.subjects.find(
       (s) => s.code === questionForm.subjectCode
     );
+    const wasEditing = Boolean(questionForm.id);
+
     addOrUpdateQuestion({
       id: questionForm.id || `q_${Date.now()}`,
       subjectCode: questionForm.subjectCode,
@@ -295,7 +408,8 @@ export function SubjectsWorkspace() {
       marks: Number(questionForm.marks) || 2,
       prompt: questionForm.prompt.trim(),
       options:
-        questionForm.type === "objective" || questionForm.type === "multi_select"
+        questionForm.type === "objective" ||
+        questionForm.type === "multi_select"
           ? [
               { id: "a", label: questionForm.optionA || "Option A" },
               { id: "b", label: questionForm.optionB || "Option B" },
@@ -316,10 +430,18 @@ export function SubjectsWorkspace() {
           : undefined,
       markingGuide:
         questionForm.type === "theory" ? questionForm.markingGuide : undefined,
+      explanation: questionForm.explanation.trim() || undefined,
       createdBy: "School Administrator",
       updatedAt: "Today",
     });
-    setQuestionModalOpen(false);
+    setQuestionFormOpen(false);
+    resetQuestionForm();
+    setFeedbackModal({
+      variant: "success",
+      eyebrow: "Question Bank Updated",
+      title: wasEditing ? "Question Updated" : "Question Added",
+      description: `"${questionForm.topic.trim()}" has been saved to ${questionForm.subjectCode}.`,
+    });
   };
 
   const q = searchQuery.trim().toLowerCase();
@@ -409,283 +531,340 @@ export function SubjectsWorkspace() {
       </div>
 
       {activeTab === "subjects" && (
-        <AdminSectionCard
-          title="Subjects & Class / Teacher Allocations"
-          description="Assign subjects to classes and teaching faculty via contextual modals."
-          action={
-            <button
-              type="button"
-              onClick={openAddSubject}
-              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Create Subject
-            </button>
-          }
-        >
-          <div className="mb-4 w-full sm:w-72">
-            <AdminSearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search subjects..."
-            />
-          </div>
+        <div className="space-y-4">
+          <SubjectForm
+            formRef={subjectFormRef}
+            open={subjectFormOpen}
+            onOpenChange={setSubjectFormOpen}
+            formState={subjectForm}
+            setFormState={setSubjectForm}
+            classArms={store.classArms}
+            teachers={store.teachers}
+            onReset={resetSubjectForm}
+            onSubmit={handleSaveSubject}
+          />
 
-          <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-                <tr>
-                  <AdminTableHead>Code</AdminTableHead>
-                  <AdminTableHead>Subject Title</AdminTableHead>
-                  <AdminTableHead>Assigned Classes</AdminTableHead>
-                  <AdminTableHead>Assigned Teachers</AdminTableHead>
-                  <AdminTableHead className="text-right">Actions</AdminTableHead>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-100 bg-white">
-                {store.subjects
-                  .filter(
-                    (s) =>
-                      !q ||
-                      s.title.toLowerCase().includes(q) ||
-                      s.code.toLowerCase().includes(q)
-                  )
-                  .map((sub) => (
-                    <tr key={sub.id} className="hover:bg-surface-mist/50 transition-colors">
-                      <AdminTableCell className="font-mono font-extrabold text-brand-900">
-                        {sub.code}
-                      </AdminTableCell>
-                      <AdminTableCell>
-                        <p className="font-extrabold text-brand-950">
-                          {sub.title}
-                        </p>
-                        <p className="text-[11px] text-ink-secondary">
-                          {sub.category}
-                        </p>
-                      </AdminTableCell>
-                      <AdminTableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {sub.assignedClasses.map((c) => (
-                            <span
-                              key={c}
-                              className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-extrabold text-brand-900"
-                            >
-                              {c}
-                            </span>
-                          ))}
-                        </div>
-                      </AdminTableCell>
-                      <AdminTableCell className="font-semibold text-brand-800">
-                        {sub.assignedTeacherIds
-                          .map(
-                            (id) =>
-                              store.teachers.find((t) => t.id === id)?.name ??
-                              sub.teacherName
-                          )
-                          .join(", ") || sub.teacherName}
-                      </AdminTableCell>
-                      <AdminTableCell className="text-right">
-                        <AdminActionMenu
-                          ariaLabel={`Actions for ${sub.title}`}
-                          items={[
-                            {
-                              id: "edit-sub",
-                              label: "Edit & Assign Classes/Teachers",
-                              icon: <Edit3 className="h-3.5 w-3.5" />,
-                              onClick: () => openEditSubject(sub),
-                            },
-                            {
-                              id: "del-sub",
-                              label: "Delete Subject",
-                              icon: <Trash2 className="h-3.5 w-3.5" />,
-                              variant: "danger",
-                              dividerBefore: true,
-                              onClick: () =>
-                                setDeleteTarget({
-                                  kind: "subject",
-                                  id: sub.id,
-                                  label: sub.title,
-                                }),
-                            },
-                          ]}
-                        />
-                      </AdminTableCell>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </AdminSectionCard>
+          <AdminSectionCard
+            title="Subjects & Class / Teacher Allocations"
+            description="Assign subjects to classes and teaching faculty using the inline form above."
+            action={
+              <button
+                type="button"
+                onClick={openAddSubject}
+                className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Create Subject
+              </button>
+            }
+          >
+            <div className="mb-4 w-full sm:w-72">
+              <AdminSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search subjects..."
+              />
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b-2 border-brand-100 bg-surface-pearl">
+                  <tr>
+                    <AdminTableHead>Code</AdminTableHead>
+                    <AdminTableHead>Subject Title</AdminTableHead>
+                    <AdminTableHead>Assigned Classes</AdminTableHead>
+                    <AdminTableHead>Assigned Teachers</AdminTableHead>
+                    <AdminTableHead className="text-right">Actions</AdminTableHead>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-brand-100 bg-white">
+                  {store.subjects
+                    .filter(
+                      (s) =>
+                        !q ||
+                        s.title.toLowerCase().includes(q) ||
+                        s.code.toLowerCase().includes(q)
+                    )
+                    .map((sub) => (
+                      <tr
+                        key={sub.id}
+                        className="hover:bg-surface-mist/50 transition-colors"
+                      >
+                        <AdminTableCell className="font-mono font-extrabold text-brand-900">
+                          {sub.code}
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          <p className="font-extrabold text-brand-950">
+                            {sub.title}
+                          </p>
+                          <p className="text-[11px] text-ink-secondary">
+                            {sub.category}
+                          </p>
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {sub.assignedClasses.map((c) => (
+                              <span
+                                key={c}
+                                className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-extrabold text-brand-900"
+                              >
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        </AdminTableCell>
+                        <AdminTableCell className="font-semibold text-brand-800">
+                          {sub.assignedTeacherIds
+                            .map(
+                              (id) =>
+                                store.teachers.find((t) => t.id === id)?.name ??
+                                sub.teacherName
+                            )
+                            .join(", ") || sub.teacherName}
+                        </AdminTableCell>
+                        <AdminTableCell className="text-right">
+                          <AdminActionMenu
+                            ariaLabel={`Actions for ${sub.title}`}
+                            items={[
+                              {
+                                id: "edit-sub",
+                                label: "Edit & Assign Classes/Teachers",
+                                icon: <Edit3 className="h-3.5 w-3.5" />,
+                                onClick: () => openEditSubject(sub),
+                              },
+                              {
+                                id: "del-sub",
+                                label: "Delete Subject",
+                                icon: <Trash2 className="h-3.5 w-3.5" />,
+                                variant: "danger",
+                                dividerBefore: true,
+                                onClick: () =>
+                                  setDeleteTarget({
+                                    kind: "subject",
+                                    id: sub.id,
+                                    label: sub.title,
+                                  }),
+                              },
+                            ]}
+                          />
+                        </AdminTableCell>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </AdminSectionCard>
+        </div>
       )}
 
       {activeTab === "classes" && (
-        <AdminSectionCard
-          title="Class Arms & Class Teachers"
-          description="Define school arms (e.g. JSS 3A) and assign form teachers."
-          action={
-            <button
-              type="button"
-              onClick={openAddClassArm}
-              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Create Class Arm
-            </button>
-          }
-        >
-          <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-                <tr>
-                  <AdminTableHead>Class Name</AdminTableHead>
-                  <AdminTableHead>Level & Wing</AdminTableHead>
-                  <AdminTableHead>Class Teacher</AdminTableHead>
-                  <AdminTableHead>Enrolled Students</AdminTableHead>
-                  <AdminTableHead className="text-right">Actions</AdminTableHead>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-100 bg-white">
-                {store.classArms.map((arm) => {
-                  const ct = store.teachers.find(
-                    (t) => t.id === arm.classTeacherId
-                  );
-                  const stuCount = store.students.filter(
-                    (s) => s.classLevel === arm.name
-                  ).length;
-                  return (
-                    <tr key={arm.id} className="hover:bg-surface-mist/50 transition-colors">
-                      <AdminTableCell className="font-extrabold text-brand-950">
-                        {arm.name}
-                      </AdminTableCell>
-                      <AdminTableCell>
-                        {arm.level} · {arm.arm}
-                      </AdminTableCell>
-                      <AdminTableCell className="font-semibold text-brand-900">
-                        {ct?.name ?? "Unassigned"}
-                      </AdminTableCell>
-                      <AdminTableCell className="font-bold">
-                        {stuCount} / {arm.capacity} seats
-                      </AdminTableCell>
-                      <AdminTableCell className="text-right">
-                        <AdminActionMenu
-                          ariaLabel={`Actions for ${arm.name}`}
-                          items={[
-                            {
-                              id: "edit-arm",
-                              label: "Edit Class & Teacher",
-                              icon: <Edit3 className="h-3.5 w-3.5" />,
-                              onClick: () => openEditClassArm(arm),
-                            },
-                            {
-                              id: "del-arm",
-                              label: "Remove Class Arm",
-                              icon: <Trash2 className="h-3.5 w-3.5" />,
-                              variant: "danger",
-                              dividerBefore: true,
-                              onClick: () =>
-                                setDeleteTarget({
-                                  kind: "class",
-                                  id: arm.id,
-                                  label: arm.name,
-                                }),
-                            },
-                          ]}
-                        />
-                      </AdminTableCell>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </AdminSectionCard>
+        <div className="space-y-4">
+          <ClassArmForm
+            formRef={classFormRef}
+            open={classFormOpen}
+            onOpenChange={setClassFormOpen}
+            formState={classForm}
+            setFormState={setClassForm}
+            teachers={store.teachers}
+            onReset={resetClassArmForm}
+            onSubmit={handleSaveClassArm}
+          />
+
+          <AdminSectionCard
+            title="Class Arms & Class Teachers"
+            description="Define school arms (e.g. JSS 3A) and assign form teachers."
+            action={
+              <button
+                type="button"
+                onClick={openAddClassArm}
+                className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Create Class Arm
+              </button>
+            }
+          >
+            <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b-2 border-brand-100 bg-surface-pearl">
+                  <tr>
+                    <AdminTableHead>Class Name</AdminTableHead>
+                    <AdminTableHead>Level & Wing</AdminTableHead>
+                    <AdminTableHead>Class Teacher</AdminTableHead>
+                    <AdminTableHead>Enrolled Students</AdminTableHead>
+                    <AdminTableHead className="text-right">Actions</AdminTableHead>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-brand-100 bg-white">
+                  {store.classArms.map((arm) => {
+                    const ct = store.teachers.find(
+                      (t) => t.id === arm.classTeacherId
+                    );
+                    const stuCount = store.students.filter(
+                      (s) => s.classLevel === arm.name
+                    ).length;
+                    return (
+                      <tr
+                        key={arm.id}
+                        className="hover:bg-surface-mist/50 transition-colors"
+                      >
+                        <AdminTableCell className="font-extrabold text-brand-950">
+                          {arm.name}
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          {arm.level} · {arm.arm}
+                        </AdminTableCell>
+                        <AdminTableCell className="font-semibold text-brand-900">
+                          {ct?.name ?? "Unassigned"}
+                        </AdminTableCell>
+                        <AdminTableCell className="font-bold">
+                          {stuCount} / {arm.capacity} seats
+                        </AdminTableCell>
+                        <AdminTableCell className="text-right">
+                          <AdminActionMenu
+                            ariaLabel={`Actions for ${arm.name}`}
+                            items={[
+                              {
+                                id: "edit-arm",
+                                label: "Edit Class & Teacher",
+                                icon: <Edit3 className="h-3.5 w-3.5" />,
+                                onClick: () => openEditClassArm(arm),
+                              },
+                              {
+                                id: "del-arm",
+                                label: "Remove Class Arm",
+                                icon: <Trash2 className="h-3.5 w-3.5" />,
+                                variant: "danger",
+                                dividerBefore: true,
+                                onClick: () =>
+                                  setDeleteTarget({
+                                    kind: "class",
+                                    id: arm.id,
+                                    label: arm.name,
+                                  }),
+                              },
+                            ]}
+                          />
+                        </AdminTableCell>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </AdminSectionCard>
+        </div>
       )}
 
       {activeTab === "terms" && (
-        <AdminSectionCard
-          title="Academic Sessions & Active Term"
-          description="Set the active session and term across Student, Teacher, and Admin portals."
-          action={
-            <button
-              type="button"
-              onClick={openAddTerm}
-              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Session / Term
-            </button>
-          }
-        >
-          <div className="grid gap-3 md:grid-cols-3">
-            {store.academicTerms.map((term) => (
-              <div
-                key={term.id}
-                className={cn(
-                  "flex flex-col justify-between rounded-2xl border p-4",
-                  term.isActive
-                    ? "border-emerald-300 bg-emerald-50/70"
-                    : "border-brand-100 bg-white"
-                )}
+        <div className="space-y-4">
+          <AcademicTermForm
+            formRef={termFormRef}
+            open={termFormOpen}
+            onOpenChange={setTermFormOpen}
+            formState={termForm}
+            setFormState={setTermForm}
+            onSubmit={handleSaveTerm}
+          />
+
+          <AdminSectionCard
+            title="Academic Sessions & Active Term"
+            description="Set the active session and term across Student, Teacher, and Admin portals."
+            action={
+              <button
+                type="button"
+                onClick={openAddTerm}
+                className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
               >
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-xs font-extrabold text-brand-800">
-                      {term.session}
-                    </span>
-                    {term.isActive && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-700 px-2.5 py-0.5 text-[10px] font-extrabold text-white">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Active Term
+                <Plus className="h-3.5 w-3.5" />
+                Add Session / Term
+              </button>
+            }
+          >
+            <div className="grid gap-3 md:grid-cols-3">
+              {store.academicTerms.map((term) => (
+                <div
+                  key={term.id}
+                  className={cn(
+                    "flex flex-col justify-between rounded-2xl border p-4",
+                    term.isActive
+                      ? "border-emerald-300 bg-emerald-50/70"
+                      : "border-brand-100 bg-white"
+                  )}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-xs font-extrabold text-brand-800">
+                        {term.session}
                       </span>
+                      {term.isActive && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-700 px-2.5 py-0.5 text-[10px] font-extrabold text-white">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Active Term
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 font-display text-base font-extrabold text-brand-950">
+                      {term.term}
+                    </p>
+                    <p className="mt-0.5 text-xs font-medium text-ink-secondary">
+                      {term.startsAt} — {term.endsAt}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-brand-100 pt-3">
+                    {term.isActive ? (
+                      <span className="text-xs font-extrabold text-emerald-800">
+                        Currently Active
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setActiveAcademicTerm(term.id)}
+                        className="cta-surface-primary rounded-pill px-3.5 py-1.5 font-display text-[11px] font-extrabold text-ink-on-blue cursor-pointer"
+                      >
+                        Set Active Term
+                      </button>
+                    )}
+
+                    {!term.isActive && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDeleteTarget({
+                            kind: "term",
+                            id: term.id,
+                            label: `${term.term} · ${term.session}`,
+                          })
+                        }
+                        className="text-xs font-bold text-rose-700 hover:underline cursor-pointer"
+                      >
+                        Remove
+                      </button>
                     )}
                   </div>
-                  <p className="mt-2 font-display text-base font-extrabold text-brand-950">
-                    {term.term}
-                  </p>
-                  <p className="mt-0.5 text-xs font-medium text-ink-secondary">
-                    {term.startsAt} — {term.endsAt}
-                  </p>
                 </div>
-
-                <div className="mt-4 flex items-center justify-between gap-2 border-t border-brand-100 pt-3">
-                  {term.isActive ? (
-                    <span className="text-xs font-extrabold text-emerald-800">
-                      Currently Active
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setActiveAcademicTerm(term.id)}
-                      className="cta-surface-primary rounded-pill px-3.5 py-1.5 font-display text-[11px] font-extrabold text-ink-on-blue cursor-pointer"
-                    >
-                      Set Active Term
-                    </button>
-                  )}
-
-                  {!term.isActive && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDeleteTarget({
-                          kind: "term",
-                          id: term.id,
-                          label: `${term.term} · ${term.session}`,
-                        })
-                      }
-                      className="text-xs font-bold text-rose-700 hover:underline cursor-pointer"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </AdminSectionCard>
+              ))}
+            </div>
+          </AdminSectionCard>
+        </div>
       )}
 
       {activeTab === "question_bank" && (
         <div className="space-y-6">
+          <QuestionBankForm
+            formRef={questionFormRef}
+            open={questionFormOpen}
+            onOpenChange={setQuestionFormOpen}
+            eyebrow="Admin Question Bank"
+            formState={questionForm}
+            setFormState={setQuestionForm}
+            subjects={store.subjects}
+            classArms={store.classArms}
+            onReset={resetQuestionForm}
+            onSubmit={handleSaveQuestion}
+          />
+
           <AdminSectionCard
             title="Exam Question Types"
             description="Enable or disable supported CBT item formats school-wide."
@@ -753,7 +932,10 @@ export function SubjectsWorkspace() {
                 </thead>
                 <tbody className="divide-y divide-brand-100 bg-white">
                   {store.questions.map((item) => (
-                    <tr key={item.id} className="hover:bg-surface-mist/50 transition-colors">
+                    <tr
+                      key={item.id}
+                      className="hover:bg-surface-mist/50 transition-colors"
+                    >
                       <AdminTableCell className="max-w-md">
                         <p className="font-extrabold text-brand-950">
                           {item.topic}
@@ -808,396 +990,19 @@ export function SubjectsWorkspace() {
         </div>
       )}
 
-      {/* Contextual Subject Modal */}
-      <AdminModal
-        open={subjectModalOpen}
-        onOpenChange={setSubjectModalOpen}
-        eyebrow="Subject Configuration"
-        title={subjectForm.id ? "Edit Subject & Allocations" : "Create Subject"}
-        size="md"
-      >
-        <form onSubmit={handleSaveSubject} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <AdminTextField
-              label="Code"
-              value={subjectForm.code}
-              onChange={(e) =>
-                setSubjectForm((p) => ({ ...p, code: e.target.value }))
-              }
-              placeholder="PHY-101"
-              required
-            />
-            <div className="sm:col-span-2">
-              <AdminTextField
-                label="Subject Title"
-                value={subjectForm.title}
-                onChange={(e) =>
-                  setSubjectForm((p) => ({ ...p, title: e.target.value }))
-                }
-                placeholder="Physics"
-                required
-              />
-            </div>
-          </div>
-
-          <AdminTextField
-            label="Category"
-            value={subjectForm.category}
-            onChange={(e) =>
-              setSubjectForm((p) => ({ ...p, category: e.target.value }))
-            }
-          />
-
-          <div>
-            <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-              Assign to Class Arms
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {store.classArms.map((arm) => {
-                const selected = subjectForm.assignedClasses.includes(arm.name);
-                return (
-                  <button
-                    key={arm.id}
-                    type="button"
-                    onClick={() =>
-                      setSubjectForm((p) => ({
-                        ...p,
-                        assignedClasses: selected
-                          ? p.assignedClasses.filter((c) => c !== arm.name)
-                          : [...p.assignedClasses, arm.name],
-                      }))
-                    }
-                    className={cn(
-                      "rounded-pill px-3 py-1 font-display text-xs font-extrabold cursor-pointer transition-colors",
-                      selected
-                        ? "cta-surface-primary text-ink-on-blue"
-                        : "border-2 border-brand-100 bg-surface-porcelain text-brand-800 hover:bg-surface-mist"
-                    )}
-                  >
-                    {arm.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-              Assign Subject Teachers
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {store.teachers.map((t) => {
-                const selected = subjectForm.assignedTeacherIds.includes(t.id);
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() =>
-                      setSubjectForm((p) => ({
-                        ...p,
-                        assignedTeacherIds: selected
-                          ? p.assignedTeacherIds.filter((id) => id !== t.id)
-                          : [...p.assignedTeacherIds, t.id],
-                      }))
-                    }
-                    className={cn(
-                      "rounded-full px-3 py-1 text-xs font-extrabold cursor-pointer",
-                      selected
-                        ? "bg-emerald-700 text-white"
-                        : "border border-brand-200 bg-white text-brand-800"
-                    )}
-                  >
-                    {t.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setSubjectModalOpen(false)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              Save Subject
-            </button>
-          </div>
-        </form>
-      </AdminModal>
-
-      {/* Contextual Class Arm Modal */}
-      <AdminModal
-        open={classModalOpen}
-        onOpenChange={setClassModalOpen}
-        eyebrow="Class Setup"
-        title={classForm.id ? "Edit Class Arm" : "Create Class Arm"}
-        size="md"
-      >
-        <form onSubmit={handleSaveClassArm} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <AdminTextField
-              label="Class Arm Name"
-              value={classForm.name}
-              onChange={(e) =>
-                setClassForm((p) => ({ ...p, name: e.target.value }))
-              }
-              placeholder="e.g. SSS 2A"
-              required
-            />
-            <AdminTextField
-              label="Level"
-              value={classForm.level}
-              onChange={(e) =>
-                setClassForm((p) => ({ ...p, level: e.target.value }))
-              }
-              placeholder="SSS 2"
-            />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <AdminTextField
-              label="Arm / Wing"
-              value={classForm.arm}
-              onChange={(e) =>
-                setClassForm((p) => ({ ...p, arm: e.target.value }))
-              }
-            />
-            <AdminTextField
-              label="Seat Capacity"
-              type="number"
-              min={5}
-              value={String(classForm.capacity)}
-              onChange={(e) =>
-                setClassForm((p) => ({
-                  ...p,
-                  capacity: Number(e.target.value) || 30,
-                }))
-              }
-            />
-          </div>
-          <AdminSelectField
-            label="Assign Class Teacher"
-            value={classForm.classTeacherId}
-            onChange={(val) =>
-              setClassForm((p) => ({ ...p, classTeacherId: val }))
-            }
-            options={store.teachers.map((t) => ({
-              id: t.id,
-              label: t.name,
-            }))}
-          />
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setClassModalOpen(false)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              Save Class Arm
-            </button>
-          </div>
-        </form>
-      </AdminModal>
-
-      {/* Contextual Term Modal */}
-      <AdminModal
-        open={termModalOpen}
-        onOpenChange={setTermModalOpen}
-        eyebrow="Academic Calendar"
-        title="Add Session / Term"
-        size="sm"
-      >
-        <form onSubmit={handleSaveTerm} className="space-y-4">
-          <AdminTextField
-            label="Academic Session"
-            value={termForm.session}
-            onChange={(e) =>
-              setTermForm((p) => ({ ...p, session: e.target.value }))
-            }
-            placeholder="2026/2027"
-            required
-          />
-          <AdminSelectField<AcademicSessionTerm["term"]>
-            label="Term"
-            value={termForm.term}
-            onChange={(val) => setTermForm((p) => ({ ...p, term: val }))}
-            options={[
-              { id: "First Term", label: "First Term" },
-              { id: "Second Term", label: "Second Term" },
-              { id: "Third Term", label: "Third Term" },
-            ]}
-          />
-          <div className="grid gap-3 grid-cols-2">
-            <AdminTextField
-              label="Starts"
-              value={termForm.startsAt}
-              onChange={(e) =>
-                setTermForm((p) => ({ ...p, startsAt: e.target.value }))
-              }
-            />
-            <AdminTextField
-              label="Ends"
-              value={termForm.endsAt}
-              onChange={(e) =>
-                setTermForm((p) => ({ ...p, endsAt: e.target.value }))
-              }
-            />
-          </div>
-          <label className="flex items-center gap-2 text-xs font-bold text-brand-900 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={termForm.isActive}
-              onChange={(e) =>
-                setTermForm((p) => ({ ...p, isActive: e.target.checked }))
-              }
-              className="h-4 w-4 accent-brand-700"
-            />
-            Set as active term immediately
-          </label>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setTermModalOpen(false)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              Save Term
-            </button>
-          </div>
-        </form>
-      </AdminModal>
-
-      {/* Contextual Question Modal */}
-      <AdminModal
-        open={questionModalOpen}
-        onOpenChange={setQuestionModalOpen}
-        eyebrow="Admin Question Bank"
-        title={questionForm.id ? "Edit Question Item" : "Add Bank Question"}
-        size="lg"
-      >
-        <form onSubmit={handleSaveQuestion} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <AdminSelectField
-              label="Subject"
-              value={questionForm.subjectCode}
-              onChange={(val) =>
-                setQuestionForm((p) => ({ ...p, subjectCode: val }))
-              }
-              options={store.subjects.map((sub) => ({
-                id: sub.code,
-                label: sub.title,
-              }))}
-            />
-            <AdminSelectField<QuestionType>
-              label="Type"
-              value={questionForm.type}
-              onChange={(val) =>
-                setQuestionForm((p) => ({ ...p, type: val }))
-              }
-              options={[
-                { id: "objective", label: "Objective" },
-                { id: "multi_select", label: "Multi-Select" },
-                { id: "fill_blank", label: "Fill-in-Blank" },
-                { id: "theory", label: "Theory" },
-              ]}
-            />
-            <AdminTextField
-              label="Marks"
-              type="number"
-              min={1}
-              value={String(questionForm.marks)}
-              onChange={(e) =>
-                setQuestionForm((p) => ({
-                  ...p,
-                  marks: Number(e.target.value) || 2,
-                }))
-              }
-            />
-          </div>
-          <AdminTextField
-            label="Topic"
-            value={questionForm.topic}
-            onChange={(e) =>
-              setQuestionForm((p) => ({ ...p, topic: e.target.value }))
-            }
-            required
-          />
-          <AdminTextareaField
-            label="Question Prompt"
-            value={questionForm.prompt}
-            onChange={(e) =>
-              setQuestionForm((p) => ({ ...p, prompt: e.target.value }))
-            }
-            rows={3}
-            required
-          />
-          {(questionForm.type === "objective" ||
-            questionForm.type === "multi_select") && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <AdminTextField
-                label="Option A"
-                value={questionForm.optionA}
-                onChange={(e) =>
-                  setQuestionForm((p) => ({ ...p, optionA: e.target.value }))
-                }
-              />
-              <AdminTextField
-                label="Option B"
-                value={questionForm.optionB}
-                onChange={(e) =>
-                  setQuestionForm((p) => ({ ...p, optionB: e.target.value }))
-                }
-              />
-              <AdminTextField
-                label="Option C"
-                value={questionForm.optionC}
-                onChange={(e) =>
-                  setQuestionForm((p) => ({ ...p, optionC: e.target.value }))
-                }
-              />
-              <AdminTextField
-                label="Option D"
-                value={questionForm.optionD}
-                onChange={(e) =>
-                  setQuestionForm((p) => ({ ...p, optionD: e.target.value }))
-                }
-              />
-            </div>
-          )}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setQuestionModalOpen(false)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Save Question
-            </button>
-          </div>
-        </form>
-      </AdminModal>
+      <AdminDialogModal
+        open={Boolean(feedbackModal)}
+        onOpenChange={(open) => {
+          if (!open) setFeedbackModal(null);
+        }}
+        variant={feedbackModal?.variant ?? "primary"}
+        eyebrow={feedbackModal?.eyebrow}
+        title={feedbackModal?.title ?? ""}
+        description={feedbackModal?.description}
+        confirmLabel="OK"
+        cancelLabel="Close"
+        onConfirm={() => setFeedbackModal(null)}
+      />
 
       <AdminDialogModal
         open={Boolean(deleteTarget)}
@@ -1213,14 +1018,15 @@ export function SubjectsWorkspace() {
         }
         confirmLabel="Confirm Delete"
         onConfirm={() => {
-          if (!deleteTarget) return;
-          if (deleteTarget.kind === "subject") deleteSubject(deleteTarget.id);
-          else if (deleteTarget.kind === "class")
-            deleteClassArm(deleteTarget.id);
-          else if (deleteTarget.kind === "term")
-            deleteAcademicTerm(deleteTarget.id);
-          else deleteQuestion(deleteTarget.id);
-          setDeleteTarget(null);
+          if (deleteTarget) {
+            if (deleteTarget.kind === "subject") deleteSubject(deleteTarget.id);
+            else if (deleteTarget.kind === "class")
+              deleteClassArm(deleteTarget.id);
+            else if (deleteTarget.kind === "term")
+              deleteAcademicTerm(deleteTarget.id);
+            else deleteQuestion(deleteTarget.id);
+            setDeleteTarget(null);
+          }
         }}
       />
     </div>

@@ -2,7 +2,7 @@
 
 import type { RefObject, FormEvent } from "react";
 import { Save, ShieldCheck } from "lucide-react";
-import { AdminModal } from "@/components/admin/ui/admin-modal";
+import { CustomForm } from "@/components/forms/custom-form";
 import {
   AdminSelectPills,
   AdminTextField,
@@ -85,7 +85,7 @@ export function PlatformPolicyForm({
 }: PlatformPolicyFormProps) {
   return (
     <div className="mt-6">
-      <AdminModal
+      <CustomForm
         formRef={formRef}
         eyebrow="Inline Examinify Settings & Policy Form"
         title={
@@ -100,8 +100,10 @@ export function PlatformPolicyForm({
         open={open}
         onOpenChange={onOpenChange}
         savedMessage={savedMessage}
+        onSubmit={onSubmit}
+        formClassName="space-y-5"
+        hideFooter
       >
-        <form onSubmit={onSubmit} className="space-y-5">
           {/* Global Platform Parameters */}
           {!editingId && (
             <div className="space-y-4 pb-4 border-b border-surface-frost">
@@ -235,8 +237,7 @@ export function PlatformPolicyForm({
               </CtaButton>
             </div>
           </div>
-        </form>
-      </AdminModal>
+      </CustomForm>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import type { RefObject, FormEvent } from "react";
 import { Plus, Save } from "lucide-react";
-import { AdminModal } from "@/components/admin/ui/admin-modal";
+import { CustomForm } from "@/components/forms/custom-form";
 import {
   AdminSelectPills,
   AdminTextareaField,
@@ -59,7 +59,7 @@ export function SupportTicketForm({
 }: SupportTicketFormProps) {
   return (
     <div className="mt-6">
-      <AdminModal
+      <CustomForm
         formRef={formRef}
         eyebrow="Inline Support Helpdesk Form"
         title={
@@ -74,8 +74,9 @@ export function SupportTicketForm({
         open={open}
         onOpenChange={onOpenChange}
         savedMessage={savedMessage}
+        onSubmit={onSubmit}
+        hideFooter
       >
-        <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <AdminTextField
               label="Requester Full Name"
@@ -151,8 +152,7 @@ export function SupportTicketForm({
               )}
             </CtaButton>
           </div>
-        </form>
-      </AdminModal>
+      </CustomForm>
     </div>
   );
 }

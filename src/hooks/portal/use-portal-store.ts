@@ -742,10 +742,30 @@ export function usePortalStore() {
             (sum, entry) => sum + entry.score,
             0
           );
+          const totalScore = (sub.objectiveEarned ?? 0) + theoryEarned;
+          const totalMax = (sub.objectiveTotal ?? 0) + (sub.theoryTotal ?? 0);
+          const percentage =
+            totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
+          const grade =
+            percentage >= 80
+              ? "A"
+              : percentage >= 70
+                ? "B"
+                : percentage >= 60
+                  ? "C"
+                  : percentage >= 50
+                    ? "D"
+                    : "F";
           return {
             ...sub,
             theoryScores,
+            theoryScoresByQuestion: theoryScores,
             theoryEarned,
+            theoryScore: theoryEarned,
+            totalScore,
+            totalMax,
+            percentage,
+            grade,
             overallFeedback,
             gradingStatus: publishNow ? "published" : sub.gradingStatus,
             appealStatus:

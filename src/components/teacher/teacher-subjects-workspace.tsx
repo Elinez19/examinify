@@ -13,8 +13,6 @@ import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import {
   AdminSearchInput,
   AdminSelectField,
-  AdminTextField,
-  AdminTextareaField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
   AdminSortableTableHead,
@@ -25,10 +23,10 @@ import {
 import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
 import { AdminModal } from "@/components/admin/ui/admin-modal";
 import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
+import { QuestionBankForm, type QuestionBankFormState } from "@/components/forms";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 import type {
   QuestionItem,
-  QuestionType,
   SubjectEnrollment,
 } from "@/data/portal-mock-data";
 import { cn } from "@/lib/utils";
@@ -36,26 +34,6 @@ import { cn } from "@/lib/utils";
 type SubjectsTab = "subjects" | "questions";
 type SubjectSortKey = "code" | "title" | "questions" | "passRate";
 type QuestionSortKey = "topic" | "subjectCode" | "type" | "difficulty" | "marks";
-
-interface QuestionFormState {
-  id: string;
-  subjectCode: string;
-  topic: string;
-  classLevel: string;
-  type: QuestionType;
-  difficulty: QuestionItem["difficulty"];
-  marks: number;
-  prompt: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctOptionId: string;
-  correctOptionIds: string[];
-  acceptedAnswersText: string;
-  markingGuide: string;
-  explanation: string;
-}
 
 export function TeacherSubjectsWorkspace() {
   const { store, activeSessionTerm, addOrUpdateQuestion, deleteQuestion } =
@@ -78,14 +56,20 @@ export function TeacherSubjectsWorkspace() {
   const [qSortKey, setQSortKey] = React.useState<QuestionSortKey>("subjectCode");
   const [qSortDir, setQSortDir] = React.useState<SortDirection>("asc");
 
-  // Contextual modals
+  // Contextual form & preview dialogs
   const [questionModalOpen, setQuestionModalOpen] = React.useState(false);
   const [previewQuestion, setPreviewQuestion] =
     React.useState<QuestionItem | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<QuestionItem | null>(
     null
   );
-  const [formState, setFormState] = React.useState<QuestionFormState>({
+  const [feedbackDialog, setFeedbackDialog] = React.useState<{
+    variant: "success" | "warning";
+    title: string;
+    description: string;
+  } | null>(null);
+  const questionFormRef = React.useRef<HTMLDivElement | null>(null);
+  const [formState, setFormState] = React.useState<QuestionBankFormState>({
     id: "",
     subjectCode: store.subjects[0]?.code ?? "MTH-301",
     topic: "",
@@ -123,6 +107,15 @@ export function TeacherSubjectsWorkspace() {
     }
   };
 
+  const scrollToQuestionForm = () => {
+    window.requestAnimationFrame(() => {
+      questionFormRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
   const openAddQuestionModal = (defaultSubjectCode?: string) => {
     const code = defaultSubjectCode || store.subjects[0]?.code || "MTH-301";
     setFormState({
@@ -144,7 +137,9 @@ export function TeacherSubjectsWorkspace() {
       markingGuide: "",
       explanation: "",
     });
+    setActiveTab("questions");
     setQuestionModalOpen(true);
+    scrollToQuestionForm();
   };
 
   const openEditQuestionModal = (item: QuestionItem) => {
@@ -168,12 +163,23 @@ export function TeacherSubjectsWorkspace() {
       markingGuide: item.markingGuide ?? "",
       explanation: item.explanation ?? "",
     });
+    setActiveTab("questions");
     setQuestionModalOpen(true);
+    scrollToQuestionForm();
   };
 
   const handleSaveQuestion = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!formState.prompt.trim() || !formState.topic.trim()) return;
+    if (!formState.prompt.trim() || !formState.topic.trim()) {
+      setFeedbackDialog({
+        variant: "warning",
+        title: "Missing Required Details",
+        description:
+          "Please provide both the question topic and prompt before saving.",
+      });
+      return;
+    }
+    const isUpdate = Boolean(formState.id);
 
     const subject =
       store.subjects.find((s) => s.code === formState.subjectCode) ??
@@ -204,7 +210,9 @@ export function TeacherSubjectsWorkspace() {
       correctOptionId:
         formState.type === "objective" ? formState.correctOptionId : undefined,
       correctOptionIds:
-        formState.type === "multi_select" ? formState.correctOptionIds : undefined,
+        formState.type === "multi_select"
+          ? formState.correctOptionIds ?? ["a"]
+          : undefined,
       acceptedAnswers:
         formState.type === "fill_blank"
           ? formState.acceptedAnswersText
@@ -221,6 +229,11 @@ export function TeacherSubjectsWorkspace() {
 
     addOrUpdateQuestion(nextItem);
     setQuestionModalOpen(false);
+    setFeedbackDialog({
+      variant: "success",
+      title: isUpdate ? "Question Updated" : "Question Added",
+      description: `"${nextItem.topic}" (${nextItem.subjectCode}) has been saved to the Question Bank.`,
+    });
   };
 
   const filteredSubjects = React.useMemo(() => {
@@ -495,24 +508,37 @@ export function TeacherSubjectsWorkspace() {
           </div>
         </AdminSectionCard>
       ) : (
-        <AdminSectionCard
-          title="Question Bank Table"
-          description="Sort, filter, preview, edit, or remove questions using contextual modals."
-          action={
-            <button
-              type="button"
-              onClick={() =>
-                openAddQuestionModal(
-                  qSubjectFilter !== "ALL" ? qSubjectFilter : undefined
-                )
-              }
-              className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New Question
-            </button>
-          }
-        >
+        <div className="space-y-6">
+          <QuestionBankForm
+            formRef={questionFormRef}
+            open={questionModalOpen}
+            onOpenChange={setQuestionModalOpen}
+            formState={formState}
+            setFormState={setFormState}
+            subjects={store.subjects}
+            classArms={store.classArms}
+            onReset={() => openAddQuestionModal(formState.subjectCode)}
+            onSubmit={handleSaveQuestion}
+          />
+
+          <AdminSectionCard
+            title="Question Bank Table"
+            description="Sort, filter, preview, edit, or remove questions using the inline form and detail previews."
+            action={
+              <button
+                type="button"
+                onClick={() =>
+                  openAddQuestionModal(
+                    qSubjectFilter !== "ALL" ? qSubjectFilter : undefined
+                  )
+                }
+                className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                New Question
+              </button>
+            }
+          >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="w-full sm:w-72">
               <AdminSearchInput
@@ -666,7 +692,8 @@ export function TeacherSubjectsWorkspace() {
               </tbody>
             </table>
           </div>
-        </AdminSectionCard>
+          </AdminSectionCard>
+        </div>
       )}
 
       {/* Contextual Subject Details Modal */}
@@ -764,229 +791,6 @@ export function TeacherSubjectsWorkspace() {
         )}
       </AdminModal>
 
-      {/* Contextual Add / Edit Question Modal */}
-      <AdminModal
-        open={questionModalOpen}
-        onOpenChange={setQuestionModalOpen}
-        eyebrow="Question Bank Authoring"
-        title={formState.id ? "Edit Question Item" : "Add Question Item"}
-        description="Configure only the fields needed for this CBT question."
-        size="lg"
-      >
-        <form onSubmit={handleSaveQuestion} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <AdminSelectField
-              label="Subject"
-              value={formState.subjectCode}
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  subjectCode: val,
-                }))
-              }
-              options={store.subjects.map((sub) => ({
-                id: sub.code,
-                label: `${sub.title} (${sub.code})`,
-              }))}
-            />
-
-            <AdminSelectField<QuestionType>
-              label="Question Type"
-              value={formState.type}
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  type: val,
-                }))
-              }
-              options={[
-                { id: "objective", label: "Objective" },
-                { id: "multi_select", label: "Multi-Select" },
-                { id: "fill_blank", label: "Fill-in-Blank" },
-                { id: "theory", label: "Theory" },
-              ]}
-            />
-
-            <AdminTextField
-              label="Marks"
-              type="number"
-              min={1}
-              max={50}
-              value={String(formState.marks)}
-              onChange={(event) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  marks: Number(event.target.value) || 1,
-                }))
-              }
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <AdminTextField
-              label="Topic"
-              value={formState.topic}
-              onChange={(event) =>
-                setFormState((prev) => ({ ...prev, topic: event.target.value }))
-              }
-              placeholder="e.g. Linear Equations"
-              required
-            />
-            <AdminSelectField
-              label="Class Arm"
-              value={formState.classLevel}
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  classLevel: val,
-                }))
-              }
-              options={store.classArms.map((arm) => ({
-                id: arm.name,
-                label: arm.name,
-              }))}
-            />
-            <AdminSelectField<QuestionItem["difficulty"]>
-              label="Difficulty"
-              value={formState.difficulty}
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  difficulty: val,
-                }))
-              }
-              options={[
-                { id: "Easy", label: "Easy" },
-                { id: "Standard", label: "Standard" },
-                { id: "Challenge", label: "Challenge" },
-              ]}
-            />
-          </div>
-
-          <AdminTextareaField
-            label="Question Prompt"
-            value={formState.prompt}
-            onChange={(event) =>
-              setFormState((prev) => ({ ...prev, prompt: event.target.value }))
-            }
-            placeholder="Write the full question prompt..."
-            rows={3}
-            required
-          />
-
-          {(formState.type === "objective" ||
-            formState.type === "multi_select") && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <AdminTextField
-                label="Option A"
-                value={formState.optionA}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, optionA: event.target.value }))
-                }
-              />
-              <AdminTextField
-                label="Option B"
-                value={formState.optionB}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, optionB: event.target.value }))
-                }
-              />
-              <AdminTextField
-                label="Option C"
-                value={formState.optionC}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, optionC: event.target.value }))
-                }
-              />
-              <AdminTextField
-                label="Option D"
-                value={formState.optionD}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, optionD: event.target.value }))
-                }
-              />
-            </div>
-          )}
-
-          {formState.type === "objective" && (
-            <AdminSelectField
-              label="Correct Option"
-              className="max-w-xs"
-              value={formState.correctOptionId}
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  correctOptionId: val,
-                }))
-              }
-              options={[
-                { id: "a", label: "Option A" },
-                { id: "b", label: "Option B" },
-                { id: "c", label: "Option C" },
-                { id: "d", label: "Option D" },
-              ]}
-            />
-          )}
-
-          {formState.type === "fill_blank" && (
-            <AdminTextField
-              label="Accepted Answers (comma separated)"
-              value={formState.acceptedAnswersText}
-              onChange={(event) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  acceptedAnswersText: event.target.value,
-                }))
-              }
-              placeholder="e.g. 2000, 2,000"
-            />
-          )}
-
-          {formState.type === "theory" && (
-            <AdminTextareaField
-              label="Marking Guide"
-              value={formState.markingGuide}
-              onChange={(event) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  markingGuide: event.target.value,
-                }))
-              }
-              rows={2}
-              placeholder="Step-by-step mark allocation..."
-            />
-          )}
-
-          <AdminTextField
-            label="Explanation (Optional)"
-            value={formState.explanation}
-            onChange={(event) =>
-              setFormState((prev) => ({
-                ...prev,
-                explanation: event.target.value,
-              }))
-            }
-            placeholder="Displayed during student Study Mode"
-          />
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setQuestionModalOpen(false)}
-              className="rounded-xl border border-brand-200 px-4 py-2 text-xs font-bold text-brand-800 hover:bg-brand-50 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cta-surface-primary rounded-pill px-5 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
-            >
-              {formState.id ? "Save Changes" : "Add Question"}
-            </button>
-          </div>
-        </form>
-      </AdminModal>
-
       <AdminDialogModal
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => {
@@ -1006,6 +810,18 @@ export function TeacherSubjectsWorkspace() {
             setDeleteTarget(null);
           }
         }}
+      />
+
+      <AdminDialogModal
+        open={Boolean(feedbackDialog)}
+        onOpenChange={(open) => {
+          if (!open) setFeedbackDialog(null);
+        }}
+        variant={feedbackDialog?.variant ?? "success"}
+        eyebrow={feedbackDialog?.variant === "warning" ? "Validation" : "Saved"}
+        title={feedbackDialog?.title ?? ""}
+        description={feedbackDialog?.description}
+        cancelLabel="Done"
       />
     </div>
   );

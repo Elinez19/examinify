@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Plus, Save } from "lucide-react";
-import { AdminModal } from "@/components/admin/ui/admin-modal";
+import { CustomForm } from "@/components/forms/custom-form";
 import {
   AdminSelectPills,
   AdminTextField,
@@ -52,7 +52,7 @@ export function PaymentLedgerForm({
   const platformFee = Math.round(gross * 0.1);
 
   return (
-    <AdminModal
+    <CustomForm
       formRef={formRef}
       eyebrow="Inline School Billing & License Form"
       title={
@@ -67,8 +67,9 @@ export function PaymentLedgerForm({
       open={open}
       onOpenChange={onOpenChange}
       savedMessage={savedMessage}
+      onSubmit={onSubmit}
+      hideFooter
     >
-      <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <AdminTextField
             label="School / Payer Name"
@@ -170,8 +171,7 @@ export function PaymentLedgerForm({
             )}
           </CtaButton>
         </div>
-      </form>
-    </AdminModal>
+    </CustomForm>
   );
 }
 

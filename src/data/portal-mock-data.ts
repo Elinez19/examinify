@@ -138,12 +138,23 @@ export type AccountStatus = "active" | "inactive" | "pending";
 export interface StudentProfile {
   id: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   name: string;
   email: string;
+  emailType?: string;
+  alternateEmail?: string;
   phone: string;
+  phoneType?: string;
   admissionNo: string;
   regNo?: string;
+  schoolBranch?: string;
+  sex?: string;
+  country?: string;
+  stateOfOrigin?: string;
+  cityOfResidence?: string;
+  dateOfBirth?: string;
+  entrySession?: string;
   classLevel: string;
   classArmId: string;
   wing: string;
@@ -152,17 +163,42 @@ export interface StudentProfile {
   avatarUrl?: string;
   password: string;
   status: AccountStatus;
+  parentId?: string;
+  parentFirstName?: string;
+  parentMiddleName?: string;
+  parentSurname?: string;
+  parentSex?: string;
+  parentRelationship?: string;
+  parentMaritalStatus?: string;
+  parentCountry?: string;
+  parentState?: string;
 }
 
 export interface TeacherProfile {
   id: string;
+  displayPrefix?: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   name: string;
   email: string;
+  emailType?: string;
+  alternateEmail?: string;
   phone: string;
+  phoneType?: string;
+  alternatePhone?: string;
   staffId: string;
+  schoolBranch?: string;
+  sex?: string;
+  dateOfBirth?: string;
+  maritalStatus?: string;
+  country?: string;
+  stateOfOrigin?: string;
+  cityOfResidence?: string;
   department: string;
+  qualification?: string;
+  employmentType?: string;
+  employmentDate?: string;
   assignedClasses: string[];
   assignedSubjectIds: string[];
   termLabel: string;
@@ -170,22 +206,47 @@ export interface TeacherProfile {
   avatarUrl?: string;
   password: string;
   status: AccountStatus;
+  nextOfKinName?: string;
+  nextOfKinRelationship?: string;
+  nextOfKinPhone?: string;
+  nextOfKinAddress?: string;
 }
 
 export interface StaffProfile {
   id: string;
+  displayPrefix?: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   name: string;
   email: string;
+  emailType?: string;
+  alternateEmail?: string;
   phone: string;
+  phoneType?: string;
+  alternatePhone?: string;
+  staffCode?: string;
+  schoolBranch?: string;
+  sex?: string;
+  dateOfBirth?: string;
+  maritalStatus?: string;
+  country?: string;
+  stateOfOrigin?: string;
+  cityOfResidence?: string;
   roleTitle: string;
+  departmentUnit?: string;
+  employmentType?: string;
+  employmentDate?: string;
   adminScope: "super_admin" | "kyc_moderator" | "dispatch_support";
   permissions: string;
   avatarUrl?: string;
   password: string;
   status: AccountStatus;
   lastActive: string;
+  nextOfKinName?: string;
+  nextOfKinRelationship?: string;
+  nextOfKinPhone?: string;
+  nextOfKinAddress?: string;
 }
 
 export interface SubjectEnrollment {
@@ -1132,6 +1193,24 @@ export function loadPortalStore(): PortalStoreData {
       };
     };
 
+    const normalizeSubmission = (item: ExamSubmission): ExamSubmission => {
+      const theoryScores = item.theoryScores ?? item.theoryScoresByQuestion ?? {};
+      return {
+        ...item,
+        answers: item.answers ?? {},
+        theoryScores,
+        theoryScoresByQuestion: item.theoryScoresByQuestion ?? theoryScores,
+        objectiveEarned: item.objectiveEarned ?? item.objectiveScore ?? 0,
+        objectiveTotal: item.objectiveTotal ?? item.objectiveMax ?? 0,
+        theoryEarned: item.theoryEarned ?? item.theoryScore ?? 0,
+        theoryTotal: item.theoryTotal ?? item.theoryMax ?? 0,
+        timeSpentMinutes: item.timeSpentMinutes ?? 1,
+        tabSwitches: item.tabSwitches ?? item.tabSwitchCount ?? 0,
+        gradingStatus: item.gradingStatus ?? "published",
+        appealStatus: item.appealStatus ?? "none",
+      };
+    };
+
     return {
       student: normalizeStudent({
         ...INITIAL_STUDENT,
@@ -1171,7 +1250,9 @@ export function loadPortalStore(): PortalStoreData {
           : INITIAL_SUBJECTS,
       questions: parsed.questions ?? INITIAL_QUESTIONS,
       exams: parsed.exams ?? INITIAL_EXAMS,
-      submissions: parsed.submissions ?? INITIAL_SUBMISSIONS,
+      submissions: Array.isArray(parsed.submissions)
+        ? parsed.submissions.map(normalizeSubmission)
+        : INITIAL_SUBMISSIONS,
       liveCandidates: parsed.liveCandidates ?? INITIAL_LIVE_CANDIDATES,
       broadcasts: parsed.broadcasts ?? INITIAL_BROADCASTS,
       accessibility: { ...INITIAL_ACCESSIBILITY, ...(parsed.accessibility ?? {}) },

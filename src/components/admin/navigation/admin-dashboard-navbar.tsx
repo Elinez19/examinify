@@ -10,7 +10,7 @@ import { useAdminSearch } from "@/hooks/admin/use-admin-search";
 import { AdminAlertsPopover } from "./admin-alerts-popover";
 import { AdminCommandSearch } from "./admin-command-search";
 import { AdminProfileDropdown } from "./admin-profile-dropdown";
-import { resolveActiveNavItem } from "./constants";
+import { resolveActiveNavContext, resolveActiveNavItem } from "./constants";
 import { NavIcon } from "./nav-icon";
 import type { AdminDashboardNavbarProps } from "./types";
 
@@ -26,6 +26,8 @@ export function AdminDashboardNavbar({
   adminUser,
 }: AdminDashboardNavbarProps) {
   const activeItem = resolveActiveNavItem(pathname);
+  const { parent: activeParent, subItem: activeSubItem } =
+    resolveActiveNavContext(pathname);
 
   const {
     query,
@@ -103,9 +105,24 @@ export function AdminDashboardNavbar({
                   className="h-3 w-3 text-brand-400 shrink-0"
                   aria-hidden="true"
                 />
-                <span className="truncate text-brand-800">
-                  {activeItem.label}
-                </span>
+                {activeSubItem ? (
+                  <>
+                    <span className="truncate text-brand-600">
+                      {activeParent.label}
+                    </span>
+                    <ChevronRight
+                      className="h-3 w-3 text-brand-400 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span className="truncate text-brand-800">
+                      {activeSubItem.label}
+                    </span>
+                  </>
+                ) : (
+                  <span className="truncate text-brand-800">
+                    {activeItem.label}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <h2 className="truncate font-display text-sm sm:text-base font-extrabold tracking-tight text-brand-950">

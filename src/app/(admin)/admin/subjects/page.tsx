@@ -1,5 +1,5 @@
-import { SubjectsWorkspace } from "@/components/admin/subjects/subjects-workspace";
+import { AllSubjectsWorkspace } from "@/components/admin/subjects/all-subjects-workspace";
 
 export default function AdminSubjectsPage() {
-  return <SubjectsWorkspace />;
+  return <AllSubjectsWorkspace />;
 }

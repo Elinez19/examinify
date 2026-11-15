@@ -462,6 +462,73 @@ export function usePortalStore() {
     }));
   }, []);
 
+  const assignSubjectsToClass = useCallback(
+    (
+      className: string,
+      branch: string,
+      assignments: Array<{
+        subjectId: string;
+        assigned: boolean;
+        description?: string;
+      }>
+    ) => {
+      const assignmentMap = new Map(
+        assignments.map((item) => [item.subjectId, item])
+      );
+      updateStore((prev) => ({
+        ...prev,
+        subjects: prev.subjects.map((sub) => {
+          const entry = assignmentMap.get(sub.id);
+          if (!entry) return sub;
+          const nextClasses = entry.assigned
+            ? Array.from(new Set([...sub.assignedClasses, className]))
+            : sub.assignedClasses.filter((cls) => cls !== className);
+          const nextDescriptions = { ...(sub.classDescriptions ?? {}) };
+          if (entry.assigned && entry.description?.trim()) {
+            nextDescriptions[className] = entry.description.trim();
+          } else if (!entry.assigned || !entry.description?.trim()) {
+            delete nextDescriptions[className];
+          }
+          return {
+            ...sub,
+            schoolBranch: branch || sub.schoolBranch,
+            assignedClasses: nextClasses,
+            classDescriptions: nextDescriptions,
+          };
+        }),
+      }));
+    },
+    []
+  );
+
+  const removeSubjectClassAssignments = useCallback(
+    (pairs: Array<{ subjectId: string; className: string }>) => {
+      updateStore((prev) => ({
+        ...prev,
+        subjects: prev.subjects.map((sub) => {
+          const matchingClasses = new Set(
+            pairs
+              .filter((pair) => pair.subjectId === sub.id)
+              .map((pair) => pair.className)
+          );
+          if (matchingClasses.size === 0) return sub;
+          const nextDescriptions = { ...(sub.classDescriptions ?? {}) };
+          for (const cls of matchingClasses) {
+            delete nextDescriptions[cls];
+          }
+          return {
+            ...sub,
+            assignedClasses: sub.assignedClasses.filter(
+              (cls) => !matchingClasses.has(cls)
+            ),
+            classDescriptions: nextDescriptions,
+          };
+        }),
+      }));
+    },
+    []
+  );
+
   // Admin: Question Types
   const saveQuestionType = useCallback((qType: QuestionTypeConfig) => {
     updateStore((prev) => {
@@ -901,6 +968,8 @@ export function usePortalStore() {
     deleteClassArm,
     saveSubject,
     deleteSubject,
+    assignSubjectsToClass,
+    removeSubjectClassAssignments,
     saveQuestionType,
     toggleQuestionType,
     addOrUpdateQuestion,

@@ -9,13 +9,30 @@ export type AdminNavIconType =
   | "reviews"
   | "settings"
   | "support"
-  | "user-management";
+  | "user-management"
+  | "book-open"
+  | "clipboard-list"
+  | "graduation-cap"
+  | "calendar-days"
+  | "layers"
+  | "shield-check"
+  | "user-check"
+  | "shield"
+  | "proctoring";
+
+export interface AdminSubNavItem {
+  readonly label: string;
+  readonly subtitle: string;
+  readonly href: string;
+  readonly icon: AdminNavIconType;
+}
 
 export interface AdminNavItem {
   readonly label: string;
   readonly subtitle: string;
   readonly href: string;
   readonly icon: AdminNavIconType;
+  readonly children?: ReadonlyArray<AdminSubNavItem>;
 }
 
 export interface AdminUserProfile {
@@ -55,4 +72,3 @@ export interface AdminProfileShortcut {
   readonly href: string;
   readonly icon: React.ComponentType<{ className?: string }>;
 }
-

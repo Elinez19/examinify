@@ -6,9 +6,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, Search } from "lucide-react";
 import { motionTokens } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { isAdminLinkActive } from "./constants";
+import { isAdminSubLinkActive, type FlatAdminNavEntry } from "./constants";
 import { NavIcon } from "./nav-icon";
-import type { AdminNavItem } from "./types";
 
 export interface AdminCommandSearchProps {
   query: string;
@@ -16,7 +15,7 @@ export interface AdminCommandSearchProps {
   searchFocused: boolean;
   onFocus: () => void;
   searchRef: React.RefObject<HTMLDivElement | null>;
-  matchingModules: ReadonlyArray<AdminNavItem>;
+  matchingModules: ReadonlyArray<FlatAdminNavEntry>;
   onSelectModule: (href: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   pathname: string | null;
@@ -74,7 +73,7 @@ export function AdminCommandSearch({
             ) : (
               <div className="space-y-1">
                 {matchingModules.map((mod) => {
-                  const isCurrent = isAdminLinkActive(pathname, mod.href);
+                  const isCurrent = isAdminSubLinkActive(pathname, mod.href);
                   return (
                     <Link
                       key={mod.href}
@@ -96,7 +95,7 @@ export function AdminCommandSearch({
                         </span>
                         <div className="min-w-0">
                           <p className="truncate font-display text-xs font-extrabold">
-                            {mod.label}
+                            {mod.parentLabel ? `${mod.parentLabel} · ${mod.label}` : mod.label}
                           </p>
                           <p className="truncate text-[10px] font-semibold text-ink-secondary">
                             {mod.subtitle}

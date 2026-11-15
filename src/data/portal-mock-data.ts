@@ -257,6 +257,8 @@ export interface SubjectEnrollment {
   teacherName: string;
   assignedClasses: string[];
   assignedTeacherIds: string[];
+  classDescriptions?: Record<string, string>;
+  schoolBranch?: string;
   nextExamAt: string;
   topicsCovered: number;
   totalTopics: number;

@@ -2,8 +2,10 @@
 
 import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ADMIN_NAV_ITEMS } from "@/components/admin/navigation/constants";
-import type { AdminNavItem } from "@/components/admin/navigation/types";
+import {
+  FLAT_ADMIN_NAV_ITEMS,
+  type FlatAdminNavEntry,
+} from "@/components/admin/navigation/constants";
 
 export interface UseAdminSearchReturn {
   query: string;
@@ -11,7 +13,7 @@ export interface UseAdminSearchReturn {
   searchFocused: boolean;
   setSearchFocused: (focused: boolean) => void;
   searchRef: React.RefObject<HTMLDivElement | null>;
-  matchingModules: ReadonlyArray<AdminNavItem>;
+  matchingModules: ReadonlyArray<FlatAdminNavEntry>;
   handleKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
   selectModule: (href: string) => void;
   clearSearch: () => void;
@@ -25,11 +27,12 @@ export function useAdminSearch(): UseAdminSearchReturn {
 
   const matchingModules = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return ADMIN_NAV_ITEMS;
-    return ADMIN_NAV_ITEMS.filter(
+    if (!q) return FLAT_ADMIN_NAV_ITEMS;
+    return FLAT_ADMIN_NAV_ITEMS.filter(
       (item) =>
         item.label.toLowerCase().includes(q) ||
-        item.subtitle.toLowerCase().includes(q)
+        item.subtitle.toLowerCase().includes(q) ||
+        (item.parentLabel?.toLowerCase().includes(q) ?? false)
     );
   }, [query]);
 
@@ -62,4 +65,3 @@ export function useAdminSearch(): UseAdminSearchReturn {
     clearSearch,
   };
 }
-

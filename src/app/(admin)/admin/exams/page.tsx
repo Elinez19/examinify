@@ -1,5 +1,5 @@
-import { ExamsWorkspace } from "@/components/admin/exams/exams-workspace";
+import { ExamSchedulingWorkspace } from "@/components/admin/exams/exam-scheduling-workspace";
 
 export default function AdminExamsPage() {
-  return <ExamsWorkspace />;
+  return <ExamSchedulingWorkspace />;
 }

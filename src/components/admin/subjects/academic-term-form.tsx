@@ -24,6 +24,7 @@ export interface AcademicTermFormProps {
   onOpenChange: (open: boolean) => void;
   formState: AcademicTermFormState;
   setFormState: React.Dispatch<React.SetStateAction<AcademicTermFormState>>;
+  onReset?: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 }
 
@@ -33,8 +34,11 @@ export function AcademicTermForm({
   onOpenChange,
   formState,
   setFormState,
+  onReset,
   onSubmit,
 }: AcademicTermFormProps) {
+  const isEditing = Boolean(formState.id);
+
   return (
     <CustomForm
       id="academic-term-inline-form"
@@ -42,11 +46,16 @@ export function AcademicTermForm({
       open={open}
       onOpenChange={onOpenChange}
       eyebrow="Academic Calendar"
-      title="Add Session / Term"
-      description="Create an academic session term and optionally activate it across all portals."
+      title={isEditing ? "Edit Session / Term" : "Add Session / Term"}
+      description="Create or update an academic session term and optionally activate it across all portals."
+      isEditing={isEditing}
+      editingBadgeText={
+        isEditing ? `${formState.term} · ${formState.session}` : undefined
+      }
+      onResetToCreate={onReset}
       onSubmit={onSubmit}
       onCancel={() => onOpenChange(false)}
-      submitLabel="Save Term"
+      submitLabel={isEditing ? "Save Term Changes" : "Save Term"}
       submitIcon={<CalendarDays className="h-3.5 w-3.5" />}
     >
       <FormSection title="Session & Term Window">
@@ -86,14 +95,14 @@ export function AcademicTermForm({
           />
         </div>
 
-        <label className="mt-4 flex items-center gap-2 text-xs font-bold text-brand-900 cursor-pointer">
+        <label className="mt-4 flex items-center gap-2 text-xs font-bold text-brand-950 cursor-pointer">
           <input
             type="checkbox"
             checked={formState.isActive}
             onChange={(e) =>
               setFormState((p) => ({ ...p, isActive: e.target.checked }))
             }
-            className="h-4 w-4 accent-brand-700"
+            className="h-4 w-4 rounded border-brand-300 accent-brand-600"
           />
           Set as active term immediately
         </label>

@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
   ChevronDown,
+  ChevronRight,
   LogOut,
   Menu,
   Search,
@@ -23,12 +24,21 @@ import { motionTokens } from "@/lib/motion";
 import { clearPortalSessionCookie } from "@/lib/portal-auth";
 import { cn } from "@/lib/utils";
 
+export interface PortalSubNavItem {
+  href: string;
+  label: string;
+  description?: string;
+  icon: LucideIcon;
+  badge?: string;
+}
+
 export interface PortalNavItem {
   href: string;
   label: string;
   description?: string;
   icon: LucideIcon;
   badge?: string;
+  children?: PortalSubNavItem[];
 }
 
 export interface PortalAlertItem {
@@ -74,6 +84,9 @@ export function PortalShell({
   const [alertsOpen, setAlertsOpen] = React.useState(false);
   const [profileOpen, setProfileOpen] = React.useState(false);
   const [quickQuery, setQuickQuery] = React.useState("");
+  const [groupOverrides, setGroupOverrides] = React.useState<
+    Record<string, boolean>
+  >({});
 
   const alertsRef = React.useRef<HTMLDivElement>(null);
   const profileRef = React.useRef<HTMLDivElement>(null);
@@ -103,16 +116,72 @@ export function PortalShell({
     };
   }, []);
 
-  const isActiveHref = (href: string) => {
-    const rootHref = role === "student" ? "/student" : "/teacher";
+  const rootHref = role === "student" ? "/student" : "/teacher";
+
+  const isSubLinkActive = (href: string) => {
     if (href === rootHref) {
       return pathname === rootHref;
+    }
+    if (href === "/student/profile") {
+      return pathname === "/student/profile";
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const activeNav =
-    navItems.find((item) => isActiveHref(item.href)) ?? navItems[0];
+  const isNavItemActive = (item: PortalNavItem) => {
+    if (item.children && item.children.length > 0) {
+      return item.children.some((child) => isSubLinkActive(child.href));
+    }
+    return isSubLinkActive(item.href);
+  };
+
+  const activeContext = (() => {
+    for (const item of navItems) {
+      if (item.children && item.children.length > 0) {
+        const sub = item.children.find((child) => isSubLinkActive(child.href));
+        if (sub) return { parent: item, subItem: sub };
+      } else if (isSubLinkActive(item.href)) {
+        return { parent: item, subItem: null };
+      }
+    }
+    return { parent: navItems[0], subItem: null };
+  })();
+
+  const flatSearchItems: Array<{
+    href: string;
+    label: string;
+    parentLabel?: string;
+  }> = navItems.flatMap((item) => {
+    if (item.children && item.children.length > 0) {
+      return item.children.map((child) => ({
+        href: child.href,
+        label: child.label,
+        parentLabel: item.label,
+      }));
+    }
+    return [{ href: item.href, label: item.label }];
+  });
+
+  const hasActiveChildGroup = navItems.some(
+    (item) => Boolean(item.children?.length) && isNavItemActive(item)
+  );
+
+  const isGroupExpanded = (label: string, active: boolean, index: number) => {
+    const override = groupOverrides[label];
+    if (override !== undefined) return override;
+    if (active) return true;
+    const firstGroup = navItems.find((item) => Boolean(item.children?.length));
+    return !hasActiveChildGroup && firstGroup?.label === label && index >= 0;
+  };
+
+  const toggleGroup = (label: string, currentlyExpanded: boolean) => {
+    setGroupOverrides((prev) => ({
+      ...prev,
+      [label]: !currentlyExpanded,
+    }));
+  };
+
+  const activeDisplay = activeContext.subItem ?? activeContext.parent;
 
   const handleSignOut = () => {
     clearPortalSessionCookie();
@@ -129,11 +198,11 @@ export function PortalShell({
       />
       <ToolPattern tone="on-light" />
 
-      <div className="relative z-10 space-y-4">
+      <div className="relative z-10 space-y-3.5">
         {/* Brand Identity */}
-        <div className="flex items-center justify-between gap-2 border-b border-brand-100/80 px-1 pb-2.5">
+        <div className="flex items-center justify-between gap-2 border-b border-brand-100/80 px-1 pb-2">
           <Link
-            href={role === "student" ? "/student" : "/teacher"}
+            href={rootHref}
             onClick={onNavigate}
             className="focus:outline-none"
           >
@@ -148,23 +217,133 @@ export function PortalShell({
           </PillBadge>
         </div>
 
-        {/* Navigation Links */}
+        {/* Menu & Submenu Navigation */}
         <div className="space-y-1.5">
           <p className="px-2.5 font-display text-[10px] font-extrabold uppercase tracking-wider text-brand-600">
-            {roleLabel}
+            Menu
           </p>
 
           <nav aria-label={`${roleLabel} Sidebar`} className="space-y-1">
-            {navItems.map((item) => {
+            {navItems.map((item, idx) => {
               const Icon = item.icon;
-              const active = isActiveHref(item.href);
+              const active = isNavItemActive(item);
+              const hasChildren = Boolean(item.children && item.children.length > 0);
+              const expanded = isGroupExpanded(item.label, active, idx);
+
+              if (hasChildren && item.children) {
+                return (
+                  <div key={item.label} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(item.label, expanded)}
+                      aria-expanded={expanded}
+                      className={cn(
+                        "group relative flex w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-sky",
+                        active
+                          ? "border border-brand-200/80 bg-brand-50 text-brand-800"
+                          : "text-brand-950 hover:bg-brand-50/90 hover:text-brand-700"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition-colors",
+                          active
+                            ? "border-brand-300 bg-surface-porcelain text-brand-600 shadow-gloss-card"
+                            : "border-brand-100 bg-surface-pearl text-brand-600 shadow-gloss-card group-hover:border-brand-200 group-hover:bg-surface-porcelain"
+                        )}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                      </span>
+
+                      <span className="min-w-0 flex-1 truncate font-display text-xs font-extrabold leading-tight">
+                        {item.label}
+                      </span>
+
+                      <ChevronDown
+                        className={cn(
+                          "h-3.5 w-3.5 shrink-0 text-brand-500 transition-transform duration-200",
+                          expanded ? "rotate-0" : "-rotate-90"
+                        )}
+                        aria-hidden="true"
+                      />
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {expanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: motionTokens.duration.fast }}
+                          className="overflow-hidden"
+                        >
+                          <div className="ml-4 space-y-0.5 border-l-2 border-brand-100 py-0.5 pl-2.5">
+                            {item.children.map((sub) => {
+                              const SubIcon = sub.icon;
+                              const subActive = isSubLinkActive(sub.href);
+                              return (
+                                <Link
+                                  key={sub.href}
+                                  href={sub.href}
+                                  onClick={onNavigate}
+                                  className={cn(
+                                    "group relative isolate flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-sky",
+                                    subActive
+                                      ? "text-ink-on-blue"
+                                      : "text-brand-900 hover:bg-brand-50/90 hover:text-brand-700"
+                                  )}
+                                >
+                                  {subActive && (
+                                    <motion.span
+                                      layoutId={`${role}-sidebar-active-pill`}
+                                      transition={motionTokens.spring.snappy}
+                                      className="cta-surface-primary absolute inset-0 -z-10 rounded-xl"
+                                      aria-hidden="true"
+                                    />
+                                  )}
+                                  <span className="flex min-w-0 items-center gap-2">
+                                    <SubIcon
+                                      className={cn(
+                                        "h-3.5 w-3.5 shrink-0 transition-colors",
+                                        subActive
+                                          ? "text-accent-gold"
+                                          : "text-brand-500 group-hover:text-brand-700"
+                                      )}
+                                    />
+                                    <span className="truncate font-display text-[11px] font-extrabold leading-tight">
+                                      {sub.label}
+                                    </span>
+                                  </span>
+                                  {sub.badge && (
+                                    <span
+                                      className={cn(
+                                        "rounded-pill px-2 py-0.5 text-[10px] font-extrabold",
+                                        subActive
+                                          ? "bg-surface-porcelain/20 text-ink-on-blue"
+                                          : "bg-surface-mist text-brand-700"
+                                      )}
+                                    >
+                                      {sub.badge}
+                                    </span>
+                                  )}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={onNavigate}
                   className={cn(
-                    "group relative isolate flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 font-display text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-sky",
+                    "group relative isolate flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-sky",
                     active
                       ? "text-ink-on-blue"
                       : "text-brand-950 hover:bg-brand-50/90 hover:text-brand-700"
@@ -179,20 +358,24 @@ export function PortalShell({
                     />
                   )}
                   <span className="flex min-w-0 items-center gap-2.5">
-                    <Icon
+                    <span
                       className={cn(
-                        "h-4 w-4 shrink-0 transition-colors",
+                        "grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition-colors",
                         active
-                          ? "text-ink-on-blue"
-                          : "text-brand-500 group-hover:text-brand-700"
+                          ? "border-surface-porcelain bg-surface-porcelain text-brand-600 shadow-gloss-card"
+                          : "border-brand-100 bg-surface-pearl text-brand-600 shadow-gloss-card group-hover:border-brand-200 group-hover:bg-surface-porcelain"
                       )}
-                    />
-                    <span className="truncate">{item.label}</span>
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="truncate font-display text-xs font-extrabold leading-tight">
+                      {item.label}
+                    </span>
                   </span>
                   {item.badge && (
                     <span
                       className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-extrabold",
+                        "rounded-pill px-2 py-0.5 text-[10px] font-extrabold",
                         active
                           ? "bg-surface-porcelain/20 text-ink-on-blue"
                           : "bg-surface-mist text-brand-700"
@@ -217,14 +400,14 @@ export function PortalShell({
         >
           {statusBadge}
         </PillBadge>
-        <p className="mt-2 text-xs font-medium text-ink-secondary leading-relaxed">
+        <p className="mt-2 text-xs font-medium leading-relaxed text-ink-secondary">
           {brandTagline}
         </p>
       </div>
     </div>
   );
 
-  const ActiveNavIcon = activeNav?.icon ?? User;
+  const ActiveNavIcon = activeDisplay?.icon ?? User;
 
   return (
     <div className="min-h-screen bg-surface-pearl text-ink-primary lg:grid lg:grid-cols-[264px_1fr]">
@@ -289,20 +472,47 @@ export function PortalShell({
                 <OffsetRing
                   size="xs"
                   faceTone="blue"
-                  className="hidden sm:grid shrink-0"
+                  className="hidden shrink-0 sm:grid"
                 >
                   <ActiveNavIcon className="h-4 w-4 text-ink-on-blue" />
                 </OffsetRing>
 
                 <div className="min-w-0">
-                  <p className="truncate font-display text-sm font-extrabold text-brand-950 sm:text-base">
-                    {activeNav?.label ?? roleLabel}
-                  </p>
-                  {activeNav?.description && (
-                    <p className="hidden truncate text-[11px] font-medium text-ink-secondary sm:block">
-                      {activeNav.description}
+                  <div className="flex items-center gap-1.5 text-[10px] font-display font-extrabold uppercase tracking-wider text-brand-600">
+                    <span>{roleLabel}</span>
+                    <ChevronRight
+                      className="h-3 w-3 shrink-0 text-brand-400"
+                      aria-hidden="true"
+                    />
+                    {activeContext.subItem ? (
+                      <>
+                        <span className="truncate text-brand-600">
+                          {activeContext.parent.label}
+                        </span>
+                        <ChevronRight
+                          className="h-3 w-3 shrink-0 text-brand-400"
+                          aria-hidden="true"
+                        />
+                        <span className="truncate text-brand-800">
+                          {activeContext.subItem.label}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="truncate text-brand-800">
+                        {activeDisplay?.label ?? roleLabel}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-display text-sm font-extrabold text-brand-950 sm:text-base">
+                      {activeDisplay?.label ?? roleLabel}
                     </p>
-                  )}
+                    {activeDisplay?.description && (
+                      <p className="hidden truncate text-xs font-medium text-ink-secondary md:block">
+                        · {activeDisplay.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -315,10 +525,11 @@ export function PortalShell({
                     onChange={(event) => setQuickQuery(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" && quickQuery.trim()) {
-                        const match = navItems.find((item) =>
-                          item.label
-                            .toLowerCase()
-                            .includes(quickQuery.trim().toLowerCase())
+                        const q = quickQuery.trim().toLowerCase();
+                        const match = flatSearchItems.find(
+                          (item) =>
+                            item.label.toLowerCase().includes(q) ||
+                            (item.parentLabel?.toLowerCase().includes(q) ?? false)
                         );
                         if (match) {
                           router.push(match.href);
@@ -327,14 +538,14 @@ export function PortalShell({
                       }
                     }}
                     placeholder="Jump to view..."
-                    className="w-44 rounded-pill border-2 border-brand-100 bg-surface-porcelain pl-8 pr-3 py-1.5 text-xs font-semibold text-ink-primary shadow-gloss-card placeholder:text-brand-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-accent-sky/40"
+                    className="w-44 rounded-pill border-2 border-brand-100 bg-surface-porcelain py-1.5 pl-8 pr-3 text-xs font-semibold text-ink-primary shadow-gloss-card placeholder:text-brand-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-accent-sky/40"
                   />
                 </div>
 
                 <PillBadge
                   tone="sky"
                   icon="dot"
-                  className="hidden sm:inline-flex px-2.5 py-1 text-[10px]"
+                  className="hidden px-2.5 py-1 text-[10px] sm:inline-flex"
                 >
                   {statusBadge}
                 </PillBadge>
@@ -404,10 +615,10 @@ export function PortalShell({
                   >
                     <AvatarBadge name={userName} avatarUrl={avatarUrl} size="sm" />
                     <div className="hidden text-left sm:block">
-                      <p className="max-w-[140px] truncate font-display text-xs font-extrabold text-brand-950 leading-tight">
+                      <p className="max-w-[140px] truncate font-display text-xs font-extrabold leading-tight text-brand-950">
                         {userName}
                       </p>
-                      <p className="max-w-[140px] truncate text-[10px] font-semibold text-ink-secondary leading-tight">
+                      <p className="max-w-[140px] truncate text-[10px] font-semibold leading-tight text-ink-secondary">
                         {userSublabel}
                       </p>
                     </div>

@@ -44,7 +44,7 @@ export function TeacherOverviewWorkspace() {
         ]}
         action={
           <Link
-            href="/teacher/exams?tab=monitor"
+            href="/teacher/live-monitor"
             className="cta-surface-secondary inline-flex items-center gap-2 rounded-pill px-5 py-2.5 font-display text-xs font-extrabold transition-colors"
           >
             <Activity className="h-3.5 w-3.5" />
@@ -94,7 +94,7 @@ export function TeacherOverviewWorkspace() {
           description="Scripts containing subjective sections queued for your rubric marks."
           action={
             <Link
-              href="/teacher/exams?tab=grading"
+              href="/teacher/grading"
               className="inline-flex items-center gap-1 text-xs font-extrabold text-brand-700 hover:text-brand-950"
             >
               Open Grading
@@ -122,7 +122,7 @@ export function TeacherOverviewWorkspace() {
                     </p>
                   </div>
                   <Link
-                    href="/teacher/exams?tab=grading"
+                    href={`/teacher/grading?scriptId=${encodeURIComponent(sub.id)}`}
                     className="cta-surface-primary rounded-pill px-4 py-1.5 font-display text-xs font-extrabold text-ink-on-blue transition-colors"
                   >
                     Grade Script
@@ -163,7 +163,7 @@ export function TeacherOverviewWorkspace() {
               </p>
             </Link>
             <Link
-              href="/teacher/exams?tab=monitor"
+              href="/teacher/live-monitor"
               className="rounded-2xl border-2 border-brand-100 bg-surface-pearl p-4 shadow-gloss-card transition-all hover:border-brand-400 hover:bg-surface-porcelain"
             >
               <Activity className="h-5 w-5 text-accent-success" />
@@ -175,7 +175,7 @@ export function TeacherOverviewWorkspace() {
               </p>
             </Link>
             <Link
-              href="/teacher/exams?tab=broadsheets"
+              href="/teacher/analytics"
               className="rounded-2xl border-2 border-brand-100 bg-surface-pearl p-4 shadow-gloss-card transition-all hover:border-brand-400 hover:bg-surface-porcelain"
             >
               <FileCheck2 className="h-5 w-5 text-accent-gold" />

@@ -184,10 +184,10 @@ export function StudentOverviewWorkspace() {
                   <div>
                     {submitted ? (
                       <Link
-                        href="/student/exams"
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-extrabold text-emerald-800"
+                        href="/student/results"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-accent-success/40 bg-accent-success/10 px-3.5 py-2 text-xs font-extrabold text-brand-950"
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-accent-success" />
                         Submitted
                       </Link>
                     ) : exam.status === "live" ? (

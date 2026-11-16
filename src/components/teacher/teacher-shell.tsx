@@ -2,8 +2,12 @@
 
 import * as React from "react";
 import {
+  Activity,
+  Award,
+  BarChart3,
   BookOpen,
   ClipboardCheck,
+  Layers,
   LayoutDashboard,
   Users,
 } from "lucide-react";
@@ -30,22 +34,63 @@ export function TeacherShell({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/teacher/class-list",
-      label: "ClassList",
-      description: "Student rosters across assigned classes",
-      icon: Users,
-    },
-    {
-      href: "/teacher/subjects",
-      label: "Subjects",
-      description: "Assigned subjects & question bank items",
+      label: "Class & Subjects",
+      description: "Rosters, subjects & question bank",
       icon: BookOpen,
+      children: [
+        {
+          href: "/teacher/class-list",
+          label: "ClassList",
+          description: "Student rosters across assigned classes",
+          icon: Users,
+        },
+        {
+          href: "/teacher/subjects",
+          label: "Assigned Subjects",
+          description: "Subject catalog & pass rates",
+          icon: BookOpen,
+        },
+        {
+          href: "/teacher/question-bank",
+          label: "Question Bank",
+          description: "Create & edit CBT assessment items",
+          icon: Layers,
+        },
+      ],
     },
     {
       href: "/teacher/exams",
-      label: "Exam",
+      label: "Examinations",
       description: "Assessments, live monitor, grading & broadsheets",
       icon: ClipboardCheck,
-      badge: pendingGradingCount > 0 ? `${pendingGradingCount}` : undefined,
+      children: [
+        {
+          href: "/teacher/exams",
+          label: "Assessments",
+          description: "Schedule & configure CBT assessments",
+          icon: ClipboardCheck,
+        },
+        {
+          href: "/teacher/live-monitor",
+          label: "Live Monitor",
+          description: "Supervise active candidate workstations",
+          icon: Activity,
+        },
+        {
+          href: "/teacher/grading",
+          label: "Theory Grading",
+          description: "Score subjective scripts & publish results",
+          icon: Award,
+          badge:
+            pendingGradingCount > 0 ? `${pendingGradingCount}` : undefined,
+        },
+        {
+          href: "/teacher/analytics",
+          label: "Broadsheets",
+          description: "Consolidated scores & CSV export",
+          icon: BarChart3,
+        },
+      ],
     },
   ];
 

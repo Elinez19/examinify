@@ -2,10 +2,14 @@
 
 import * as React from "react";
 import {
+  Award,
+  BookOpen,
   BookOpenCheck,
   GraduationCap,
+  KeyRound,
   LayoutDashboard,
   Sparkles,
+  User,
 } from "lucide-react";
 import {
   PortalShell,
@@ -33,22 +37,70 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/student/class",
-      label: "Class",
-      description: "Class arm, subjects & peers",
+      label: "Class & Subjects",
+      description: "Class arm, peers & registered subjects",
       icon: GraduationCap,
+      children: [
+        {
+          href: "/student/class",
+          label: "My Class",
+          description: "Class teacher, wing & classmate roster",
+          icon: GraduationCap,
+        },
+        {
+          href: "/student/subjects",
+          label: "My Subjects",
+          description: "Registered subjects & syllabus progress",
+          icon: BookOpen,
+        },
+      ],
     },
     {
       href: "/student/exams",
       label: "Examinations",
       description: "Active CBTs, schedule & results",
       icon: BookOpenCheck,
-      badge: liveCount > 0 ? `${liveCount} Live` : undefined,
+      children: [
+        {
+          href: "/student/exams",
+          label: "Live & Upcoming",
+          description: "Launch live CBTs & view exam timetable",
+          icon: BookOpenCheck,
+          badge: liveCount > 0 ? `${liveCount} Live` : undefined,
+        },
+        {
+          href: "/student/results",
+          label: "Results & Scripts",
+          description: "Review marked scripts & request remarks",
+          icon: Award,
+        },
+      ],
     },
     {
       href: "/student/study-mode",
       label: "Study Mode",
       description: "Self-paced question bank practice",
       icon: Sparkles,
+    },
+    {
+      href: "/student/profile",
+      label: "Account",
+      description: "Profile details & sign-in security",
+      icon: User,
+      children: [
+        {
+          href: "/student/profile",
+          label: "Profile Details",
+          description: "Update display name & avatar",
+          icon: User,
+        },
+        {
+          href: "/student/profile/password",
+          label: "Change Password",
+          description: "Update your CBT portal password",
+          icon: KeyRound,
+        },
+      ],
     },
   ];
 

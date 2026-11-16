@@ -284,7 +284,7 @@ export function TeacherClassListWorkspace() {
                               id: "grading",
                               label: "Open Theory Grading",
                               icon: <BookCheck className="h-3.5 w-3.5" />,
-                              href: "/teacher/exams?tab=grading",
+                              href: "/teacher/grading",
                             },
                           ]}
                         />

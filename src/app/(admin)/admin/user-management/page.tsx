@@ -1,5 +1,5 @@
-import { StudentsWorkspace } from "@/components/admin/users/students-workspace";
+import { StudentsDirectory } from "@/components/admin/users/students-directory";
 
 export default function AdminUserManagementPage() {
-  return <StudentsWorkspace />;
+  return <StudentsDirectory />;
 }

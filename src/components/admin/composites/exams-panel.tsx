@@ -11,4 +11,4 @@ export * from "@/components/admin/exams/types";
 export * from "@/components/admin/exams/constants";
 export * from "@/components/admin/exams/exam-session-form";
 export * from "@/components/admin/exams/exam-sessions-table";
-export * from "@/components/admin/exams/exams-workspace";
+export * from "@/components/admin/exams/exams-view";

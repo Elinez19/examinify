@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { KeyRound, Shield } from "lucide-react";
+import { KeyRound, Shield, UserCheck } from "lucide-react";
 import {
   AdminSelectField,
   AdminTextField,
@@ -10,7 +10,6 @@ import {
   ACCOUNT_STATUS_OPTIONS,
   CustomForm,
   EmailDetailSection,
-  EMPLOYMENT_TYPE_OPTIONS,
   FormSection,
   IdGeneratorField,
   MARITAL_STATUS_OPTIONS,
@@ -20,16 +19,22 @@ import {
   PhotoUploadField,
   SCHOOL_BRANCH_OPTIONS,
   SEX_OPTIONS,
-  STAFF_UNIT_OPTIONS,
-  TEACHER_PREFIX_OPTIONS,
+  STAFF_REGISTRATION_ROLE_OPTIONS,
+  STAFF_TYPE_OPTIONS,
 } from "@/components/forms";
-import type { AccountStatus, StaffProfile } from "@/data/portal-mock-data";
+import type {
+  AccountStatus,
+  StaffProfile,
+  StaffRegistrationRole,
+  StaffRoleOption,
+  StaffType,
+  TeacherProfile,
+} from "@/data/portal-mock-data";
 
 export interface StaffRegistrationFormState {
   id: string;
   schoolBranch: string;
   staffCode: string;
-  displayPrefix: string;
   firstName: string;
   middleName: string;
   lastName: string;
@@ -40,12 +45,8 @@ export interface StaffRegistrationFormState {
   stateOfOrigin: string;
   cityOfResidence: string;
   photoDataUrl: string;
-  roleTitle: string;
-  departmentUnit: string;
-  employmentType: string;
-  employmentDate: string;
-  adminScope: StaffProfile["adminScope"];
-  permissions: string;
+  staffType: StaffType;
+  role: StaffRegistrationRole;
   phoneType: string;
   phone: string;
   alternatePhone: string;
@@ -73,14 +74,32 @@ export interface StaffRegistrationFormProps {
   savedMessage?: string | null;
 }
 
+function normalizeRegistrationRole(
+  role?: StaffRoleOption | string | null
+): StaffRegistrationRole {
+  if (
+    role === "Teacher" ||
+    role === "Class Teacher" ||
+    role === "Subject Teacher" ||
+    role === "Admin" ||
+    role === "Staff"
+  ) {
+    return role;
+  }
+  if (role === "Principal" || role === "Exam Officer") {
+    return "Admin";
+  }
+  return "Staff";
+}
+
 export function createInitialStaffFormState(
-  staffCount: number
+  staffCount: number,
+  defaults?: { staffType?: StaffType; role?: StaffRegistrationRole }
 ): StaffRegistrationFormState {
   return {
     id: "",
     schoolBranch: SCHOOL_BRANCH_OPTIONS[0].id,
-    staffCode: `STF/ADM/${String(staffCount + 11).padStart(3, "0")}`,
-    displayPrefix: "Mr.",
+    staffCode: `STF/${String(staffCount + 11).padStart(3, "0")}`,
     firstName: "",
     middleName: "",
     lastName: "",
@@ -91,12 +110,8 @@ export function createInitialStaffFormState(
     stateOfOrigin: "FCT Abuja",
     cityOfResidence: "",
     photoDataUrl: "",
-    roleTitle: "Examination Officer",
-    departmentUnit: STAFF_UNIT_OPTIONS[0].id,
-    employmentType: "Full-Time",
-    employmentDate: "",
-    adminScope: "kyc_moderator",
-    permissions: "Exam Governance & Proctoring",
+    staffType: defaults?.staffType ?? "Academic",
+    role: defaults?.role ?? "Teacher",
     phoneType: "Personal Mobile",
     phone: "",
     alternatePhone: "",
@@ -107,8 +122,84 @@ export function createInitialStaffFormState(
     nextOfKinRelationship: "Spouse",
     nextOfKinPhone: "",
     nextOfKinAddress: "",
-    password: "Admin@2026",
+    password: "Staff@2026",
     status: "active",
+  };
+}
+
+export function staffRecordToFormState(
+  record:
+    | { kind: "teacher"; data: TeacherProfile }
+    | { kind: "staff"; data: StaffProfile },
+  staffCount: number
+): StaffRegistrationFormState {
+  const base = createInitialStaffFormState(staffCount);
+  if (record.kind === "teacher") {
+    const t = record.data;
+    return {
+      ...base,
+      id: t.id,
+      schoolBranch: t.schoolBranch ?? base.schoolBranch,
+      staffCode: t.staffId,
+      firstName: t.firstName,
+      middleName: t.middleName ?? "",
+      lastName: t.lastName,
+      sex: t.sex ?? "Male",
+      maritalStatus: t.maritalStatus ?? "Married",
+      dateOfBirth: t.dateOfBirth ?? "",
+      country: t.country ?? "Nigeria",
+      stateOfOrigin: t.stateOfOrigin ?? "FCT Abuja",
+      cityOfResidence: t.cityOfResidence ?? "",
+      photoDataUrl:
+        t.avatarUrl && t.avatarUrl.startsWith("data:image/") ? t.avatarUrl : "",
+      staffType: t.staffType ?? "Academic",
+      role: normalizeRegistrationRole(t.assignedRole ?? "Teacher"),
+      phoneType: t.phoneType ?? "Personal Mobile",
+      phone: t.phone,
+      alternatePhone: t.alternatePhone ?? "",
+      emailType: t.emailType ?? "Official School",
+      email: t.email,
+      alternateEmail: t.alternateEmail ?? "",
+      nextOfKinName: t.nextOfKinName ?? "",
+      nextOfKinRelationship: t.nextOfKinRelationship ?? "Spouse",
+      nextOfKinPhone: t.nextOfKinPhone ?? "",
+      nextOfKinAddress: t.nextOfKinAddress ?? "",
+      password: t.password,
+      status: t.status,
+    };
+  }
+
+  const s = record.data;
+  return {
+    ...base,
+    id: s.id,
+    schoolBranch: s.schoolBranch ?? base.schoolBranch,
+    staffCode: s.staffCode ?? `STF/${s.id.slice(-3).toUpperCase()}`,
+    firstName: s.firstName,
+    middleName: s.middleName ?? "",
+    lastName: s.lastName,
+    sex: s.sex ?? "Male",
+    maritalStatus: s.maritalStatus ?? "Married",
+    dateOfBirth: s.dateOfBirth ?? "",
+    country: s.country ?? "Nigeria",
+    stateOfOrigin: s.stateOfOrigin ?? "FCT Abuja",
+    cityOfResidence: s.cityOfResidence ?? "",
+    photoDataUrl:
+      s.avatarUrl && s.avatarUrl.startsWith("data:image/") ? s.avatarUrl : "",
+    staffType: s.staffType ?? "Non-Academic",
+    role: normalizeRegistrationRole(s.assignedRole ?? s.roleTitle),
+    phoneType: s.phoneType ?? "Personal Mobile",
+    phone: s.phone,
+    alternatePhone: s.alternatePhone ?? "",
+    emailType: s.emailType ?? "Official School",
+    email: s.email,
+    alternateEmail: s.alternateEmail ?? "",
+    nextOfKinName: s.nextOfKinName ?? "",
+    nextOfKinRelationship: s.nextOfKinRelationship ?? "Spouse",
+    nextOfKinPhone: s.nextOfKinPhone ?? "",
+    nextOfKinAddress: s.nextOfKinAddress ?? "",
+    password: s.password,
+    status: s.status,
   };
 }
 
@@ -128,7 +219,7 @@ export function StaffRegistrationForm({
 
   const generateStaffCode = () => {
     const seq = String(staffCount + Math.floor(100 + Math.random() * 899));
-    return `STF/ADM/${seq}`;
+    return `STF/${seq}`;
   };
 
   return (
@@ -137,13 +228,9 @@ export function StaffRegistrationForm({
       formRef={formRef}
       open={open}
       onOpenChange={onOpenChange}
-      eyebrow="Staff & Admin Registration Desk"
-      title={
-        isEditing
-          ? "Edit Staff / Administrator Registration"
-          : "Register Staff / Administrator"
-      }
-      description="Record staff bio-data, administrative role, governance permissions, contact details, and emergency next of kin."
+      eyebrow="Staff Registration"
+      title={isEditing ? "Edit Staff Details" : "Register Staff"}
+      description="Enter staff personal details, staff type, role, contact details, and emergency contact."
       isEditing={isEditing}
       editingBadgeText={formState.staffCode || "Editing Staff"}
       onResetToCreate={onReset}
@@ -171,23 +258,14 @@ export function StaffRegistrationForm({
             />
 
             <IdGeneratorField
-              label="Staff Code / ID"
+              label="Staff ID"
               value={formState.staffCode}
               onChange={(val) =>
                 setFormState((p) => ({ ...p, staffCode: val }))
               }
               onGenerate={generateStaffCode}
-              placeholder="e.g. STF/ADM/012"
+              placeholder="e.g. STF/012"
               required
-            />
-
-            <AdminSelectField
-              label="Title *"
-              value={formState.displayPrefix}
-              onChange={(val) =>
-                setFormState((p) => ({ ...p, displayPrefix: val }))
-              }
-              options={TEACHER_PREFIX_OPTIONS}
             />
 
             <AdminTextField
@@ -273,69 +351,24 @@ export function StaffRegistrationForm({
         </div>
       </FormSection>
 
-      {/* Section 2: Role, Unit & Permissions */}
+      {/* Section 2: Staff Type & Role */}
       <FormSection
-        title="Role, Administrative Unit & Permissions"
-        icon={<KeyRound className="h-3.5 w-3.5" />}
+        title="Staff Type & Role"
+        icon={<UserCheck className="h-3.5 w-3.5" />}
       >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <AdminTextField
-            label="Role Title *"
-            value={formState.roleTitle}
-            onChange={(e) =>
-              setFormState((p) => ({ ...p, roleTitle: e.target.value }))
-            }
-            placeholder="e.g. Chief Examination Officer"
-            required
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <AdminSelectField<StaffType>
+            label="Staff Type *"
+            value={formState.staffType}
+            onChange={(val) => setFormState((p) => ({ ...p, staffType: val }))}
+            options={STAFF_TYPE_OPTIONS}
           />
 
-          <AdminSelectField
-            label="Department / Unit *"
-            value={formState.departmentUnit}
-            onChange={(val) =>
-              setFormState((p) => ({ ...p, departmentUnit: val }))
-            }
-            options={STAFF_UNIT_OPTIONS}
-          />
-
-          <AdminSelectField<StaffProfile["adminScope"]>
-            label="Governance Scope *"
-            value={formState.adminScope}
-            onChange={(val) =>
-              setFormState((p) => ({ ...p, adminScope: val }))
-            }
-            options={[
-              { id: "super_admin", label: "Super Admin (Full Governance)" },
-              { id: "kyc_moderator", label: "Exam & Academic Moderator" },
-              { id: "dispatch_support", label: "Support & Operations" },
-            ]}
-          />
-
-          <AdminSelectField
-            label="Employment Type *"
-            value={formState.employmentType}
-            onChange={(val) =>
-              setFormState((p) => ({ ...p, employmentType: val }))
-            }
-            options={EMPLOYMENT_TYPE_OPTIONS}
-          />
-
-          <AdminTextField
-            label="Employment Date"
-            type="date"
-            value={formState.employmentDate}
-            onChange={(e) =>
-              setFormState((p) => ({ ...p, employmentDate: e.target.value }))
-            }
-          />
-
-          <AdminTextField
-            label="Permissions Summary"
-            value={formState.permissions}
-            onChange={(e) =>
-              setFormState((p) => ({ ...p, permissions: e.target.value }))
-            }
-            placeholder="e.g. Exam Governance & Proctoring"
+          <AdminSelectField<StaffRegistrationRole>
+            label="Select Role *"
+            value={formState.role}
+            onChange={(val) => setFormState((p) => ({ ...p, role: val }))}
+            options={STAFF_REGISTRATION_ROLE_OPTIONS}
           />
         </div>
       </FormSection>
@@ -382,9 +415,9 @@ export function StaffRegistrationForm({
         }
       />
 
-      {/* Section 6: Portal Credentials */}
+      {/* Section 6: Login Details & Account Status */}
       <FormSection
-        title="Portal Credentials & Account Status"
+        title="Login Details & Account Status"
         icon={<KeyRound className="h-3.5 w-3.5" />}
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

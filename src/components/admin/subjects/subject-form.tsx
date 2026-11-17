@@ -2,162 +2,142 @@
 
 import * as React from "react";
 import { BookOpen } from "lucide-react";
-import { AdminTextField } from "@/components/admin/ui/admin-form-controls";
-import { CustomForm, FormSection } from "@/components/forms";
-import type { ClassArm, TeacherProfile } from "@/data/portal-mock-data";
-import { cn } from "@/lib/utils";
+import { AdminModal } from "@/components/admin/ui/admin-modal";
+import {
+  AdminTextareaField,
+  AdminTextField,
+} from "@/components/admin/ui/admin-form-controls";
+import { CtaButton } from "@/components/landing/ui/cta-button";
+import type { QuestionItem, SubjectEnrollment } from "@/data/portal-mock-data";
 
 export interface SubjectFormState {
   id: string;
-  code: string;
   title: string;
-  category: string;
-  assignedClasses: string[];
-  assignedTeacherIds: string[];
+  description: string;
 }
 
 export interface SubjectFormProps {
-  formRef?: React.RefObject<HTMLDivElement | null>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   formState: SubjectFormState;
   setFormState: React.Dispatch<React.SetStateAction<SubjectFormState>>;
-  classArms: ClassArm[];
-  teachers: TeacherProfile[];
   onReset: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 }
 
+/** Generate a unique subject code from a subject title when creating a subject. */
+export function generateSubjectCode(
+  title: string,
+  existingSubjects: ReadonlyArray<SubjectEnrollment>
+): string {
+  const prefix =
+    title
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .slice(0, 3)
+      .toUpperCase() || "SUB";
+  const used = new Set(existingSubjects.map((s) => s.code.toUpperCase()));
+  let num = 101;
+  while (used.has(`${prefix}-${num}`)) {
+    num += 1;
+  }
+  return `${prefix}-${num}`;
+}
+
+/** Build a normalized SubjectEnrollment record from the simplified subject form state. */
+export function buildSubjectFromForm(
+  formState: SubjectFormState,
+  subjects: ReadonlyArray<SubjectEnrollment>,
+  questions: ReadonlyArray<QuestionItem>
+): SubjectEnrollment {
+  const existing = subjects.find((s) => s.id === formState.id);
+  const title = formState.title.trim();
+  const description = formState.description.trim();
+  const code = existing?.code || generateSubjectCode(title, subjects);
+
+  return {
+    id: formState.id || `sub_${Date.now()}`,
+    code,
+    title,
+    category: existing?.category ?? "Core",
+    description,
+    teacherName: existing?.teacherName ?? "Unassigned",
+    assignedClasses: existing?.assignedClasses ?? [],
+    assignedTeacherIds: existing?.assignedTeacherIds ?? [],
+    classDescriptions: existing?.classDescriptions,
+    schoolBranch: existing?.schoolBranch,
+    nextExamAt: existing?.nextExamAt ?? "Not scheduled",
+    topicsCovered: existing?.topicsCovered ?? 0,
+    totalTopics: existing?.totalTopics ?? 10,
+    questionCount: questions.filter((q) => q.subjectCode === code).length,
+    passRate: existing?.passRate ?? 80,
+    status: existing?.status ?? "active",
+  };
+}
+
 export function SubjectForm({
-  formRef,
   open,
   onOpenChange,
   formState,
   setFormState,
-  classArms,
-  teachers,
   onReset,
   onSubmit,
 }: SubjectFormProps) {
   const isEditing = Boolean(formState.id);
+  const internalFormRef = React.useRef<HTMLFormElement | null>(null);
 
   return (
-    <CustomForm
-      id="subject-inline-form"
-      formRef={formRef}
+    <AdminModal
       open={open}
       onOpenChange={onOpenChange}
       eyebrow="Subject Configuration"
-      title={isEditing ? "Edit Subject & Allocations" : "Create Subject"}
-      description="Define subject code, curriculum category, assigned class arms, and teaching faculty."
+      title={isEditing ? "Edit Subject" : "Create Subject"}
+      description="Define the subject title and description for your school curriculum."
+      size="md"
       isEditing={isEditing}
-      editingBadgeText={formState.code || "Editing Subject"}
+      editingBadgeText={formState.title || "Editing Subject"}
       onResetToCreate={onReset}
-      onSubmit={onSubmit}
-      onCancel={() => onOpenChange(false)}
-      submitLabel={isEditing ? "Save Subject Changes" : "Save Subject"}
-      submitIcon={<BookOpen className="h-3.5 w-3.5" />}
+      footer={
+        <>
+          <CtaButton
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </CtaButton>
+          <CtaButton
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={() => internalFormRef.current?.requestSubmit()}
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            <span>{isEditing ? "Save Subject Changes" : "Save Subject"}</span>
+          </CtaButton>
+        </>
+      }
     >
-      <FormSection title="Subject Identity">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <AdminTextField
-            label="Subject Code *"
-            value={formState.code}
-            onChange={(e) =>
-              setFormState((p) => ({ ...p, code: e.target.value }))
-            }
-            placeholder="PHY-101"
-            required
-          />
-          <AdminTextField
-            label="Subject Title *"
-            value={formState.title}
-            onChange={(e) =>
-              setFormState((p) => ({ ...p, title: e.target.value }))
-            }
-            placeholder="Physics"
-            required
-          />
-          <AdminTextField
-            label="Curriculum Category"
-            value={formState.category}
-            onChange={(e) =>
-              setFormState((p) => ({ ...p, category: e.target.value }))
-            }
-            placeholder="Core STEM"
-          />
-        </div>
-      </FormSection>
-
-      <FormSection title="Class Arm & Teacher Allocations">
-        <div className="grid gap-5 lg:grid-cols-2">
-          <div>
-            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-              Assign to Class Arms
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {classArms.map((arm) => {
-                const selected = formState.assignedClasses.includes(arm.name);
-                return (
-                  <button
-                    key={arm.id}
-                    type="button"
-                    onClick={() =>
-                      setFormState((p) => ({
-                        ...p,
-                        assignedClasses: selected
-                          ? p.assignedClasses.filter((c) => c !== arm.name)
-                          : [...p.assignedClasses, arm.name],
-                      }))
-                    }
-                    className={cn(
-                      "rounded-pill px-3 py-1 font-display text-xs font-extrabold cursor-pointer transition-colors",
-                      selected
-                        ? "cta-surface-primary text-ink-on-blue"
-                        : "border-2 border-brand-100 bg-surface-porcelain text-brand-800 hover:bg-surface-mist"
-                    )}
-                  >
-                    {arm.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-brand-900">
-              Assign Subject Teachers
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {teachers.map((t) => {
-                const selected = formState.assignedTeacherIds.includes(t.id);
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() =>
-                      setFormState((p) => ({
-                        ...p,
-                        assignedTeacherIds: selected
-                          ? p.assignedTeacherIds.filter((id) => id !== t.id)
-                          : [...p.assignedTeacherIds, t.id],
-                      }))
-                    }
-                    className={cn(
-                      "rounded-full px-3 py-1 text-xs font-extrabold cursor-pointer transition-colors",
-                      selected
-                        ? "bg-emerald-700 text-white"
-                        : "border border-brand-200 bg-white text-brand-800 hover:bg-surface-mist"
-                    )}
-                  >
-                    {t.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </FormSection>
-    </CustomForm>
+      <form ref={internalFormRef} onSubmit={onSubmit} className="space-y-4">
+        <AdminTextField
+          label="Subject Title *"
+          value={formState.title}
+          onChange={(e) =>
+            setFormState((p) => ({ ...p, title: e.target.value }))
+          }
+          placeholder="Physics"
+          required
+        />
+        <AdminTextareaField
+          label="Subject Description"
+          value={formState.description}
+          onChange={(e) =>
+            setFormState((p) => ({ ...p, description: e.target.value }))
+          }
+          placeholder="Brief overview of curriculum scope, core topics, and learning objectives..."
+          rows={3}
+        />
+      </form>
+    </AdminModal>
   );
 }

@@ -27,23 +27,23 @@ import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 import type { SubjectEnrollment } from "@/data/portal-mock-data";
-import { SubjectForm, type SubjectFormState } from "./subject-form";
+import {
+  buildSubjectFromForm,
+  SubjectForm,
+  type SubjectFormState,
+} from "./subject-form";
 
 export function AllSubjectsWorkspace() {
   const { store, activeSessionTerm, saveSubject, deleteSubject } =
     usePortalStore();
 
   const [searchQuery, setSearchQuery] = React.useState("");
-  const subjectFormRef = React.useRef<HTMLDivElement | null>(null);
   const [subjectFormOpen, setSubjectFormOpen] = React.useState(false);
 
   const [subjectForm, setSubjectForm] = React.useState<SubjectFormState>({
     id: "",
-    code: "",
     title: "",
-    category: "Core STEM",
-    assignedClasses: [],
-    assignedTeacherIds: [],
+    description: "",
   });
 
   const [feedbackModal, setFeedbackModal] = React.useState<{
@@ -57,84 +57,48 @@ export function AllSubjectsWorkspace() {
     null
   );
 
-  const scrollToForm = () => {
-    setTimeout(() => {
-      subjectFormRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 60);
-  };
-
   const resetSubjectForm = () => {
     setSubjectForm({
       id: "",
-      code: "",
       title: "",
-      category: "Core STEM",
-      assignedClasses: store.classArms[0] ? [store.classArms[0].name] : [],
-      assignedTeacherIds: store.teachers[0] ? [store.teachers[0].id] : [],
+      description: "",
     });
   };
 
   const openAddSubject = () => {
     resetSubjectForm();
     setSubjectFormOpen(true);
-    scrollToForm();
   };
 
   const openEditSubject = (sub: SubjectEnrollment) => {
     setSubjectForm({
       id: sub.id,
-      code: sub.code,
       title: sub.title,
-      category: sub.category,
-      assignedClasses: sub.assignedClasses,
-      assignedTeacherIds: sub.assignedTeacherIds,
+      description: sub.description ?? "",
     });
     setSubjectFormOpen(true);
-    scrollToForm();
   };
 
   const handleSaveSubject = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!subjectForm.code.trim() || !subjectForm.title.trim()) {
+    if (!subjectForm.title.trim()) {
       setFeedbackModal({
         variant: "danger",
         eyebrow: "Validation Error",
-        title: "Missing Subject Details",
-        description: "Please provide both a subject code and subject title.",
+        title: "Missing Subject Title",
+        description: "Please provide a subject title.",
       });
       return;
     }
 
-    const primaryTeacher = store.teachers.find((t) =>
-      subjectForm.assignedTeacherIds.includes(t.id)
-    );
-    const existing = store.subjects.find((s) => s.id === subjectForm.id);
     const wasEditing = Boolean(subjectForm.id);
-    const title = subjectForm.title.trim();
-    const normalizedCode = subjectForm.code.trim().toUpperCase();
+    const saved = buildSubjectFromForm(
+      subjectForm,
+      store.subjects,
+      store.questions
+    );
 
-    saveSubject({
-      id: subjectForm.id || `sub_${Date.now()}`,
-      code: normalizedCode,
-      title,
-      category: subjectForm.category.trim() || "Core",
-      teacherName: primaryTeacher?.name ?? existing?.teacherName ?? "Unassigned",
-      assignedClasses: subjectForm.assignedClasses,
-      assignedTeacherIds: subjectForm.assignedTeacherIds,
-      classDescriptions: existing?.classDescriptions,
-      schoolBranch: existing?.schoolBranch,
-      nextExamAt: existing?.nextExamAt ?? "Not scheduled",
-      topicsCovered: existing?.topicsCovered ?? 0,
-      totalTopics: existing?.totalTopics ?? 10,
-      questionCount: store.questions.filter(
-        (item) => item.subjectCode === normalizedCode
-      ).length,
-      passRate: existing?.passRate ?? 80,
-      status: existing?.status ?? "active",
-    });
+    saveSubject(saved);
 
     setSubjectFormOpen(false);
     resetSubjectForm();
@@ -142,7 +106,7 @@ export function AllSubjectsWorkspace() {
       variant: "success",
       eyebrow: "Curriculum Updated",
       title: wasEditing ? "Subject Updated" : "Subject Created",
-      description: `"${title}" (${normalizedCode}) has been saved to the school subject catalog.`,
+      description: `"${saved.title}" (${saved.code}) has been saved to the school subject catalog.`,
     });
   };
 
@@ -152,7 +116,8 @@ export function AllSubjectsWorkspace() {
       !q ||
       s.title.toLowerCase().includes(q) ||
       s.code.toLowerCase().includes(q) ||
-      s.category.toLowerCase().includes(q)
+      s.category.toLowerCase().includes(q) ||
+      (s.description ?? "").toLowerCase().includes(q)
   );
 
   const termLabel = activeSessionTerm
@@ -166,7 +131,7 @@ export function AllSubjectsWorkspace() {
         eyebrowIcon="dot"
         headline="All Subjects Catalog."
         highlightWords={["All", "Subjects"]}
-        subtitle="Create and maintain school subject codes, categories, and faculty ownership using the single inline form below."
+        subtitle="Create and maintain school subjects and descriptions using the modal dialog."
         primaryCta={{
           label: "New Subject",
           onClick: openAddSubject,
@@ -182,23 +147,11 @@ export function AllSubjectsWorkspace() {
       />
 
       <AdminWorkspaceSlab tone="pearl" withPearlAsset>
-        <SubjectForm
-          formRef={subjectFormRef}
-          open={subjectFormOpen}
-          onOpenChange={setSubjectFormOpen}
-          formState={subjectForm}
-          setFormState={setSubjectForm}
-          classArms={store.classArms}
-          teachers={store.teachers}
-          onReset={resetSubjectForm}
-          onSubmit={handleSaveSubject}
-        />
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <AdminSearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search subject title, code, or category..."
+            placeholder="Search subject title, code, or description..."
           />
           <CtaButton
             type="button"
@@ -248,7 +201,7 @@ export function AllSubjectsWorkspace() {
                           {sub.title}
                         </p>
                         <p className="text-[11px] font-medium text-ink-secondary">
-                          {sub.category}
+                          {sub.description || sub.category}
                         </p>
                       </AdminTableCell>
                       <AdminTableCell>
@@ -311,6 +264,15 @@ export function AllSubjectsWorkspace() {
           </AdminDataTable>
         </div>
       </AdminWorkspaceSlab>
+
+      <SubjectForm
+        open={subjectFormOpen}
+        onOpenChange={setSubjectFormOpen}
+        formState={subjectForm}
+        setFormState={setSubjectForm}
+        onReset={resetSubjectForm}
+        onSubmit={handleSaveSubject}
+      />
 
       <AdminDialogModal
         open={Boolean(feedbackModal)}

@@ -100,6 +100,43 @@ export const TEACHER_PREFIX_OPTIONS: ReadonlyArray<AdminSelectOption> = [
   { id: "Prof.", label: "Prof." },
 ];
 
+export const STAFF_TYPE_OPTIONS: ReadonlyArray<
+  AdminSelectOption<"Academic" | "Non-Academic">
+> = [
+  { id: "Academic", label: "Academic" },
+  { id: "Non-Academic", label: "Non-Academic" },
+];
+
+export const STAFF_REGISTRATION_ROLE_OPTIONS: ReadonlyArray<
+  AdminSelectOption<"Teacher" | "Class Teacher" | "Subject Teacher" | "Admin" | "Staff">
+> = [
+  { id: "Teacher", label: "Teacher" },
+  { id: "Class Teacher", label: "Class Teacher" },
+  { id: "Subject Teacher", label: "Subject Teacher" },
+  { id: "Admin", label: "Admin" },
+  { id: "Staff", label: "Staff" },
+];
+
+export const ASSIGNABLE_STAFF_ROLE_OPTIONS: ReadonlyArray<
+  AdminSelectOption<
+    | "Teacher"
+    | "Class Teacher"
+    | "Subject Teacher"
+    | "Principal"
+    | "Admin"
+    | "Staff"
+    | "Exam Officer"
+  >
+> = [
+  { id: "Teacher", label: "Teacher" },
+  { id: "Class Teacher", label: "Class Teacher" },
+  { id: "Subject Teacher", label: "Subject Teacher" },
+  { id: "Principal", label: "Principal" },
+  { id: "Admin", label: "Admin" },
+  { id: "Staff", label: "Staff" },
+  { id: "Exam Officer", label: "Exam Officer" },
+];
+
 export const DEPARTMENT_OPTIONS: ReadonlyArray<AdminSelectOption> = [
   { id: "Sciences", label: "Sciences" },
   { id: "Mathematics & Computing", label: "Mathematics & Computing" },
@@ -110,7 +147,7 @@ export const DEPARTMENT_OPTIONS: ReadonlyArray<AdminSelectOption> = [
 ];
 
 export const STAFF_UNIT_OPTIONS: ReadonlyArray<AdminSelectOption> = [
-  { id: "Examination Governance", label: "Examination Governance" },
+  { id: "Exam Office", label: "Exam Office" },
   { id: "ICT & CBT Operations", label: "ICT & CBT Operations" },
   { id: "Admissions & Registry", label: "Admissions & Registry" },
   { id: "Finance & Bursary", label: "Finance & Bursary" },

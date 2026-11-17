@@ -23,6 +23,7 @@ import {
   AdminDialogModal,
   type ModalVariant,
 } from "@/components/admin/ui/admin-dialog-modal";
+import { PillBadge } from "@/components/landing/ui/pill-badge";
 import {
   QuestionBankForm,
   type QuestionBankFormState,
@@ -34,10 +35,19 @@ import type {
   SubjectEnrollment,
 } from "@/data/portal-mock-data";
 import { cn } from "@/lib/utils";
-import { SubjectForm, type SubjectFormState } from "./subject-form";
-import { ClassArmForm, type ClassArmFormState } from "./class-arm-form";
+import {
+  buildSubjectFromForm,
+  SubjectForm,
+  type SubjectFormState,
+} from "./subject-form";
+import {
+  buildClassArmFromForm,
+  ClassArmForm,
+  type ClassArmFormState,
+} from "./class-arm-form";
 import {
   AcademicTermForm,
+  buildAcademicTermFromForm,
   type AcademicTermFormState,
 } from "./academic-term-form";
 
@@ -51,9 +61,9 @@ export function SubjectsWorkspace() {
     deleteSubject,
     saveClassArm,
     deleteClassArm,
-    saveAcademicTerm,
-    setActiveAcademicTerm,
-    deleteAcademicTerm,
+    saveTermRecord,
+    setActiveTermRecord,
+    deleteTermRecord,
     toggleQuestionType,
     addOrUpdateQuestion,
     deleteQuestion,
@@ -62,9 +72,6 @@ export function SubjectsWorkspace() {
   const [activeTab, setActiveTab] = React.useState<AcademicsTab>("subjects");
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const subjectFormRef = React.useRef<HTMLDivElement | null>(null);
-  const classFormRef = React.useRef<HTMLDivElement | null>(null);
-  const termFormRef = React.useRef<HTMLDivElement | null>(null);
   const questionFormRef = React.useRef<HTMLDivElement | null>(null);
 
   const scrollToForm = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -77,33 +84,24 @@ export function SubjectsWorkspace() {
   const [subjectFormOpen, setSubjectFormOpen] = React.useState(false);
   const [subjectForm, setSubjectForm] = React.useState<SubjectFormState>({
     id: "",
-    code: "",
     title: "",
-    category: "Core",
-    assignedClasses: [],
-    assignedTeacherIds: [],
+    description: "",
   });
 
-  // Class arm inline form
+  // Class arm modal form
   const [classFormOpen, setClassFormOpen] = React.useState(false);
   const [classForm, setClassForm] = React.useState<ClassArmFormState>({
     id: "",
     name: "",
-    level: "JSS 3",
-    arm: "Science Wing",
-    classTeacherId: store.teachers[0]?.id ?? "",
-    capacity: 40,
+    classification: "NURSERY",
   });
 
-  // Term inline form
+  // Term modal form
   const [termFormOpen, setTermFormOpen] = React.useState(false);
   const [termForm, setTermForm] = React.useState<AcademicTermFormState>({
     id: "",
-    session: "2026/2027",
-    term: "First Term",
-    startsAt: "Sep 08, 2026",
-    endsAt: "Dec 18, 2026",
-    isActive: false,
+    term: "",
+    description: "",
   });
 
   // Question inline form
@@ -145,11 +143,8 @@ export function SubjectsWorkspace() {
   const resetSubjectForm = () => {
     setSubjectForm({
       id: "",
-      code: "",
       title: "",
-      category: "Core STEM",
-      assignedClasses: store.classArms[0] ? [store.classArms[0].name] : [],
-      assignedTeacherIds: store.teachers[0] ? [store.teachers[0].id] : [],
+      description: "",
     });
   };
 
@@ -157,66 +152,45 @@ export function SubjectsWorkspace() {
     setActiveTab("subjects");
     resetSubjectForm();
     setSubjectFormOpen(true);
-    scrollToForm(subjectFormRef);
   };
 
   const openEditSubject = (sub: SubjectEnrollment) => {
     setActiveTab("subjects");
     setSubjectForm({
       id: sub.id,
-      code: sub.code,
       title: sub.title,
-      category: sub.category,
-      assignedClasses: sub.assignedClasses,
-      assignedTeacherIds: sub.assignedTeacherIds,
+      description: sub.description ?? "",
     });
     setSubjectFormOpen(true);
-    scrollToForm(subjectFormRef);
   };
 
   const handleSaveSubject = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!subjectForm.code.trim() || !subjectForm.title.trim()) {
+    if (!subjectForm.title.trim()) {
       setFeedbackModal({
         variant: "danger",
         eyebrow: "Validation Error",
-        title: "Missing Subject Details",
-        description: "Please provide both a subject code and subject title.",
+        title: "Missing Subject Title",
+        description: "Please provide a subject title.",
       });
       return;
     }
 
-    const primaryTeacher = store.teachers.find((t) =>
-      subjectForm.assignedTeacherIds.includes(t.id)
-    );
-    const existing = store.subjects.find((s) => s.id === subjectForm.id);
     const wasEditing = Boolean(subjectForm.id);
-    const title = subjectForm.title.trim();
+    const saved = buildSubjectFromForm(
+      subjectForm,
+      store.subjects,
+      store.questions
+    );
 
-    saveSubject({
-      id: subjectForm.id || `sub_${Date.now()}`,
-      code: subjectForm.code.trim().toUpperCase(),
-      title,
-      category: subjectForm.category.trim() || "Core",
-      teacherName: primaryTeacher?.name ?? existing?.teacherName ?? "Unassigned",
-      assignedClasses: subjectForm.assignedClasses,
-      assignedTeacherIds: subjectForm.assignedTeacherIds,
-      nextExamAt: existing?.nextExamAt ?? "Not scheduled",
-      topicsCovered: existing?.topicsCovered ?? 0,
-      totalTopics: existing?.totalTopics ?? 10,
-      questionCount: store.questions.filter(
-        (q) => q.subjectCode === subjectForm.code.trim().toUpperCase()
-      ).length,
-      passRate: existing?.passRate ?? 80,
-      status: "active",
-    });
+    saveSubject(saved);
     setSubjectFormOpen(false);
     resetSubjectForm();
     setFeedbackModal({
       variant: "success",
       eyebrow: "Curriculum Updated",
       title: wasEditing ? "Subject Updated" : "Subject Created",
-      description: `"${title}" has been saved with its class and teacher allocations.`,
+      description: `"${saved.title}" (${saved.code}) has been saved to the school subject catalog.`,
     });
   };
 
@@ -224,10 +198,7 @@ export function SubjectsWorkspace() {
     setClassForm({
       id: "",
       name: "",
-      level: "JSS 3",
-      arm: "Science Wing",
-      classTeacherId: store.teachers[0]?.id ?? "",
-      capacity: 40,
+      classification: "NURSERY",
     });
   };
 
@@ -235,7 +206,6 @@ export function SubjectsWorkspace() {
     setActiveTab("classes");
     resetClassArmForm();
     setClassFormOpen(true);
-    scrollToForm(classFormRef);
   };
 
   const openEditClassArm = (arm: ClassArm) => {
@@ -243,13 +213,9 @@ export function SubjectsWorkspace() {
     setClassForm({
       id: arm.id,
       name: arm.name,
-      level: arm.level,
-      arm: arm.arm,
-      classTeacherId: arm.classTeacherId,
-      capacity: arm.capacity,
+      classification: arm.classification ?? "SECONDARY",
     });
     setClassFormOpen(true);
-    scrollToForm(classFormRef);
   };
 
   const handleSaveClassArm = (e: React.FormEvent<HTMLFormElement>) => {
@@ -258,72 +224,60 @@ export function SubjectsWorkspace() {
       setFeedbackModal({
         variant: "danger",
         eyebrow: "Validation Error",
-        title: "Class Arm Name Required",
+        title: "Arm Name Required",
         description: "Please enter a name for the class arm.",
       });
       return;
     }
 
     const wasEditing = Boolean(classForm.id);
-    const armName = classForm.name.trim();
-    saveClassArm({
-      id: classForm.id || `arm_${Date.now()}`,
-      name: armName,
-      level: classForm.level.trim() || "JSS 3",
-      arm: classForm.arm.trim() || "General",
-      classTeacherId: classForm.classTeacherId,
-      capacity: Number(classForm.capacity) || 40,
-      status: "active",
-    });
+    const saved = buildClassArmFromForm(classForm, store.classArms);
+    saveClassArm(saved);
     setClassFormOpen(false);
     resetClassArmForm();
     setFeedbackModal({
       variant: "success",
       eyebrow: "Class Directory Updated",
       title: wasEditing ? "Class Arm Updated" : "Class Arm Created",
-      description: `"${armName}" is now configured in the school directory.`,
+      description: `"${saved.name}" (${saved.classification}) is now configured in the school directory.`,
+    });
+  };
+
+  const resetTermForm = () => {
+    setTermForm({
+      id: "",
+      term: "",
+      description: "",
     });
   };
 
   const openAddTerm = () => {
     setActiveTab("terms");
-    setTermForm({
-      id: "",
-      session: "2026/2027",
-      term: "Third Term",
-      startsAt: "Apr 19, 2027",
-      endsAt: "Jul 23, 2027",
-      isActive: false,
-    });
+    resetTermForm();
     setTermFormOpen(true);
-    scrollToForm(termFormRef);
   };
 
   const handleSaveTerm = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!termForm.session.trim()) {
+    if (!termForm.term.trim()) {
       setFeedbackModal({
         variant: "danger",
         eyebrow: "Validation Error",
-        title: "Session Required",
-        description: "Please enter an academic session (e.g. 2026/2027).",
+        title: "Term Required",
+        description: "Please enter a term name (e.g. First Term).",
       });
       return;
     }
-    saveAcademicTerm({
-      id: termForm.id || `term_${Date.now()}`,
-      session: termForm.session.trim(),
-      term: termForm.term,
-      startsAt: termForm.startsAt.trim(),
-      endsAt: termForm.endsAt.trim(),
-      isActive: termForm.isActive,
-    });
+    const wasEditing = Boolean(termForm.id);
+    const saved = buildAcademicTermFromForm(termForm, store.terms);
+    saveTermRecord(saved);
     setTermFormOpen(false);
+    resetTermForm();
     setFeedbackModal({
       variant: "success",
-      eyebrow: "Academic Calendar Updated",
-      title: "Session / Term Saved",
-      description: `${termForm.term} · ${termForm.session} has been added to the academic calendar.`,
+      eyebrow: "Academic Terms Updated",
+      title: wasEditing ? "Term Updated" : "Term Saved",
+      description: `"${saved.term}" has been saved to the academic terms directory.`,
     });
   };
 
@@ -533,13 +487,10 @@ export function SubjectsWorkspace() {
       {activeTab === "subjects" && (
         <div className="space-y-4">
           <SubjectForm
-            formRef={subjectFormRef}
             open={subjectFormOpen}
             onOpenChange={setSubjectFormOpen}
             formState={subjectForm}
             setFormState={setSubjectForm}
-            classArms={store.classArms}
-            teachers={store.teachers}
             onReset={resetSubjectForm}
             onSubmit={handleSaveSubject}
           />
@@ -598,7 +549,7 @@ export function SubjectsWorkspace() {
                             {sub.title}
                           </p>
                           <p className="text-[11px] text-ink-secondary">
-                            {sub.category}
+                            {sub.description || sub.category}
                           </p>
                         </AdminTableCell>
                         <AdminTableCell>
@@ -660,19 +611,17 @@ export function SubjectsWorkspace() {
       {activeTab === "classes" && (
         <div className="space-y-4">
           <ClassArmForm
-            formRef={classFormRef}
             open={classFormOpen}
             onOpenChange={setClassFormOpen}
             formState={classForm}
             setFormState={setClassForm}
-            teachers={store.teachers}
             onReset={resetClassArmForm}
             onSubmit={handleSaveClassArm}
           />
 
           <AdminSectionCard
             title="Class Arms & Class Teachers"
-            description="Define school arms (e.g. JSS 3A) and assign form teachers."
+            description="Define school arms (e.g. JSS 3A) and classifications."
             action={
               <button
                 type="button"
@@ -688,8 +637,8 @@ export function SubjectsWorkspace() {
               <table className="w-full text-left text-xs">
                 <thead className="border-b-2 border-brand-100 bg-surface-pearl">
                   <tr>
-                    <AdminTableHead>Class Name</AdminTableHead>
-                    <AdminTableHead>Level & Wing</AdminTableHead>
+                    <AdminTableHead>Arm Name</AdminTableHead>
+                    <AdminTableHead>Classification</AdminTableHead>
                     <AdminTableHead>Class Teacher</AdminTableHead>
                     <AdminTableHead>Enrolled Students</AdminTableHead>
                     <AdminTableHead className="text-right">Actions</AdminTableHead>
@@ -712,7 +661,13 @@ export function SubjectsWorkspace() {
                           {arm.name}
                         </AdminTableCell>
                         <AdminTableCell>
-                          {arm.level} · {arm.arm}
+                          <PillBadge
+                            tone="sky"
+                            icon="none"
+                            className="px-2.5 py-0.5 text-[10px]"
+                          >
+                            {arm.classification}
+                          </PillBadge>
                         </AdminTableCell>
                         <AdminTableCell className="font-semibold text-brand-900">
                           {ct?.name ?? "Unassigned"}
@@ -726,7 +681,7 @@ export function SubjectsWorkspace() {
                             items={[
                               {
                                 id: "edit-arm",
-                                label: "Edit Class & Teacher",
+                                label: "Edit Class Arm",
                                 icon: <Edit3 className="h-3.5 w-3.5" />,
                                 onClick: () => openEditClassArm(arm),
                               },
@@ -759,17 +714,17 @@ export function SubjectsWorkspace() {
       {activeTab === "terms" && (
         <div className="space-y-4">
           <AcademicTermForm
-            formRef={termFormRef}
             open={termFormOpen}
             onOpenChange={setTermFormOpen}
             formState={termForm}
             setFormState={setTermForm}
+            onReset={resetTermForm}
             onSubmit={handleSaveTerm}
           />
 
           <AdminSectionCard
-            title="Academic Sessions & Active Term"
-            description="Set the active session and term across Student, Teacher, and Admin portals."
+            title="Academic Terms"
+            description="Create school terms and set the active term across Student, Teacher, and Admin portals."
             action={
               <button
                 type="button"
@@ -777,12 +732,12 @@ export function SubjectsWorkspace() {
                 className="cta-surface-primary inline-flex items-center gap-1.5 rounded-pill px-4 py-2 font-display text-xs font-extrabold text-ink-on-blue cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Add Session / Term
+                Add Term
               </button>
             }
           >
             <div className="grid gap-3 md:grid-cols-3">
-              {store.academicTerms.map((term) => (
+              {store.terms.map((term) => (
                 <div
                   key={term.id}
                   className={cn(
@@ -794,8 +749,8 @@ export function SubjectsWorkspace() {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-xs font-extrabold text-brand-800">
-                        {term.session}
+                      <span className="font-display text-base font-extrabold text-brand-950">
+                        {term.term}
                       </span>
                       {term.isActive && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-700 px-2.5 py-0.5 text-[10px] font-extrabold text-white">
@@ -804,11 +759,8 @@ export function SubjectsWorkspace() {
                         </span>
                       )}
                     </div>
-                    <p className="mt-2 font-display text-base font-extrabold text-brand-950">
-                      {term.term}
-                    </p>
-                    <p className="mt-0.5 text-xs font-medium text-ink-secondary">
-                      {term.startsAt} — {term.endsAt}
+                    <p className="mt-1.5 text-xs font-medium text-ink-secondary">
+                      {term.description || "No description"}
                     </p>
                   </div>
 
@@ -820,7 +772,7 @@ export function SubjectsWorkspace() {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setActiveAcademicTerm(term.id)}
+                        onClick={() => setActiveTermRecord(term.id)}
                         className="cta-surface-primary rounded-pill px-3.5 py-1.5 font-display text-[11px] font-extrabold text-ink-on-blue cursor-pointer"
                       >
                         Set Active Term
@@ -834,7 +786,7 @@ export function SubjectsWorkspace() {
                           setDeleteTarget({
                             kind: "term",
                             id: term.id,
-                            label: `${term.term} · ${term.session}`,
+                            label: term.term,
                           })
                         }
                         className="text-xs font-bold text-rose-700 hover:underline cursor-pointer"
@@ -1023,7 +975,7 @@ export function SubjectsWorkspace() {
             else if (deleteTarget.kind === "class")
               deleteClassArm(deleteTarget.id);
             else if (deleteTarget.kind === "term")
-              deleteAcademicTerm(deleteTarget.id);
+              deleteTermRecord(deleteTarget.id);
             else deleteQuestion(deleteTarget.id);
             setDeleteTarget(null);
           }

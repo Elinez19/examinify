@@ -43,10 +43,16 @@ export const ADMIN_NAV_ITEMS: ReadonlyArray<AdminNavItem> = [
         icon: "graduation-cap",
       },
       {
-        label: "Sessions & Terms",
-        subtitle: "Academic sessions & active term",
-        href: "/admin/academic/terms",
+        label: "Sessions",
+        subtitle: "Academic sessions & calendar dates",
+        href: "/admin/academic/sessions",
         icon: "calendar-days",
+      },
+      {
+        label: "Terms",
+        subtitle: "Academic terms & descriptions",
+        href: "/admin/academic/terms",
+        icon: "bookings",
       },
       {
         label: "Question Types",
@@ -64,27 +70,27 @@ export const ADMIN_NAV_ITEMS: ReadonlyArray<AdminNavItem> = [
   },
   {
     label: "Users",
-    subtitle: "Students, teachers & admin directory",
+    subtitle: "Students, staff & role assignment",
     href: "/admin/user-management",
     icon: "user-management",
     children: [
       {
         label: "Students",
-        subtitle: "Student accounts & class assignment",
+        subtitle: "Student records & class assignment",
         href: "/admin/user-management",
         icon: "graduation-cap",
       },
       {
-        label: "Teachers",
-        subtitle: "Faculty profiles & teaching allocations",
-        href: "/admin/teachers",
-        icon: "user-check",
-      },
-      {
-        label: "Staff & Admins",
-        subtitle: "Administrative & support staff",
+        label: "Staff",
+        subtitle: "Register and manage all school staff",
         href: "/admin/users/staff",
         icon: "shield",
+      },
+      {
+        label: "Assign Staff Role",
+        subtitle: "Assign roles to registered staff",
+        href: "/admin/users/assign-role",
+        icon: "user-check",
       },
     ],
   },
@@ -202,9 +208,9 @@ export const LIVE_ALERTS: ReadonlyArray<AdminAlertItem> = [
   },
   {
     id: "alert-kyc",
-    title: "Teacher & Staff Verification",
-    detail: "New teacher credentials and invigilator profiles awaiting approval.",
-    href: "/admin/teachers",
+    title: "Staff & Teacher Review",
+    detail: "New staff profiles and role assignments ready for review.",
+    href: "/admin/users/staff",
   },
   {
     id: "alert-dispute",

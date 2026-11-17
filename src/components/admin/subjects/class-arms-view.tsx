@@ -24,25 +24,26 @@ import {
   type ModalVariant,
 } from "@/components/admin/ui/admin-dialog-modal";
 import { CtaButton } from "@/components/landing/ui/cta-button";
+import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 import type { ClassArm } from "@/data/portal-mock-data";
-import { ClassArmForm, type ClassArmFormState } from "./class-arm-form";
+import {
+  buildClassArmFromForm,
+  ClassArmForm,
+  type ClassArmFormState,
+} from "./class-arm-form";
 
 export function ClassArmsWorkspace() {
   const { store, activeSessionTerm, saveClassArm, deleteClassArm } =
     usePortalStore();
 
   const [searchQuery, setSearchQuery] = React.useState("");
-  const classFormRef = React.useRef<HTMLDivElement | null>(null);
   const [classFormOpen, setClassFormOpen] = React.useState(false);
 
   const [classForm, setClassForm] = React.useState<ClassArmFormState>({
     id: "",
     name: "",
-    level: "JSS 3",
-    arm: "Science Wing",
-    classTeacherId: store.teachers[0]?.id ?? "",
-    capacity: 40,
+    classification: "NURSERY",
   });
 
   const [feedbackModal, setFeedbackModal] = React.useState<{
@@ -54,43 +55,26 @@ export function ClassArmsWorkspace() {
 
   const [deleteTarget, setDeleteTarget] = React.useState<ClassArm | null>(null);
 
-  const scrollToForm = () => {
-    setTimeout(() => {
-      classFormRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 60);
-  };
-
   const resetClassArmForm = () => {
     setClassForm({
       id: "",
       name: "",
-      level: "JSS 3",
-      arm: "Science Wing",
-      classTeacherId: store.teachers[0]?.id ?? "",
-      capacity: 40,
+      classification: "NURSERY",
     });
   };
 
   const openAddClassArm = () => {
     resetClassArmForm();
     setClassFormOpen(true);
-    scrollToForm();
   };
 
   const openEditClassArm = (arm: ClassArm) => {
     setClassForm({
       id: arm.id,
       name: arm.name,
-      level: arm.level,
-      arm: arm.arm,
-      classTeacherId: arm.classTeacherId,
-      capacity: arm.capacity,
+      classification: arm.classification ?? "SECONDARY",
     });
     setClassFormOpen(true);
-    scrollToForm();
   };
 
   const handleSaveClassArm = (e: React.FormEvent<HTMLFormElement>) => {
@@ -99,23 +83,15 @@ export function ClassArmsWorkspace() {
       setFeedbackModal({
         variant: "danger",
         eyebrow: "Validation Error",
-        title: "Class Arm Name Required",
+        title: "Arm Name Required",
         description: "Please enter a name for the class arm.",
       });
       return;
     }
 
     const wasEditing = Boolean(classForm.id);
-    const armName = classForm.name.trim();
-    saveClassArm({
-      id: classForm.id || `arm_${Date.now()}`,
-      name: armName,
-      level: classForm.level.trim() || "JSS 3",
-      arm: classForm.arm.trim() || "General",
-      classTeacherId: classForm.classTeacherId,
-      capacity: Number(classForm.capacity) || 40,
-      status: "active",
-    });
+    const saved = buildClassArmFromForm(classForm, store.classArms);
+    saveClassArm(saved);
 
     setClassFormOpen(false);
     resetClassArmForm();
@@ -123,7 +99,7 @@ export function ClassArmsWorkspace() {
       variant: "success",
       eyebrow: "Class Directory Updated",
       title: wasEditing ? "Class Arm Updated" : "Class Arm Created",
-      description: `"${armName}" is now configured in the school directory.`,
+      description: `"${saved.name}" (${saved.classification}) is now configured in the school directory.`,
     });
   };
 
@@ -132,6 +108,7 @@ export function ClassArmsWorkspace() {
     (arm) =>
       !q ||
       arm.name.toLowerCase().includes(q) ||
+      arm.classification.toLowerCase().includes(q) ||
       arm.level.toLowerCase().includes(q) ||
       arm.arm.toLowerCase().includes(q)
   );
@@ -147,7 +124,7 @@ export function ClassArmsWorkspace() {
         eyebrowIcon="dot"
         headline="Class Arms & Form Teachers."
         highlightWords={["Class", "Arms"]}
-        subtitle="Define school class arms, seating capacities, and assigned form teachers using the single inline form below."
+        subtitle="Create and manage school class arms and their classifications using the modal dialog."
         primaryCta={{
           label: "New Class Arm",
           onClick: openAddClassArm,
@@ -163,22 +140,11 @@ export function ClassArmsWorkspace() {
       />
 
       <AdminWorkspaceSlab tone="pearl" withPearlAsset>
-        <ClassArmForm
-          formRef={classFormRef}
-          open={classFormOpen}
-          onOpenChange={setClassFormOpen}
-          formState={classForm}
-          setFormState={setClassForm}
-          teachers={store.teachers}
-          onReset={resetClassArmForm}
-          onSubmit={handleSaveClassArm}
-        />
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <AdminSearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search class name, level, or wing..."
+            placeholder="Search arm name or classification..."
           />
           <CtaButton
             type="button"
@@ -194,7 +160,7 @@ export function ClassArmsWorkspace() {
         <div className="mt-4">
           <AdminDataTable
             title="Class Arms Directory"
-            subtitle="Configure school class arms and assigned form teachers."
+            subtitle="Configure school class arms and classifications."
             badge={`${filteredArms.length} class arms`}
           >
             {filteredArms.length === 0 ? (
@@ -207,8 +173,8 @@ export function ClassArmsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
-                    <AdminTableHead>Class Name</AdminTableHead>
-                    <AdminTableHead>Level & Wing</AdminTableHead>
+                    <AdminTableHead>Arm Name</AdminTableHead>
+                    <AdminTableHead>Classification</AdminTableHead>
                     <AdminTableHead>Class Teacher</AdminTableHead>
                     <AdminTableHead>Enrolled Students</AdminTableHead>
                     <AdminTableHead>Status</AdminTableHead>
@@ -230,8 +196,14 @@ export function ClassArmsWorkspace() {
                         <AdminTableCell className="font-display font-extrabold text-brand-950">
                           {arm.name}
                         </AdminTableCell>
-                        <AdminTableCell className="font-medium text-ink-secondary">
-                          {arm.level} · {arm.arm}
+                        <AdminTableCell>
+                          <PillBadge
+                            tone="sky"
+                            icon="none"
+                            className="px-2.5 py-0.5 text-[10px]"
+                          >
+                            {arm.classification}
+                          </PillBadge>
                         </AdminTableCell>
                         <AdminTableCell className="font-semibold text-brand-900">
                           {ct?.name ?? "Unassigned"}
@@ -248,7 +220,7 @@ export function ClassArmsWorkspace() {
                             items={[
                               {
                                 id: "edit-arm",
-                                label: "Edit Class & Teacher",
+                                label: "Edit Class Arm",
                                 icon: <Edit3 className="h-3.5 w-3.5" />,
                                 onClick: () => openEditClassArm(arm),
                               },
@@ -272,6 +244,15 @@ export function ClassArmsWorkspace() {
           </AdminDataTable>
         </div>
       </AdminWorkspaceSlab>
+
+      <ClassArmForm
+        open={classFormOpen}
+        onOpenChange={setClassFormOpen}
+        formState={classForm}
+        setFormState={setClassForm}
+        onReset={resetClassArmForm}
+        onSubmit={handleSaveClassArm}
+      />
 
       <AdminDialogModal
         open={Boolean(feedbackModal)}

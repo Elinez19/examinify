@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ExamWorkspace } from "@/components/exam/exam-workspace";
+import { ExamPlayer } from "@/components/exam/exam-player";
 
 async function ExamHallLoader({
   params,
@@ -7,7 +7,7 @@ async function ExamHallLoader({
   params: Promise<{ examId: string }>;
 }) {
   const { examId } = await params;
-  return <ExamWorkspace examId={examId} />;
+  return <ExamPlayer examId={examId} />;
 }
 
 export default function ExamHallPage({
@@ -24,7 +24,7 @@ export default function ExamHallPage({
               Entering Examinify Exam Hall...
             </p>
             <p className="text-xs font-semibold text-ink-secondary">
-              Preparing offline CBT workspace
+              Preparing offline CBT exam screen
             </p>
           </div>
         </div>

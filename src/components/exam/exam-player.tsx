@@ -48,7 +48,7 @@ function formatClock(totalSeconds: number): string {
 
 type PaletteFilter = "all" | "unanswered" | "flagged";
 
-export function ExamWorkspace({ examId }: { examId: string }) {
+export function ExamPlayer({ examId }: { examId: string }) {
   const { store, hydrated, submitExamAttempt } = usePortalStore();
 
   const exam = React.useMemo(

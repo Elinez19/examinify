@@ -135,6 +135,28 @@ export interface RoomBroadcast {
 
 export type AccountStatus = "active" | "inactive" | "pending";
 
+export type StaffType = "Academic" | "Non-Academic";
+
+export type StaffRegistrationRole =
+  | "Teacher"
+  | "Class Teacher"
+  | "Subject Teacher"
+  | "Admin"
+  | "Staff";
+
+export type StaffRoleOption =
+  | StaffRegistrationRole
+  | "Principal"
+  | "Exam Officer";
+
+export function isTeachingStaffRole(role?: string | null): boolean {
+  return (
+    role === "Teacher" ||
+    role === "Class Teacher" ||
+    role === "Subject Teacher"
+  );
+}
+
 export interface StudentProfile {
   id: string;
   firstName: string;
@@ -188,6 +210,8 @@ export interface TeacherProfile {
   phoneType?: string;
   alternatePhone?: string;
   staffId: string;
+  staffType?: StaffType;
+  assignedRole?: StaffRoleOption;
   schoolBranch?: string;
   sex?: string;
   dateOfBirth?: string;
@@ -226,6 +250,8 @@ export interface StaffProfile {
   phoneType?: string;
   alternatePhone?: string;
   staffCode?: string;
+  staffType?: StaffType;
+  assignedRole?: StaffRoleOption;
   schoolBranch?: string;
   sex?: string;
   dateOfBirth?: string;
@@ -254,6 +280,7 @@ export interface SubjectEnrollment {
   code: string;
   title: string;
   category: string;
+  description?: string;
   teacherName: string;
   assignedClasses: string[];
   assignedTeacherIds: string[];
@@ -270,15 +297,34 @@ export interface SubjectEnrollment {
 export interface AcademicSessionTerm {
   id: string;
   session: string;
-  term: "First Term" | "Second Term" | "Third Term";
+  term: string;
   isActive: boolean;
   startsAt: string;
   endsAt: string;
 }
 
+export interface AcademicSession {
+  id: string;
+  session: string;
+  description: string;
+  startDate: string;
+  stopDate: string;
+  isActive: boolean;
+}
+
+export interface AcademicTerm {
+  id: string;
+  term: string;
+  description: string;
+  isActive: boolean;
+}
+
+export type ClassClassification = "NURSERY" | "PRIMARY" | "SECONDARY";
+
 export interface ClassArm {
   id: string;
   name: string;
+  classification: ClassClassification;
   level: string;
   arm: string;
   classTeacherId: string;
@@ -311,6 +357,8 @@ export interface PortalStoreData {
   teachers: TeacherProfile[];
   staff: StaffProfile[];
   academicTerms: AcademicSessionTerm[];
+  academicSessions: AcademicSession[];
+  terms: AcademicTerm[];
   classArms: ClassArm[];
   questionTypes: QuestionTypeConfig[];
   subjects: SubjectEnrollment[];
@@ -399,10 +447,12 @@ export const INITIAL_TEACHER: TeacherProfile = {
   id: "tch_emeka",
   firstName: "Emeka",
   lastName: "Okafor",
-  name: "Mr. Emeka Okafor",
+  name: "Emeka Okafor",
   email: "emeka.okafor@teachers.examinify.ng",
   phone: "+234 803 884 2109",
   staffId: "STF/SCI/019",
+  staffType: "Academic",
+  assignedRole: "Class Teacher",
   department: "Mathematics & Basic Sciences",
   assignedClasses: ["JSS 3A", "JSS 3B", "SSS 1A"],
   assignedSubjectIds: ["sub_math", "sub_basic_sci"],
@@ -419,10 +469,12 @@ export const INITIAL_TEACHERS: TeacherProfile[] = [
     id: "tch_aisha",
     firstName: "Aisha",
     lastName: "Kareem",
-    name: "Mrs. Aisha Kareem",
+    name: "Aisha Kareem",
     email: "aisha.kareem@teachers.examinify.ng",
     phone: "+234 806 219 4501",
     staffId: "STF/ENG/014",
+    staffType: "Academic",
+    assignedRole: "Teacher",
     department: "English & Literature",
     assignedClasses: ["JSS 3A", "JSS 3B"],
     assignedSubjectIds: ["sub_eng"],
@@ -436,10 +488,12 @@ export const INITIAL_TEACHERS: TeacherProfile[] = [
     id: "tch_babajide",
     firstName: "Babajide",
     lastName: "Lawal",
-    name: "Mr. Babajide Lawal",
+    name: "Babajide Lawal",
     email: "babajide.lawal@teachers.examinify.ng",
     phone: "+234 814 900 3312",
     staffId: "STF/CIV/027",
+    staffType: "Academic",
+    assignedRole: "Subject Teacher",
     department: "Humanities & Social Studies",
     assignedClasses: ["JSS 3A", "SSS 1A"],
     assignedSubjectIds: ["sub_civic"],
@@ -459,9 +513,12 @@ export const INITIAL_STAFF: StaffProfile[] = [
     name: "Elijah Admin",
     email: "admin@examinify.ng",
     phone: "+234 803 550 1920",
-    roleTitle: "Super Administrator",
+    staffCode: "STF/ADM/001",
+    staffType: "Non-Academic",
+    assignedRole: "Admin",
+    roleTitle: "Admin",
     adminScope: "super_admin",
-    permissions: "Full access: Academic setup, Users, Exams, PINs & Proctoring",
+    permissions: "Full school portal access",
     avatarUrl: "avatar-1",
     password: "Admin@2026",
     status: "active",
@@ -474,9 +531,12 @@ export const INITIAL_STAFF: StaffProfile[] = [
     name: "Funke Oladipo",
     email: "exams-officer@examinify.ng",
     phone: "+234 812 400 8821",
-    roleTitle: "Chief Examinations Officer",
+    staffCode: "STF/EXM/002",
+    staffType: "Academic",
+    assignedRole: "Exam Officer",
+    roleTitle: "Exam Officer",
     adminScope: "kyc_moderator",
-    permissions: "Exam scheduling, PIN generation, question bank audit & appeals",
+    permissions: "Exam scheduling, PINs, question bank & appeals",
     avatarUrl: "avatar-2",
     password: "Admin@2026",
     status: "active",
@@ -489,9 +549,12 @@ export const INITIAL_STAFF: StaffProfile[] = [
     name: "Sadiq Abdullahi",
     email: "cbt-support@examinify.ng",
     phone: "+234 805 700 9912",
-    roleTitle: "CBT Proctoring Lead",
+    staffCode: "STF/CBT/003",
+    staffType: "Non-Academic",
+    assignedRole: "Staff",
+    roleTitle: "Staff",
     adminScope: "dispatch_support",
-    permissions: "Live exam session oversight, offline sync & candidate timing",
+    permissions: "Live exam session support & candidate timing",
     avatarUrl: "avatar-5",
     password: "Admin@2026",
     status: "active",
@@ -526,10 +589,52 @@ export const INITIAL_ACADEMIC_TERMS: AcademicSessionTerm[] = [
   },
 ];
 
+export const INITIAL_ACADEMIC_SESSIONS: AcademicSession[] = [
+  {
+    id: "ses_2026_2027",
+    session: "2026/2027",
+    description:
+      "Current school calendar covering First, Second, and Third Terms.",
+    startDate: "2026-09-08",
+    stopDate: "2027-07-23",
+    isActive: true,
+  },
+  {
+    id: "ses_2025_2026",
+    session: "2025/2026",
+    description: "Completed 2025/2026 academic session archive.",
+    startDate: "2025-09-09",
+    stopDate: "2026-07-24",
+    isActive: false,
+  },
+];
+
+export const INITIAL_TERM_RECORDS: AcademicTerm[] = [
+  {
+    id: "trm_first",
+    term: "First Term",
+    description: "Opening academic term (September – December).",
+    isActive: true,
+  },
+  {
+    id: "trm_second",
+    term: "Second Term",
+    description: "Mid-session academic term (January – April).",
+    isActive: false,
+  },
+  {
+    id: "trm_third",
+    term: "Third Term",
+    description: "Promotional and final assessment term (April – July).",
+    isActive: false,
+  },
+];
+
 export const INITIAL_CLASS_ARMS: ClassArm[] = [
   {
     id: "arm_jss3a",
     name: "JSS 3A",
+    classification: "SECONDARY",
     level: "JSS 3",
     arm: "Science Wing",
     classTeacherId: "tch_emeka",
@@ -539,6 +644,7 @@ export const INITIAL_CLASS_ARMS: ClassArm[] = [
   {
     id: "arm_jss3b",
     name: "JSS 3B",
+    classification: "SECONDARY",
     level: "JSS 3",
     arm: "Arts & Commercial",
     classTeacherId: "tch_aisha",
@@ -548,6 +654,7 @@ export const INITIAL_CLASS_ARMS: ClassArm[] = [
   {
     id: "arm_sss1a",
     name: "SSS 1A",
+    classification: "SECONDARY",
     level: "SSS 1",
     arm: "Science Wing",
     classTeacherId: "tch_babajide",
@@ -1098,6 +1205,8 @@ export const INITIAL_PORTAL_STORE: PortalStoreData = {
   teachers: INITIAL_TEACHERS,
   staff: INITIAL_STAFF,
   academicTerms: INITIAL_ACADEMIC_TERMS,
+  academicSessions: INITIAL_ACADEMIC_SESSIONS,
+  terms: INITIAL_TERM_RECORDS,
   classArms: INITIAL_CLASS_ARMS,
   questionTypes: INITIAL_QUESTION_TYPES,
   subjects: INITIAL_SUBJECTS,
@@ -1144,6 +1253,8 @@ export function loadPortalStore(): PortalStoreData {
         `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim() ||
         "Teacher",
       email: item.email ?? "",
+      staffType: item.staffType ?? "Academic",
+      assignedRole: item.assignedRole ?? "Teacher",
       department: item.department ?? "",
       assignedClasses: Array.isArray(item.assignedClasses)
         ? item.assignedClasses
@@ -1163,7 +1274,45 @@ export function loadPortalStore(): PortalStoreData {
         `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim() ||
         "Staff",
       email: item.email ?? "",
-      roleTitle: item.roleTitle ?? "",
+      staffType: item.staffType ?? "Non-Academic",
+      assignedRole: item.assignedRole ?? "Staff",
+      roleTitle: item.roleTitle ?? item.assignedRole ?? "Staff",
+      status: item.status ?? "active",
+    });
+
+    const inferClassification = (item: Partial<ClassArm>): ClassClassification => {
+      if (
+        item.classification === "NURSERY" ||
+        item.classification === "PRIMARY" ||
+        item.classification === "SECONDARY"
+      ) {
+        return item.classification;
+      }
+      const probe = `${item.level ?? ""} ${item.name ?? ""}`.toUpperCase();
+      if (
+        probe.includes("NURSERY") ||
+        probe.includes("KG") ||
+        probe.includes("CRECHE")
+      ) {
+        return "NURSERY";
+      }
+      if (
+        probe.includes("PRIMARY") ||
+        probe.includes("PRY") ||
+        probe.includes("BASIC")
+      ) {
+        return "PRIMARY";
+      }
+      return "SECONDARY";
+    };
+
+    const normalizeClassArm = (item: ClassArm): ClassArm => ({
+      ...item,
+      classification: inferClassification(item),
+      level: item.level ?? item.name ?? "",
+      arm: item.arm ?? "General",
+      classTeacherId: item.classTeacherId ?? "",
+      capacity: item.capacity ?? 40,
       status: item.status ?? "active",
     });
 
@@ -1238,9 +1387,28 @@ export function loadPortalStore(): PortalStoreData {
         Array.isArray(parsed.academicTerms) && parsed.academicTerms.length > 0
           ? parsed.academicTerms
           : INITIAL_ACADEMIC_TERMS,
+      academicSessions:
+        Array.isArray(parsed.academicSessions) &&
+        parsed.academicSessions.length > 0
+          ? parsed.academicSessions.map((item) => ({
+              ...item,
+              description: item.description ?? "",
+              startDate: item.startDate ?? "",
+              stopDate: item.stopDate ?? "",
+              isActive: Boolean(item.isActive),
+            }))
+          : INITIAL_ACADEMIC_SESSIONS,
+      terms:
+        Array.isArray(parsed.terms) && parsed.terms.length > 0
+          ? parsed.terms.map((item) => ({
+              ...item,
+              description: item.description ?? "",
+              isActive: Boolean(item.isActive),
+            }))
+          : INITIAL_TERM_RECORDS,
       classArms:
         Array.isArray(parsed.classArms) && parsed.classArms.length > 0
-          ? parsed.classArms
+          ? parsed.classArms.map(normalizeClassArm)
           : INITIAL_CLASS_ARMS,
       questionTypes:
         Array.isArray(parsed.questionTypes) && parsed.questionTypes.length > 0

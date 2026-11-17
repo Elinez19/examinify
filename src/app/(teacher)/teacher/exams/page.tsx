@@ -1,5 +1,5 @@
 import * as React from "react";
-import { TeacherExamsWorkspace } from "@/components/teacher/teacher-exams-workspace";
+import { TeacherExamsWorkspace } from "@/components/teacher/teacher-exams-view";
 
 export default function TeacherExamsPage() {
   return (

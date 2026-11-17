@@ -33,46 +33,47 @@ import { CtaButton } from "@/components/landing/ui/cta-button";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 import type { TeacherProfile } from "@/data/portal-mock-data";
 import {
-  createInitialTeacherFormState,
-  TeacherRegistrationForm,
-  type TeacherRegistrationFormState,
-} from "./teacher-registration-form";
+  createInitialStaffFormState,
+  StaffRegistrationForm,
+  staffRecordToFormState,
+  type StaffRegistrationFormState,
+} from "./staff-registration-form";
 import { AssignTeacherModal } from "./assign-teacher-modal";
 
 type TeacherSortKey = "name" | "email" | "detail" | "status";
 
-export function TeachersWorkspace() {
+export function TeachersDirectory() {
   const {
     store,
     activeSessionTerm,
-    saveTeacherAccount,
+    saveUnifiedStaff,
     setTeacherStatus,
     assignTeacherAssignments,
     deleteTeacherAccount,
   } = usePortalStore();
+
+  const totalStaffCount = store.teachers.length + store.staff.length;
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("ALL");
   const [sortKey, setSortKey] = React.useState<TeacherSortKey>("name");
   const [sortDir, setSortDir] = React.useState<SortDirection>("asc");
 
-  const teacherFormRef = React.useRef<HTMLDivElement | null>(null);
-  const [teacherFormOpen, setTeacherFormOpen] = React.useState(false);
-  const [teacherForm, setTeacherForm] =
-    React.useState<TeacherRegistrationFormState>(() =>
-      createInitialTeacherFormState(
-        store.classArms,
-        store.subjects,
-        store.teachers.length
-      )
-    );
+  const staffFormRef = React.useRef<HTMLDivElement | null>(null);
+  const [staffFormOpen, setStaffFormOpen] = React.useState(false);
+  const [staffForm, setStaffForm] = React.useState<StaffRegistrationFormState>(
+    () =>
+      createInitialStaffFormState(totalStaffCount, {
+        staffType: "Academic",
+        role: "Teacher",
+      })
+  );
 
-  // Modal for assigning classes & subjects
   const [assignTeacherTarget, setAssignTeacherTarget] =
     React.useState<TeacherProfile | null>(null);
-  const [teacherClassesDraft, setTeacherClassesDraft] = React.useState<string[]>(
-    []
-  );
+  const [teacherClassesDraft, setTeacherClassesDraft] = React.useState<
+    string[]
+  >([]);
   const [teacherSubjectsDraft, setTeacherSubjectsDraft] = React.useState<
     string[]
   >([]);
@@ -92,159 +93,99 @@ export function TeachersWorkspace() {
 
   const scrollFormIntoView = () => {
     setTimeout(() => {
-      teacherFormRef.current?.scrollIntoView({
+      staffFormRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     }, 60);
   };
 
-  const resetTeacherForm = () => {
-    setTeacherForm(
-      createInitialTeacherFormState(
-        store.classArms,
-        store.subjects,
-        store.teachers.length
-      )
+  const resetStaffForm = () => {
+    setStaffForm(
+      createInitialStaffFormState(totalStaffCount, {
+        staffType: "Academic",
+        role: "Teacher",
+      })
     );
   };
 
   const openAddTeacher = () => {
-    resetTeacherForm();
-    setTeacherFormOpen(true);
+    resetStaffForm();
+    setStaffFormOpen(true);
     scrollFormIntoView();
   };
 
   const openEditTeacher = (tch: TeacherProfile) => {
-    const detectedPrefix =
-      tch.displayPrefix ??
-      (tch.name.startsWith("Mrs.")
-        ? "Mrs."
-        : tch.name.startsWith("Ms.")
-          ? "Ms."
-          : tch.name.startsWith("Dr.")
-            ? "Dr."
-            : tch.name.startsWith("Prof.")
-              ? "Prof."
-              : "Mr.");
-    setTeacherForm({
-      ...createInitialTeacherFormState(
-        store.classArms,
-        store.subjects,
-        store.teachers.length
-      ),
-      id: tch.id,
-      schoolBranch: tch.schoolBranch ?? "Main Campus (Guzape)",
-      staffId: tch.staffId,
-      displayPrefix: detectedPrefix,
-      firstName: tch.firstName,
-      middleName: tch.middleName ?? "",
-      lastName: tch.lastName,
-      sex: tch.sex ?? "Male",
-      maritalStatus: tch.maritalStatus ?? "Married",
-      dateOfBirth: tch.dateOfBirth ?? "",
-      country: tch.country ?? "Nigeria",
-      stateOfOrigin: tch.stateOfOrigin ?? "FCT Abuja",
-      cityOfResidence: tch.cityOfResidence ?? "",
-      photoDataUrl:
-        tch.avatarUrl && tch.avatarUrl.startsWith("data:image/")
-          ? tch.avatarUrl
-          : "",
-      department: tch.department,
-      qualification: tch.qualification ?? "B.Sc (Ed)",
-      employmentType: tch.employmentType ?? "Full-Time",
-      employmentDate: tch.employmentDate ?? "",
-      assignedClasses: tch.assignedClasses,
-      assignedSubjectIds: tch.assignedSubjectIds,
-      phoneType: tch.phoneType ?? "Personal Mobile",
-      phone: tch.phone,
-      alternatePhone: tch.alternatePhone ?? "",
-      emailType: tch.emailType ?? "Official School",
-      email: tch.email,
-      alternateEmail: tch.alternateEmail ?? "",
-      nextOfKinName: tch.nextOfKinName ?? "",
-      nextOfKinRelationship: tch.nextOfKinRelationship ?? "Spouse",
-      nextOfKinPhone: tch.nextOfKinPhone ?? "",
-      nextOfKinAddress: tch.nextOfKinAddress ?? "",
-      password: tch.password,
-      status: tch.status,
-    });
-    setTeacherFormOpen(true);
+    setStaffForm(
+      staffRecordToFormState({ kind: "teacher", data: tch }, totalStaffCount)
+    );
+    setStaffFormOpen(true);
     scrollFormIntoView();
   };
 
-  const handleSaveTeacher = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveStaff = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!teacherForm.firstName.trim() || !teacherForm.email.trim()) {
+    if (
+      !staffForm.firstName.trim() ||
+      !staffForm.lastName.trim() ||
+      !staffForm.email.trim()
+    ) {
       setFeedbackModal({
         variant: "danger",
-        eyebrow: "Validation Error",
-        title: "Missing Required Teacher Fields",
+        eyebrow: "Missing Information",
+        title: "Please Complete Required Fields",
         description:
-          "Please provide the teacher's first name, surname, and email address before submitting.",
+          "Please enter the staff member's first name, surname, and email address before submitting.",
       });
       return;
     }
 
-    const prefix = teacherForm.displayPrefix
-      ? `${teacherForm.displayPrefix} `
-      : "";
     const fullName = [
-      prefix.trim(),
-      teacherForm.firstName.trim(),
-      teacherForm.middleName.trim(),
-      teacherForm.lastName.trim(),
+      staffForm.firstName.trim(),
+      staffForm.middleName.trim(),
+      staffForm.lastName.trim(),
     ]
       .filter(Boolean)
       .join(" ");
-    const existing = store.teachers.find((t) => t.id === teacherForm.id);
-    const wasEditing = Boolean(teacherForm.id);
+    const wasEditing = Boolean(staffForm.id);
 
-    saveTeacherAccount({
-      id: teacherForm.id || `tch_${Date.now()}`,
-      displayPrefix: teacherForm.displayPrefix,
-      firstName: teacherForm.firstName.trim(),
-      middleName: teacherForm.middleName.trim() || undefined,
-      lastName: teacherForm.lastName.trim(),
-      name: fullName,
-      email: teacherForm.email.trim().toLowerCase(),
-      emailType: teacherForm.emailType,
-      alternateEmail: teacherForm.alternateEmail.trim() || undefined,
-      phone: teacherForm.phone.trim(),
-      phoneType: teacherForm.phoneType,
-      alternatePhone: teacherForm.alternatePhone.trim() || undefined,
-      staffId: teacherForm.staffId.trim(),
-      schoolBranch: teacherForm.schoolBranch,
-      sex: teacherForm.sex,
-      maritalStatus: teacherForm.maritalStatus,
-      dateOfBirth: teacherForm.dateOfBirth || undefined,
-      country: teacherForm.country,
-      stateOfOrigin: teacherForm.stateOfOrigin,
-      cityOfResidence: teacherForm.cityOfResidence.trim() || undefined,
-      department: teacherForm.department.trim(),
-      qualification: teacherForm.qualification.trim() || undefined,
-      employmentType: teacherForm.employmentType,
-      employmentDate: teacherForm.employmentDate || undefined,
-      assignedClasses: teacherForm.assignedClasses,
-      assignedSubjectIds: teacherForm.assignedSubjectIds,
-      termLabel,
-      schoolName: store.teacher.schoolName,
-      avatarUrl: teacherForm.photoDataUrl || existing?.avatarUrl || "avatar-5",
-      password: teacherForm.password || "Teacher@2026",
-      status: teacherForm.status,
-      nextOfKinName: teacherForm.nextOfKinName.trim() || undefined,
-      nextOfKinRelationship: teacherForm.nextOfKinRelationship,
-      nextOfKinPhone: teacherForm.nextOfKinPhone.trim() || undefined,
-      nextOfKinAddress: teacherForm.nextOfKinAddress.trim() || undefined,
+    saveUnifiedStaff({
+      id: staffForm.id,
+      schoolBranch: staffForm.schoolBranch,
+      staffCode: staffForm.staffCode.trim(),
+      firstName: staffForm.firstName.trim(),
+      middleName: staffForm.middleName.trim() || undefined,
+      lastName: staffForm.lastName.trim(),
+      sex: staffForm.sex,
+      maritalStatus: staffForm.maritalStatus,
+      dateOfBirth: staffForm.dateOfBirth || undefined,
+      country: staffForm.country,
+      stateOfOrigin: staffForm.stateOfOrigin,
+      cityOfResidence: staffForm.cityOfResidence.trim() || undefined,
+      avatarUrl: staffForm.photoDataUrl || undefined,
+      staffType: staffForm.staffType,
+      role: staffForm.role,
+      phoneType: staffForm.phoneType,
+      phone: staffForm.phone.trim(),
+      alternatePhone: staffForm.alternatePhone.trim() || undefined,
+      emailType: staffForm.emailType,
+      email: staffForm.email.trim().toLowerCase(),
+      alternateEmail: staffForm.alternateEmail.trim() || undefined,
+      nextOfKinName: staffForm.nextOfKinName.trim() || undefined,
+      nextOfKinRelationship: staffForm.nextOfKinRelationship,
+      nextOfKinPhone: staffForm.nextOfKinPhone.trim() || undefined,
+      nextOfKinAddress: staffForm.nextOfKinAddress.trim() || undefined,
+      password: staffForm.password || "Staff@2026",
+      status: staffForm.status,
     });
 
-    setTeacherFormOpen(false);
-    resetTeacherForm();
+    setStaffFormOpen(false);
+    resetStaffForm();
     setFeedbackModal({
       variant: "success",
-      eyebrow: "Operation Completed",
-      title: wasEditing ? "Teacher Record Updated" : "Teacher Registered",
-      description: `${fullName} (${teacherForm.staffId}) has been saved to the faculty directory.`,
+      eyebrow: "Saved",
+      title: wasEditing ? "Staff Record Updated" : "Staff Registered",
+      description: `${fullName} (${staffForm.staffCode}) has been saved.`,
     });
   };
 
@@ -264,7 +205,7 @@ export function TeachersWorkspace() {
       return (
         (item.name ?? "").toLowerCase().includes(q) ||
         (item.email ?? "").toLowerCase().includes(q) ||
-        (item.department ?? "").toLowerCase().includes(q) ||
+        (item.assignedRole ?? "").toLowerCase().includes(q) ||
         (item.staffId ?? "").toLowerCase().includes(q)
       );
     });
@@ -274,7 +215,9 @@ export function TeachersWorkspace() {
       else if (sortKey === "email")
         cmp = (a.email ?? "").localeCompare(b.email ?? "");
       else if (sortKey === "detail")
-        cmp = (a.department ?? "").localeCompare(b.department ?? "");
+        cmp = (a.assignedRole ?? "Teacher").localeCompare(
+          b.assignedRole ?? "Teacher"
+        );
       else if (sortKey === "status")
         cmp = (a.status ?? "").localeCompare(b.status ?? "");
       return sortDir === "asc" ? cmp : -cmp;
@@ -286,35 +229,33 @@ export function TeachersWorkspace() {
       <AdminHeroBanner
         eyebrow={`Users · ${termLabel}`}
         eyebrowIcon="dot"
-        headline="Teachers & Faculty Directory."
-        highlightWords={["Teachers", "Faculty"]}
-        subtitle="Onboard or edit teachers with the single inline form below, and manage class/subject allocations via modal."
+        headline="Teaching Staff Directory."
+        highlightWords={["Teaching", "Staff"]}
+        subtitle="Register staff using the single Staff Registration form and assign classes or subjects to teaching staff."
         primaryCta={{
-          label: "Register Teacher",
+          label: "Register Staff",
           onClick: openAddTeacher,
           variant: "primary",
           icon: <Plus className="h-4 w-4" />,
         }}
         secondaryCta={{
-          label: "Students Directory",
-          href: "/admin/user-management",
+          label: "All Staff Directory",
+          href: "/admin/users/staff",
           variant: "secondary",
           trailingArrow: true,
         }}
       />
 
       <AdminWorkspaceSlab tone="pearl" withPearlAsset>
-        <TeacherRegistrationForm
-          formRef={teacherFormRef}
-          open={teacherFormOpen}
-          onOpenChange={setTeacherFormOpen}
-          formState={teacherForm}
-          setFormState={setTeacherForm}
-          classArms={store.classArms}
-          subjects={store.subjects}
-          teacherCount={store.teachers.length}
-          onReset={resetTeacherForm}
-          onSubmit={handleSaveTeacher}
+        <StaffRegistrationForm
+          formRef={staffFormRef}
+          open={staffFormOpen}
+          onOpenChange={setStaffFormOpen}
+          formState={staffForm}
+          setFormState={setStaffForm}
+          staffCount={totalStaffCount}
+          onReset={resetStaffForm}
+          onSubmit={handleSaveStaff}
           onPhotoError={(msg) =>
             setFeedbackModal({
               variant: "danger",
@@ -330,7 +271,7 @@ export function TeachersWorkspace() {
             <AdminSearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Search teacher name, email, or department..."
+              placeholder="Search name, email, ID, or role..."
             />
             <AdminSelectField
               variant="filter"
@@ -352,20 +293,20 @@ export function TeachersWorkspace() {
             onClick={openAddTeacher}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Add Teacher</span>
+            <span>Register Staff</span>
           </CtaButton>
         </div>
 
         <div className="mt-4">
           <AdminDataTable
-            title="Teacher Accounts & Subject/Class Allocations"
-            subtitle="Edit faculty profiles inline or assign classes and subjects via modal."
-            badge={`${filteredTeachers.length} teachers`}
+            title="Teaching Staff & Class Allocations"
+            subtitle="Edit staff details or assign classes and subjects."
+            badge={`${filteredTeachers.length} teaching staff`}
           >
             {filteredTeachers.length === 0 ? (
               <AdminEmptyState
-                title="No Teachers Found"
-                description="Register a new teacher or clear your search/status filters."
+                title="No Teaching Staff Found"
+                description="Register a staff member or clear your search filters."
                 icon={<Users className="h-5 w-5 text-accent-sky" />}
               />
             ) : (
@@ -373,7 +314,7 @@ export function TeachersWorkspace() {
                 <AdminTableHeader>
                   <tr>
                     <AdminSortableTableHead
-                      label="Teacher"
+                      label="Staff Member"
                       sortKey="name"
                       activeSortKey={sortKey}
                       sortDirection={sortDir}
@@ -387,7 +328,7 @@ export function TeachersWorkspace() {
                       onSort={toggleSort}
                     />
                     <AdminSortableTableHead
-                      label="Classes & Subjects"
+                      label="Role, Classes & Subjects"
                       sortKey="detail"
                       activeSortKey={sortKey}
                       sortDirection={sortDir}
@@ -420,7 +361,7 @@ export function TeachersWorkspace() {
                               {tch.name}
                             </p>
                             <p className="text-[11px] font-medium text-ink-secondary">
-                              {tch.staffId} · {tch.department}
+                              {tch.staffId} · {tch.assignedRole ?? "Teacher"}
                             </p>
                           </div>
                         </div>
@@ -470,7 +411,7 @@ export function TeachersWorkspace() {
                             },
                             {
                               id: "edit-tch",
-                              label: "Edit Teacher Profile",
+                              label: "Edit Staff Details",
                               icon: <Edit3 className="h-3.5 w-3.5" />,
                               onClick: () => openEditTeacher(tch),
                             },
@@ -491,7 +432,7 @@ export function TeachersWorkspace() {
                             },
                             {
                               id: "del-tch",
-                              label: "Remove Teacher",
+                              label: "Remove Staff",
                               icon: <Trash2 className="h-3.5 w-3.5" />,
                               variant: "danger",
                               dividerBefore: true,
@@ -529,8 +470,8 @@ export function TeachersWorkspace() {
           setAssignTeacherTarget(null);
           setFeedbackModal({
             variant: "success",
-            eyebrow: "Operation Completed",
-            title: "Teaching Assignments Saved",
+            eyebrow: "Saved",
+            title: "Teaching Assignments Updated",
             description: `Updated class arms and subjects for ${teacherName}.`,
           });
         }}
@@ -556,10 +497,10 @@ export function TeachersWorkspace() {
           if (!open) setDeleteTarget(null);
         }}
         variant="danger"
-        title="Remove Teacher Account?"
+        title="Remove Staff Account?"
         description={
           deleteTarget
-            ? `Permanently remove "${deleteTarget.name}" from the faculty directory?`
+            ? `Permanently remove "${deleteTarget.name}" from the staff directory?`
             : undefined
         }
         confirmLabel="Confirm Delete"

@@ -1,4 +1,4 @@
-import { ClassArmsWorkspace } from "@/components/admin/subjects/class-arms-workspace";
+import { ClassArmsWorkspace } from "@/components/admin/subjects/class-arms-view";
 
 export default function AdminClassArmsPage() {
   return <ClassArmsWorkspace />;

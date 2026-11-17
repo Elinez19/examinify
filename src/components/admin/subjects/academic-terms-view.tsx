@@ -25,9 +25,10 @@ import {
 } from "@/components/admin/ui/admin-dialog-modal";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
-import type { AcademicSessionTerm } from "@/data/portal-mock-data";
+import type { AcademicTerm } from "@/data/portal-mock-data";
 import {
   AcademicTermForm,
+  buildAcademicTermFromForm,
   type AcademicTermFormState,
 } from "./academic-term-form";
 
@@ -35,22 +36,18 @@ export function AcademicTermsWorkspace() {
   const {
     store,
     activeSessionTerm,
-    saveAcademicTerm,
-    setActiveAcademicTerm,
-    deleteAcademicTerm,
+    saveTermRecord,
+    setActiveTermRecord,
+    deleteTermRecord,
   } = usePortalStore();
 
   const [searchQuery, setSearchQuery] = React.useState("");
-  const termFormRef = React.useRef<HTMLDivElement | null>(null);
   const [termFormOpen, setTermFormOpen] = React.useState(false);
 
   const [termForm, setTermForm] = React.useState<AcademicTermFormState>({
     id: "",
-    session: "2026/2027",
-    term: "Third Term",
-    startsAt: "Apr 19, 2027",
-    endsAt: "Jul 23, 2027",
-    isActive: false,
+    term: "",
+    description: "",
   });
 
   const [feedbackModal, setFeedbackModal] = React.useState<{
@@ -61,85 +58,62 @@ export function AcademicTermsWorkspace() {
   } | null>(null);
 
   const [deleteTarget, setDeleteTarget] =
-    React.useState<AcademicSessionTerm | null>(null);
-
-  const scrollToForm = () => {
-    setTimeout(() => {
-      termFormRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 60);
-  };
+    React.useState<AcademicTerm | null>(null);
 
   const resetTermForm = () => {
     setTermForm({
       id: "",
-      session: "2026/2027",
-      term: "Third Term",
-      startsAt: "Apr 19, 2027",
-      endsAt: "Jul 23, 2027",
-      isActive: false,
+      term: "",
+      description: "",
     });
   };
 
   const openAddTerm = () => {
     resetTermForm();
     setTermFormOpen(true);
-    scrollToForm();
   };
 
-  const openEditTerm = (term: AcademicSessionTerm) => {
+  const openEditTerm = (term: AcademicTerm) => {
     setTermForm({
       id: term.id,
-      session: term.session,
       term: term.term,
-      startsAt: term.startsAt,
-      endsAt: term.endsAt,
-      isActive: term.isActive,
+      description: term.description ?? "",
     });
     setTermFormOpen(true);
-    scrollToForm();
   };
 
   const handleSaveTerm = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!termForm.session.trim()) {
+    if (!termForm.term.trim()) {
       setFeedbackModal({
         variant: "danger",
         eyebrow: "Validation Error",
-        title: "Session Required",
-        description: "Please enter an academic session (e.g. 2026/2027).",
+        title: "Term Required",
+        description: "Please enter a term name (e.g. First Term).",
       });
       return;
     }
 
     const wasEditing = Boolean(termForm.id);
-    saveAcademicTerm({
-      id: termForm.id || `term_${Date.now()}`,
-      session: termForm.session.trim(),
-      term: termForm.term,
-      startsAt: termForm.startsAt.trim(),
-      endsAt: termForm.endsAt.trim(),
-      isActive: termForm.isActive,
-    });
+    const saved = buildAcademicTermFromForm(termForm, store.terms);
+    saveTermRecord(saved);
 
     setTermFormOpen(false);
     resetTermForm();
     setFeedbackModal({
       variant: "success",
-      eyebrow: "Academic Calendar Updated",
-      title: wasEditing ? "Session / Term Updated" : "Session / Term Added",
-      description: `${termForm.term} · ${termForm.session} has been saved to the academic calendar.`,
+      eyebrow: "Academic Terms Updated",
+      title: wasEditing ? "Term Updated" : "Term Created",
+      description: `"${saved.term}" has been saved to the school terms directory.`,
     });
   };
 
   const q = searchQuery.trim().toLowerCase();
-  const filteredTerms = store.academicTerms.filter(
+  const filteredTerms = store.terms.filter(
     (term) =>
       !q ||
-      term.session.toLowerCase().includes(q) ||
-      term.term.toLowerCase().includes(q)
+      term.term.toLowerCase().includes(q) ||
+      term.description.toLowerCase().includes(q)
   );
 
   const activeBadge = activeSessionTerm
@@ -151,39 +125,29 @@ export function AcademicTermsWorkspace() {
       <AdminHeroBanner
         eyebrow={`Academic · ${activeBadge}`}
         eyebrowIcon="dot"
-        headline="Sessions & Academic Terms."
-        highlightWords={["Sessions", "Terms."]}
-        subtitle="Configure school sessions, term date windows, and set the active term across Student, Teacher, and Admin portals."
+        headline="Academic Terms."
+        highlightWords={["Terms."]}
+        subtitle="Create and manage school academic terms, descriptions, and set the active term across all portals."
         primaryCta={{
-          label: "Add Session / Term",
+          label: "New Term",
           onClick: openAddTerm,
           variant: "primary",
           icon: <Plus className="h-4 w-4" />,
         }}
         secondaryCta={{
-          label: "Class Arms",
-          href: "/admin/academic/classes",
+          label: "Manage Sessions",
+          href: "/admin/academic/sessions",
           variant: "secondary",
           trailingArrow: true,
         }}
       />
 
       <AdminWorkspaceSlab tone="pearl" withPearlAsset>
-        <AcademicTermForm
-          formRef={termFormRef}
-          open={termFormOpen}
-          onOpenChange={setTermFormOpen}
-          formState={termForm}
-          setFormState={setTermForm}
-          onReset={resetTermForm}
-          onSubmit={handleSaveTerm}
-        />
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <AdminSearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search session or term..."
+            placeholder="Search term or description..."
           />
           <CtaButton
             type="button"
@@ -192,30 +156,28 @@ export function AcademicTermsWorkspace() {
             onClick={openAddTerm}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Add Session / Term</span>
+            <span>Create Term</span>
           </CtaButton>
         </div>
 
         <div className="mt-4">
           <AdminDataTable
-            title="Academic Sessions & Terms"
-            subtitle="Activate the current school term or adjust session window dates."
+            title="Academic Terms Directory"
+            subtitle="Configure school terms and activate the current term."
             badge={`${filteredTerms.length} terms`}
           >
             {filteredTerms.length === 0 ? (
               <AdminEmptyState
                 title="No Academic Terms Found"
-                description="Create a new academic session and term to organize examinations."
+                description="Create a new academic term or adjust your search query."
                 icon={<CalendarDays className="h-5 w-5 text-accent-sky" />}
               />
             ) : (
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
-                    <AdminTableHead>Session</AdminTableHead>
                     <AdminTableHead>Term</AdminTableHead>
-                    <AdminTableHead>Start Date</AdminTableHead>
-                    <AdminTableHead>End Date</AdminTableHead>
+                    <AdminTableHead>Description</AdminTableHead>
                     <AdminTableHead>Status</AdminTableHead>
                     <AdminTableHead className="text-right">
                       Actions
@@ -225,17 +187,13 @@ export function AcademicTermsWorkspace() {
                 <AdminTableBody>
                   {filteredTerms.map((term) => (
                     <AdminTableRow key={term.id} isSelected={term.isActive}>
-                      <AdminTableCell className="font-mono font-extrabold text-brand-900">
-                        {term.session}
-                      </AdminTableCell>
                       <AdminTableCell className="font-display font-extrabold text-brand-950">
                         {term.term}
                       </AdminTableCell>
-                      <AdminTableCell className="font-medium text-ink-secondary">
-                        {term.startsAt}
-                      </AdminTableCell>
-                      <AdminTableCell className="font-medium text-ink-secondary">
-                        {term.endsAt}
+                      <AdminTableCell className="max-w-md font-medium text-ink-secondary">
+                        <span className="line-clamp-2">
+                          {term.description || "—"}
+                        </span>
                       </AdminTableCell>
                       <AdminTableCell>
                         <AdminStatusPill
@@ -245,7 +203,7 @@ export function AcademicTermsWorkspace() {
                       </AdminTableCell>
                       <AdminTableCell className="text-right">
                         <AdminActionMenu
-                          ariaLabel={`Actions for ${term.term} ${term.session}`}
+                          ariaLabel={`Actions for ${term.term}`}
                           items={[
                             {
                               id: "activate-term",
@@ -255,11 +213,11 @@ export function AcademicTermsWorkspace() {
                               icon: <CheckCircle2 className="h-3.5 w-3.5" />,
                               variant: "primary",
                               disabled: term.isActive,
-                              onClick: () => setActiveAcademicTerm(term.id),
+                              onClick: () => setActiveTermRecord(term.id),
                             },
                             {
                               id: "edit-term",
-                              label: "Edit Term Details",
+                              label: "Edit Term",
                               icon: <Edit3 className="h-3.5 w-3.5" />,
                               onClick: () => openEditTerm(term),
                             },
@@ -284,6 +242,15 @@ export function AcademicTermsWorkspace() {
         </div>
       </AdminWorkspaceSlab>
 
+      <AcademicTermForm
+        open={termFormOpen}
+        onOpenChange={setTermFormOpen}
+        formState={termForm}
+        setFormState={setTermForm}
+        onReset={resetTermForm}
+        onSubmit={handleSaveTerm}
+      />
+
       <AdminDialogModal
         open={Boolean(feedbackModal)}
         onOpenChange={(open) => {
@@ -307,13 +274,13 @@ export function AcademicTermsWorkspace() {
         title="Remove Academic Term?"
         description={
           deleteTarget
-            ? `Permanently delete "${deleteTarget.term} · ${deleteTarget.session}"?`
+            ? `Permanently delete "${deleteTarget.term}" from the terms directory?`
             : undefined
         }
         confirmLabel="Confirm Delete"
         onConfirm={() => {
           if (deleteTarget) {
-            deleteAcademicTerm(deleteTarget.id);
+            deleteTermRecord(deleteTarget.id);
             setDeleteTarget(null);
           }
         }}

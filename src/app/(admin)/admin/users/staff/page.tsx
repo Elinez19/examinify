@@ -1,5 +1,5 @@
-import { StaffWorkspace } from "@/components/admin/users/staff-workspace";
+import { StaffDirectory } from "@/components/admin/users/staff-directory";
 
 export default function AdminStaffUsersPage() {
-  return <StaffWorkspace />;
+  return <StaffDirectory />;
 }

@@ -1,4 +1,4 @@
-import { PaymentsEscrowWorkspace } from "@/components/admin/composites/billing-workspace";
+import { PaymentsEscrowWorkspace } from "@/components/admin/composites/billing-panel";
 import { MOCK_PAYMENTS } from "@/components/admin/mock-data";
 
 export default function AdminPaymentsPage() {

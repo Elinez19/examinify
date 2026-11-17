@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Edit3, Plus, Power, Shield, Trash2 } from "lucide-react";
+import { Edit3, Plus, Power, Shield, Trash2, UserCheck } from "lucide-react";
 import {
   AdminHeroBanner,
   AdminWorkspaceSlab,
@@ -30,26 +30,55 @@ import {
 } from "@/components/admin/ui/admin-dialog-modal";
 import { AvatarBadge } from "@/components/portal/avatar-badge";
 import { CtaButton } from "@/components/landing/ui/cta-button";
+import { PillBadge } from "@/components/landing/ui/pill-badge";
+import { STAFF_TYPE_OPTIONS } from "@/components/forms";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
-import type { StaffProfile } from "@/data/portal-mock-data";
+import {
+  isTeachingStaffRole,
+  type AccountStatus,
+  type StaffProfile,
+  type StaffRoleOption,
+  type StaffType,
+  type TeacherProfile,
+} from "@/data/portal-mock-data";
 import {
   createInitialStaffFormState,
   StaffRegistrationForm,
+  staffRecordToFormState,
   type StaffRegistrationFormState,
 } from "./staff-registration-form";
+import { AssignTeacherModal } from "./assign-teacher-modal";
 
 type StaffSortKey = "name" | "email" | "detail" | "status";
 
-export function StaffWorkspace() {
+interface UnifiedStaffRow {
+  id: string;
+  kind: "teacher" | "staff";
+  name: string;
+  staffCode: string;
+  email: string;
+  staffType: StaffType;
+  role: StaffRoleOption;
+  avatarUrl?: string;
+  status: AccountStatus;
+  teacherData?: TeacherProfile;
+  staffData?: StaffProfile;
+}
+
+export function StaffDirectory() {
   const {
     store,
     activeSessionTerm,
-    saveStaffAccount,
-    setStaffStatus,
-    deleteStaffAccount,
+    saveUnifiedStaff,
+    setAnyStaffStatus,
+    assignTeacherAssignments,
+    deleteAnyStaffAccount,
   } = usePortalStore();
 
+  const totalStaffCount = store.teachers.length + store.staff.length;
+
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [staffTypeFilter, setStaffTypeFilter] = React.useState("ALL");
   const [statusFilter, setStatusFilter] = React.useState("ALL");
   const [sortKey, setSortKey] = React.useState<StaffSortKey>("name");
   const [sortDir, setSortDir] = React.useState<SortDirection>("asc");
@@ -57,8 +86,17 @@ export function StaffWorkspace() {
   const staffFormRef = React.useRef<HTMLDivElement | null>(null);
   const [staffFormOpen, setStaffFormOpen] = React.useState(false);
   const [staffForm, setStaffForm] = React.useState<StaffRegistrationFormState>(
-    () => createInitialStaffFormState(store.staff.length)
+    () => createInitialStaffFormState(totalStaffCount)
   );
+
+  const [assignTeacherTarget, setAssignTeacherTarget] =
+    React.useState<TeacherProfile | null>(null);
+  const [teacherClassesDraft, setTeacherClassesDraft] = React.useState<
+    string[]
+  >([]);
+  const [teacherSubjectsDraft, setTeacherSubjectsDraft] = React.useState<
+    string[]
+  >([]);
 
   const [feedbackModal, setFeedbackModal] = React.useState<{
     variant: ModalVariant;
@@ -66,13 +104,12 @@ export function StaffWorkspace() {
     title: string;
     description: string;
   } | null>(null);
-  const [deleteTarget, setDeleteTarget] = React.useState<StaffProfile | null>(
-    null
-  );
+  const [deleteTarget, setDeleteTarget] =
+    React.useState<UnifiedStaffRow | null>(null);
 
   const termLabel = activeSessionTerm
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
-    : "Admin Governance";
+    : "Staff Records";
 
   const scrollFormIntoView = () => {
     setTimeout(() => {
@@ -84,7 +121,7 @@ export function StaffWorkspace() {
   };
 
   const resetStaffForm = () => {
-    setStaffForm(createInitialStaffFormState(store.staff.length));
+    setStaffForm(createInitialStaffFormState(totalStaffCount));
   };
 
   const openAddStaff = () => {
@@ -93,118 +130,89 @@ export function StaffWorkspace() {
     scrollFormIntoView();
   };
 
-  const openEditStaff = (staff: StaffProfile) => {
-    setStaffForm({
-      ...createInitialStaffFormState(store.staff.length),
-      id: staff.id,
-      schoolBranch: staff.schoolBranch ?? "Main Campus (Guzape)",
-      staffCode: staff.staffCode ?? `STF/ADM/${staff.id.slice(-3).toUpperCase()}`,
-      displayPrefix: staff.displayPrefix ?? "Mr.",
-      firstName: staff.firstName,
-      middleName: staff.middleName ?? "",
-      lastName: staff.lastName,
-      sex: staff.sex ?? "Male",
-      maritalStatus: staff.maritalStatus ?? "Married",
-      dateOfBirth: staff.dateOfBirth ?? "",
-      country: staff.country ?? "Nigeria",
-      stateOfOrigin: staff.stateOfOrigin ?? "FCT Abuja",
-      cityOfResidence: staff.cityOfResidence ?? "",
-      photoDataUrl:
-        staff.avatarUrl && staff.avatarUrl.startsWith("data:image/")
-          ? staff.avatarUrl
-          : "",
-      roleTitle: staff.roleTitle,
-      departmentUnit: staff.departmentUnit ?? "Examination Governance",
-      employmentType: staff.employmentType ?? "Full-Time",
-      employmentDate: staff.employmentDate ?? "",
-      adminScope: staff.adminScope,
-      permissions: staff.permissions,
-      phoneType: staff.phoneType ?? "Personal Mobile",
-      phone: staff.phone,
-      alternatePhone: staff.alternatePhone ?? "",
-      emailType: staff.emailType ?? "Official School",
-      email: staff.email,
-      alternateEmail: staff.alternateEmail ?? "",
-      nextOfKinName: staff.nextOfKinName ?? "",
-      nextOfKinRelationship: staff.nextOfKinRelationship ?? "Spouse",
-      nextOfKinPhone: staff.nextOfKinPhone ?? "",
-      nextOfKinAddress: staff.nextOfKinAddress ?? "",
-      password: staff.password,
-      status: staff.status,
-    });
+  const openEditStaff = (row: UnifiedStaffRow) => {
+    if (row.kind === "teacher" && row.teacherData) {
+      setStaffForm(
+        staffRecordToFormState(
+          { kind: "teacher", data: row.teacherData },
+          totalStaffCount
+        )
+      );
+    } else if (row.staffData) {
+      setStaffForm(
+        staffRecordToFormState(
+          { kind: "staff", data: row.staffData },
+          totalStaffCount
+        )
+      );
+    }
     setStaffFormOpen(true);
     scrollFormIntoView();
   };
 
   const handleSaveStaff = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!staffForm.firstName.trim() || !staffForm.email.trim()) {
+    if (
+      !staffForm.firstName.trim() ||
+      !staffForm.lastName.trim() ||
+      !staffForm.email.trim()
+    ) {
       setFeedbackModal({
         variant: "danger",
-        eyebrow: "Validation Error",
-        title: "Missing Required Staff Fields",
+        eyebrow: "Missing Information",
+        title: "Please Complete Required Fields",
         description:
-          "Please provide the staff member's first name, surname, and email address before submitting.",
+          "Please enter the staff member's first name, surname, and email address before submitting.",
       });
       return;
     }
 
-    const prefix = staffForm.displayPrefix ? `${staffForm.displayPrefix} ` : "";
     const fullName = [
-      prefix.trim(),
       staffForm.firstName.trim(),
       staffForm.middleName.trim(),
       staffForm.lastName.trim(),
     ]
       .filter(Boolean)
       .join(" ");
-    const existing = store.staff.find((s) => s.id === staffForm.id);
     const wasEditing = Boolean(staffForm.id);
 
-    saveStaffAccount({
-      id: staffForm.id || `adm_${Date.now()}`,
-      displayPrefix: staffForm.displayPrefix,
+    saveUnifiedStaff({
+      id: staffForm.id,
+      schoolBranch: staffForm.schoolBranch,
+      staffCode: staffForm.staffCode.trim(),
       firstName: staffForm.firstName.trim(),
       middleName: staffForm.middleName.trim() || undefined,
       lastName: staffForm.lastName.trim(),
-      name: fullName,
-      email: staffForm.email.trim().toLowerCase(),
-      emailType: staffForm.emailType,
-      alternateEmail: staffForm.alternateEmail.trim() || undefined,
-      phone: staffForm.phone.trim(),
-      phoneType: staffForm.phoneType,
-      alternatePhone: staffForm.alternatePhone.trim() || undefined,
-      staffCode: staffForm.staffCode.trim(),
-      schoolBranch: staffForm.schoolBranch,
       sex: staffForm.sex,
       maritalStatus: staffForm.maritalStatus,
       dateOfBirth: staffForm.dateOfBirth || undefined,
       country: staffForm.country,
       stateOfOrigin: staffForm.stateOfOrigin,
       cityOfResidence: staffForm.cityOfResidence.trim() || undefined,
-      roleTitle: staffForm.roleTitle.trim() || "Staff Administrator",
-      departmentUnit: staffForm.departmentUnit,
-      employmentType: staffForm.employmentType,
-      employmentDate: staffForm.employmentDate || undefined,
-      adminScope: staffForm.adminScope,
-      permissions: staffForm.permissions.trim(),
-      avatarUrl: staffForm.photoDataUrl || existing?.avatarUrl || "avatar-2",
-      password: staffForm.password || "Admin@2026",
-      status: staffForm.status,
-      lastActive: "Updated now",
+      avatarUrl: staffForm.photoDataUrl || undefined,
+      staffType: staffForm.staffType,
+      role: staffForm.role,
+      phoneType: staffForm.phoneType,
+      phone: staffForm.phone.trim(),
+      alternatePhone: staffForm.alternatePhone.trim() || undefined,
+      emailType: staffForm.emailType,
+      email: staffForm.email.trim().toLowerCase(),
+      alternateEmail: staffForm.alternateEmail.trim() || undefined,
       nextOfKinName: staffForm.nextOfKinName.trim() || undefined,
       nextOfKinRelationship: staffForm.nextOfKinRelationship,
       nextOfKinPhone: staffForm.nextOfKinPhone.trim() || undefined,
       nextOfKinAddress: staffForm.nextOfKinAddress.trim() || undefined,
+      password: staffForm.password || "Staff@2026",
+      status: staffForm.status,
     });
 
     setStaffFormOpen(false);
     resetStaffForm();
     setFeedbackModal({
       variant: "success",
-      eyebrow: "Operation Completed",
-      title: wasEditing ? "Staff Record Updated" : "Staff Account Created",
-      description: `${fullName} (${staffForm.staffCode}) has been saved to the staff & admin directory.`,
+      eyebrow: "Saved",
+      title: wasEditing ? "Staff Record Updated" : "Staff Registered",
+      description: `${fullName} (${staffForm.staffCode}) has been saved to the staff directory.`,
     });
   };
 
@@ -216,48 +224,77 @@ export function StaffWorkspace() {
     }
   };
 
+  const allStaffRows = React.useMemo<UnifiedStaffRow[]>(() => {
+    const teacherRows: UnifiedStaffRow[] = store.teachers.map((t) => ({
+      id: t.id,
+      kind: "teacher",
+      name: t.name,
+      staffCode: t.staffId,
+      email: t.email,
+      staffType: t.staffType ?? "Academic",
+      role: t.assignedRole ?? "Teacher",
+      avatarUrl: t.avatarUrl,
+      status: t.status,
+      teacherData: t,
+    }));
+    const staffRows: UnifiedStaffRow[] = store.staff.map((s) => ({
+      id: s.id,
+      kind: "staff",
+      name: s.name,
+      staffCode: s.staffCode ?? `STF/${s.id.slice(-3).toUpperCase()}`,
+      email: s.email,
+      staffType: s.staffType ?? "Non-Academic",
+      role: s.assignedRole ?? "Staff",
+      avatarUrl: s.avatarUrl,
+      status: s.status,
+      staffData: s,
+    }));
+    return [...teacherRows, ...staffRows];
+  }, [store.staff, store.teachers]);
+
   const q = searchQuery.trim().toLowerCase();
   const filteredStaff = React.useMemo(() => {
-    const list = store.staff.filter((item) => {
+    const list = allStaffRows.filter((item) => {
+      if (staffTypeFilter !== "ALL" && item.staffType !== staffTypeFilter) {
+        return false;
+      }
       if (statusFilter !== "ALL" && item.status !== statusFilter) return false;
       if (!q) return true;
       return (
-        (item.name ?? "").toLowerCase().includes(q) ||
-        (item.email ?? "").toLowerCase().includes(q) ||
-        (item.roleTitle ?? "").toLowerCase().includes(q) ||
-        (item.staffCode ?? "").toLowerCase().includes(q)
+        item.name.toLowerCase().includes(q) ||
+        item.email.toLowerCase().includes(q) ||
+        item.role.toLowerCase().includes(q) ||
+        item.staffType.toLowerCase().includes(q) ||
+        item.staffCode.toLowerCase().includes(q)
       );
     });
     return [...list].sort((a, b) => {
       let cmp = 0;
-      if (sortKey === "name") cmp = (a.name ?? "").localeCompare(b.name ?? "");
-      else if (sortKey === "email")
-        cmp = (a.email ?? "").localeCompare(b.email ?? "");
-      else if (sortKey === "detail")
-        cmp = (a.roleTitle ?? "").localeCompare(b.roleTitle ?? "");
-      else if (sortKey === "status")
-        cmp = (a.status ?? "").localeCompare(b.status ?? "");
+      if (sortKey === "name") cmp = a.name.localeCompare(b.name);
+      else if (sortKey === "email") cmp = a.email.localeCompare(b.email);
+      else if (sortKey === "detail") cmp = a.role.localeCompare(b.role);
+      else if (sortKey === "status") cmp = a.status.localeCompare(b.status);
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [q, sortDir, sortKey, statusFilter, store.staff]);
+  }, [allStaffRows, q, sortDir, sortKey, staffTypeFilter, statusFilter]);
 
   return (
     <div className="space-y-4">
       <AdminHeroBanner
         eyebrow={`Users · ${termLabel}`}
         eyebrowIcon="dot"
-        headline="Staff & Administrators."
-        highlightWords={["Staff", "Administrators."]}
-        subtitle="Create and manage administrative and support staff accounts, permission scopes, and access status."
+        headline="School Staff Directory."
+        highlightWords={["Staff", "Directory."]}
+        subtitle="Register and manage all school staff — teachers, administrators, and support staff — using one simple registration form."
         primaryCta={{
-          label: "Add Staff / Admin",
+          label: "Register Staff",
           onClick: openAddStaff,
           variant: "primary",
           icon: <Plus className="h-4 w-4" />,
         }}
         secondaryCta={{
-          label: "Platform Settings",
-          href: "/admin/settings",
+          label: "Assign Staff Role",
+          href: "/admin/users/assign-role",
           variant: "secondary",
           trailingArrow: true,
         }}
@@ -270,7 +307,7 @@ export function StaffWorkspace() {
           onOpenChange={setStaffFormOpen}
           formState={staffForm}
           setFormState={setStaffForm}
-          staffCount={store.staff.length}
+          staffCount={totalStaffCount}
           onReset={resetStaffForm}
           onSubmit={handleSaveStaff}
           onPhotoError={(msg) =>
@@ -288,7 +325,17 @@ export function StaffWorkspace() {
             <AdminSearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Search staff name, email, or role..."
+              placeholder="Search staff name, ID, email, or role..."
+            />
+            <AdminSelectField
+              variant="filter"
+              aria-label="Filter staff type"
+              value={staffTypeFilter}
+              onChange={setStaffTypeFilter}
+              options={[
+                { id: "ALL", label: "All Staff Types" },
+                ...STAFF_TYPE_OPTIONS,
+              ]}
             />
             <AdminSelectField
               variant="filter"
@@ -310,20 +357,20 @@ export function StaffWorkspace() {
             onClick={openAddStaff}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Add Staff</span>
+            <span>Register Staff</span>
           </CtaButton>
         </div>
 
         <div className="mt-4">
           <AdminDataTable
-            title="Administrative & Support Staff"
-            subtitle="Manage staff accounts, roles, and access scopes."
+            title="All Registered Staff"
+            subtitle="Academic and Non-Academic school staff accounts."
             badge={`${filteredStaff.length} staff`}
           >
             {filteredStaff.length === 0 ? (
               <AdminEmptyState
                 title="No Staff Accounts Found"
-                description="Create a staff account or adjust your search/status filters."
+                description="Register a new staff member or clear your search filters."
                 icon={<Shield className="h-5 w-5 text-accent-sky" />}
               />
             ) : (
@@ -345,7 +392,7 @@ export function StaffWorkspace() {
                       onSort={toggleSort}
                     />
                     <AdminSortableTableHead
-                      label="Role Title"
+                      label="Staff Type & Role"
                       sortKey="detail"
                       activeSortKey={sortKey}
                       sortDirection={sortDir}
@@ -364,66 +411,95 @@ export function StaffWorkspace() {
                   </tr>
                 </AdminTableHeader>
                 <AdminTableBody>
-                  {filteredStaff.map((stf) => (
-                    <AdminTableRow key={stf.id}>
+                  {filteredStaff.map((row) => (
+                    <AdminTableRow key={row.id}>
                       <AdminTableCell>
                         <div className="flex items-center gap-2.5">
                           <AvatarBadge
-                            name={stf.name}
-                            avatarUrl={stf.avatarUrl}
+                            name={row.name}
+                            avatarUrl={row.avatarUrl}
                             size="sm"
                           />
                           <div>
                             <p className="font-display font-extrabold text-brand-950">
-                              {stf.name}
+                              {row.name}
                             </p>
-                            <p className="text-[11px] font-medium text-ink-secondary">
-                              {stf.staffCode ? `${stf.staffCode} · ` : ""}
-                              {stf.lastActive}
+                            <p className="font-mono text-[11px] font-medium text-ink-secondary">
+                              {row.staffCode}
                             </p>
                           </div>
                         </div>
                       </AdminTableCell>
                       <AdminTableCell className="font-medium text-brand-800">
-                        {stf.email}
+                        {row.email}
                       </AdminTableCell>
                       <AdminTableCell>
-                        <p className="font-display font-bold text-brand-950">
-                          {stf.roleTitle}
-                        </p>
-                        <p className="line-clamp-1 text-[11px] font-medium text-ink-secondary">
-                          {stf.permissions}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <PillBadge
+                            tone={row.staffType === "Academic" ? "sky" : "porcelain"}
+                            className="px-2.5 py-0.5 text-[11px]"
+                          >
+                            {row.staffType}
+                          </PillBadge>
+                          <span className="font-display text-xs font-extrabold text-brand-950">
+                            {row.role}
+                          </span>
+                        </div>
+                        {row.teacherData &&
+                          row.teacherData.assignedClasses.length > 0 && (
+                            <p className="mt-1 text-[11px] font-medium text-ink-secondary">
+                              Classes: {row.teacherData.assignedClasses.join(", ")}
+                            </p>
+                          )}
                       </AdminTableCell>
                       <AdminTableCell>
                         <AdminStatusPill
-                          status={stf.status}
+                          status={row.status}
                           variant={
-                            stf.status === "active" ? "success" : "danger"
+                            row.status === "active" ? "success" : "danger"
                           }
                         />
                       </AdminTableCell>
                       <AdminTableCell className="text-right">
                         <AdminActionMenu
-                          ariaLabel={`Actions for ${stf.name}`}
+                          ariaLabel={`Actions for ${row.name}`}
                           items={[
+                            ...(row.teacherData && isTeachingStaffRole(row.role)
+                              ? [
+                                  {
+                                    id: "assign-cls-sub",
+                                    label: "Assign Classes & Subjects",
+                                    icon: <UserCheck className="h-3.5 w-3.5" />,
+                                    variant: "primary" as const,
+                                    onClick: () => {
+                                      setTeacherClassesDraft(
+                                        row.teacherData!.assignedClasses
+                                      );
+                                      setTeacherSubjectsDraft(
+                                        row.teacherData!.assignedSubjectIds
+                                      );
+                                      setAssignTeacherTarget(row.teacherData!);
+                                    },
+                                  },
+                                ]
+                              : []),
                             {
                               id: "edit-stf",
-                              label: "Edit Staff Account",
+                              label: "Edit Staff Details",
                               icon: <Edit3 className="h-3.5 w-3.5" />,
-                              onClick: () => openEditStaff(stf),
+                              onClick: () => openEditStaff(row),
                             },
                             {
                               id: "toggle-stf",
                               label:
-                                stf.status === "active"
+                                row.status === "active"
                                   ? "Deactivate Access"
                                   : "Activate Access",
                               icon: <Power className="h-3.5 w-3.5" />,
                               onClick: () =>
-                                setStaffStatus(
-                                  stf.id,
-                                  stf.status === "active"
+                                setAnyStaffStatus(
+                                  row.id,
+                                  row.status === "active"
                                     ? "inactive"
                                     : "active"
                                 ),
@@ -434,7 +510,7 @@ export function StaffWorkspace() {
                               icon: <Trash2 className="h-3.5 w-3.5" />,
                               variant: "danger",
                               dividerBefore: true,
-                              onClick: () => setDeleteTarget(stf),
+                              onClick: () => setDeleteTarget(row),
                             },
                           ]}
                         />
@@ -447,6 +523,33 @@ export function StaffWorkspace() {
           </AdminDataTable>
         </div>
       </AdminWorkspaceSlab>
+
+      <AssignTeacherModal
+        target={assignTeacherTarget}
+        classesDraft={teacherClassesDraft}
+        setClassesDraft={setTeacherClassesDraft}
+        subjectsDraft={teacherSubjectsDraft}
+        setSubjectsDraft={setTeacherSubjectsDraft}
+        classArms={store.classArms}
+        subjects={store.subjects}
+        onClose={() => setAssignTeacherTarget(null)}
+        onConfirm={() => {
+          if (!assignTeacherTarget) return;
+          assignTeacherAssignments(
+            assignTeacherTarget.id,
+            teacherClassesDraft,
+            teacherSubjectsDraft
+          );
+          const teacherName = assignTeacherTarget.name;
+          setAssignTeacherTarget(null);
+          setFeedbackModal({
+            variant: "success",
+            eyebrow: "Saved",
+            title: "Teaching Assignments Updated",
+            description: `Updated class arms and subjects for ${teacherName}.`,
+          });
+        }}
+      />
 
       <AdminDialogModal
         open={Boolean(feedbackModal)}
@@ -477,7 +580,7 @@ export function StaffWorkspace() {
         confirmLabel="Confirm Delete"
         onConfirm={() => {
           if (deleteTarget) {
-            deleteStaffAccount(deleteTarget.id);
+            deleteAnyStaffAccount(deleteTarget.id);
             setDeleteTarget(null);
           }
         }}

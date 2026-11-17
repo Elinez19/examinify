@@ -12,4 +12,4 @@ export * from "@/components/admin/subjects/constants";
 export * from "@/components/admin/subjects/subject-cards-grid";
 export * from "@/components/admin/subjects/subject-taxonomy-form";
 export * from "@/components/admin/subjects/subjects-table";
-export * from "@/components/admin/subjects/subjects-workspace";
+export * from "@/components/admin/subjects/subjects-view";

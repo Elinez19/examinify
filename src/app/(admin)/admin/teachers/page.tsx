@@ -1,5 +1,5 @@
-import { TeachersWorkspace } from "@/components/admin/users/teachers-workspace";
+import { TeachersDirectory } from "@/components/admin/users/teachers-directory";
 
 export default function AdminTeachersPage() {
-  return <TeachersWorkspace />;
+  return <TeachersDirectory />;
 }

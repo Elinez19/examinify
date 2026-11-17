@@ -1,5 +1,5 @@
 import * as React from "react";
-import { StudentStudyWorkspace } from "@/components/student/student-study-workspace";
+import { StudentStudyWorkspace } from "@/components/student/student-study-view";
 
 export default function StudentStudyModePage() {
   return (

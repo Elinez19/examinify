@@ -42,7 +42,7 @@ import { AssignStudentClassModal } from "./assign-student-class-modal";
 
 type StudentSortKey = "name" | "email" | "detail" | "status";
 
-export function StudentsWorkspace() {
+export function StudentsDirectory() {
   const {
     store,
     activeSessionTerm,
@@ -224,7 +224,7 @@ export function StudentsWorkspace() {
     resetStudentForm();
     setFeedbackModal({
       variant: "success",
-      eyebrow: "Operation Completed",
+      eyebrow: "Saved",
       title: wasEditing ? "Student Record Updated" : "Student Registered",
       description: `${fullName} (${studentForm.admissionNo}) has been saved to ${arm?.name ?? "the class directory"}.`,
     });
@@ -270,7 +270,7 @@ export function StudentsWorkspace() {
         eyebrowIcon="dot"
         headline="Students Directory."
         highlightWords={["Students"]}
-        subtitle="Register or edit student profiles using the single inline form below, and quickly assign class arms via modal."
+        subtitle="Register or edit student profiles using the form below, and assign class arms from the row menu."
         primaryCta={{
           label: "Register Student",
           onClick: openAddStudent,
@@ -278,8 +278,8 @@ export function StudentsWorkspace() {
           icon: <Plus className="h-4 w-4" />,
         }}
         secondaryCta={{
-          label: "Teachers Directory",
-          href: "/admin/teachers",
+          label: "Staff Directory",
+          href: "/admin/users/staff",
           variant: "secondary",
           trailingArrow: true,
         }}
@@ -341,13 +341,13 @@ export function StudentsWorkspace() {
         <div className="mt-4">
           <AdminDataTable
             title="Student Accounts & Class Assignment"
-            subtitle="Edit full records inline or use Assign Class Arm to move a student via modal."
+            subtitle="Edit student records or move a student to another class arm."
             badge={`${filteredStudents.length} students`}
           >
             {filteredStudents.length === 0 ? (
               <AdminEmptyState
                 title="No Students Found"
-                description="Register a new student or clear your search/status filters."
+                description="Register a new student or clear your search filters."
                 icon={<GraduationCap className="h-5 w-5 text-accent-sky" />}
               />
             ) : (
@@ -494,7 +494,7 @@ export function StudentsWorkspace() {
           setAssignClassTarget(null);
           setFeedbackModal({
             variant: "success",
-            eyebrow: "Operation Completed",
+            eyebrow: "Saved",
             title: "Class Assigned",
             description: `${assignedName} has been moved to the selected class arm.`,
           });

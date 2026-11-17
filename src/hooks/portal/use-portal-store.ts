@@ -4,9 +4,12 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import {
   INITIAL_PORTAL_STORE,
   STORAGE_KEY,
+  isTeachingStaffRole,
   loadPortalStore,
   savePortalStore,
+  type AcademicSession,
   type AcademicSessionTerm,
+  type AcademicTerm,
   type AccountStatus,
   type ClassArm,
   type ExamSubmission,
@@ -16,6 +19,8 @@ import {
   type QuestionTypeConfig,
   type RoomBroadcast,
   type StaffProfile,
+  type StaffRoleOption,
+  type StaffType,
   type StudentAccessibilityPrefs,
   type StudentProfile,
   type SubjectEnrollment,
@@ -77,6 +82,61 @@ function getServerSnapshot() {
   return INITIAL_PORTAL_STORE;
 }
 
+export interface UnifiedStaffInput {
+  id: string;
+  schoolBranch: string;
+  staffCode: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  sex: string;
+  maritalStatus: string;
+  dateOfBirth?: string;
+  country: string;
+  stateOfOrigin: string;
+  cityOfResidence?: string;
+  avatarUrl?: string;
+  staffType: StaffType;
+  role: StaffRoleOption;
+  phoneType: string;
+  phone: string;
+  alternatePhone?: string;
+  emailType: string;
+  email: string;
+  alternateEmail?: string;
+  nextOfKinName?: string;
+  nextOfKinRelationship?: string;
+  nextOfKinPhone?: string;
+  nextOfKinAddress?: string;
+  password: string;
+  status: AccountStatus;
+}
+
+function resolveAdminScope(role: StaffRoleOption): StaffProfile["adminScope"] {
+  if (role === "Admin" || role === "Principal") return "super_admin";
+  if (role === "Exam Officer") return "kyc_moderator";
+  return "dispatch_support";
+}
+
+function resolveRolePermissions(role: StaffRoleOption): string {
+  switch (role) {
+    case "Admin":
+      return "Full school portal access";
+    case "Principal":
+      return "School leadership, exams & academic review";
+    case "Exam Officer":
+      return "Exam scheduling, PINs, question bank & appeals";
+    case "Class Teacher":
+      return "Class list, teaching, grading & live monitor";
+    case "Subject Teacher":
+      return "Subject question bank, exams & grading";
+    case "Teacher":
+      return "Teaching, question bank, exams & grading";
+    default:
+      return "General school staff access";
+  }
+}
+
 export function generateExamPassCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
@@ -93,8 +153,23 @@ export function usePortalStore() {
     hydrateFromStorage();
   }, []);
 
-  const activeSessionTerm =
+  const activeSession =
+    store.academicSessions.find((s) => s.isActive) ?? store.academicSessions[0];
+  const activeTermRecord =
+    store.terms.find((t) => t.isActive) ?? store.terms[0];
+  const fallbackSessionTerm =
     store.academicTerms.find((term) => term.isActive) ?? store.academicTerms[0];
+  const activeSessionTerm: AcademicSessionTerm | undefined =
+    activeSession && activeTermRecord
+      ? {
+          id: `${activeSession.id}::${activeTermRecord.id}`,
+          session: activeSession.session,
+          term: activeTermRecord.term,
+          isActive: true,
+          startsAt: activeSession.startDate,
+          endsAt: activeSession.stopDate,
+        }
+      : fallbackSessionTerm;
 
   const authenticateUser = useCallback(
     (
@@ -374,6 +449,279 @@ export function usePortalStore() {
     }));
   }, []);
 
+  const saveUnifiedStaff = useCallback((input: UnifiedStaffInput) => {
+    updateStore((prev) => {
+      const existingTeacher = prev.teachers.find((t) => t.id === input.id);
+      const existingStaff = prev.staff.find((s) => s.id === input.id);
+      const fullName = [
+        input.firstName.trim(),
+        input.middleName?.trim(),
+        input.lastName.trim(),
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const activeTerm =
+        prev.academicTerms.find((t) => t.isActive) ?? prev.academicTerms[0];
+      const termLabel = activeTerm
+        ? `${activeTerm.term} · ${activeTerm.session}`
+        : prev.teacher.termLabel;
+
+      if (isTeachingStaffRole(input.role)) {
+        const recordId =
+          input.id || `tch_${Date.now()}`;
+        const nextTeacher: TeacherProfile = {
+          id: recordId,
+          firstName: input.firstName.trim(),
+          middleName: input.middleName?.trim() || undefined,
+          lastName: input.lastName.trim(),
+          name: fullName,
+          email: input.email.trim().toLowerCase(),
+          emailType: input.emailType,
+          alternateEmail: input.alternateEmail?.trim() || undefined,
+          phone: input.phone.trim(),
+          phoneType: input.phoneType,
+          alternatePhone: input.alternatePhone?.trim() || undefined,
+          staffId: input.staffCode.trim(),
+          staffType: input.staffType,
+          assignedRole: input.role,
+          schoolBranch: input.schoolBranch,
+          sex: input.sex,
+          maritalStatus: input.maritalStatus,
+          dateOfBirth: input.dateOfBirth || undefined,
+          country: input.country,
+          stateOfOrigin: input.stateOfOrigin,
+          cityOfResidence: input.cityOfResidence?.trim() || undefined,
+          department: existingTeacher?.department || "General",
+          assignedClasses: existingTeacher?.assignedClasses ?? [],
+          assignedSubjectIds: existingTeacher?.assignedSubjectIds ?? [],
+          termLabel,
+          schoolName: prev.teacher.schoolName,
+          avatarUrl:
+            input.avatarUrl ||
+            existingTeacher?.avatarUrl ||
+            existingStaff?.avatarUrl ||
+            "avatar-5",
+          password: input.password || "Staff@2026",
+          status: input.status,
+          nextOfKinName: input.nextOfKinName?.trim() || undefined,
+          nextOfKinRelationship: input.nextOfKinRelationship,
+          nextOfKinPhone: input.nextOfKinPhone?.trim() || undefined,
+          nextOfKinAddress: input.nextOfKinAddress?.trim() || undefined,
+        };
+        const existsInTeachers = prev.teachers.some((t) => t.id === recordId);
+        return {
+          ...prev,
+          teachers: existsInTeachers
+            ? prev.teachers.map((t) => (t.id === recordId ? nextTeacher : t))
+            : [nextTeacher, ...prev.teachers],
+          teacher: prev.teacher.id === recordId ? nextTeacher : prev.teacher,
+          staff: prev.staff.filter((s) => s.id !== recordId),
+        };
+      }
+
+      const recordId = input.id || `adm_${Date.now()}`;
+      const nextStaff: StaffProfile = {
+        id: recordId,
+        firstName: input.firstName.trim(),
+        middleName: input.middleName?.trim() || undefined,
+        lastName: input.lastName.trim(),
+        name: fullName,
+        email: input.email.trim().toLowerCase(),
+        emailType: input.emailType,
+        alternateEmail: input.alternateEmail?.trim() || undefined,
+        phone: input.phone.trim(),
+        phoneType: input.phoneType,
+        alternatePhone: input.alternatePhone?.trim() || undefined,
+        staffCode: input.staffCode.trim(),
+        staffType: input.staffType,
+        assignedRole: input.role,
+        schoolBranch: input.schoolBranch,
+        sex: input.sex,
+        maritalStatus: input.maritalStatus,
+        dateOfBirth: input.dateOfBirth || undefined,
+        country: input.country,
+        stateOfOrigin: input.stateOfOrigin,
+        cityOfResidence: input.cityOfResidence?.trim() || undefined,
+        roleTitle: input.role,
+        adminScope: resolveAdminScope(input.role),
+        permissions: resolveRolePermissions(input.role),
+        avatarUrl:
+          input.avatarUrl ||
+          existingStaff?.avatarUrl ||
+          existingTeacher?.avatarUrl ||
+          "avatar-2",
+        password: input.password || "Staff@2026",
+        status: input.status,
+        lastActive: existingStaff?.lastActive ?? "Updated now",
+        nextOfKinName: input.nextOfKinName?.trim() || undefined,
+        nextOfKinRelationship: input.nextOfKinRelationship,
+        nextOfKinPhone: input.nextOfKinPhone?.trim() || undefined,
+        nextOfKinAddress: input.nextOfKinAddress?.trim() || undefined,
+      };
+      const existsInStaff = prev.staff.some((s) => s.id === recordId);
+      return {
+        ...prev,
+        staff: existsInStaff
+          ? prev.staff.map((s) => (s.id === recordId ? nextStaff : s))
+          : [nextStaff, ...prev.staff],
+        teachers: prev.teachers.filter((t) => t.id !== recordId),
+      };
+    });
+  }, []);
+
+  const assignStaffRole = useCallback(
+    (staffId: string, newRole: StaffRoleOption) => {
+      updateStore((prev) => {
+        const existingTeacher = prev.teachers.find((t) => t.id === staffId);
+        const existingStaff = prev.staff.find((s) => s.id === staffId);
+        if (!existingTeacher && !existingStaff) return prev;
+
+        const activeTerm =
+          prev.academicTerms.find((t) => t.isActive) ?? prev.academicTerms[0];
+        const termLabel = activeTerm
+          ? `${activeTerm.term} · ${activeTerm.session}`
+          : prev.teacher.termLabel;
+
+        if (isTeachingStaffRole(newRole)) {
+          if (existingTeacher) {
+            const updated: TeacherProfile = {
+              ...existingTeacher,
+              assignedRole: newRole,
+            };
+            return {
+              ...prev,
+              teachers: prev.teachers.map((t) =>
+                t.id === staffId ? updated : t
+              ),
+              teacher: prev.teacher.id === staffId ? updated : prev.teacher,
+            };
+          }
+          const src = existingStaff!;
+          const converted: TeacherProfile = {
+            id: src.id,
+            firstName: src.firstName,
+            middleName: src.middleName,
+            lastName: src.lastName,
+            name: src.name,
+            email: src.email,
+            emailType: src.emailType,
+            alternateEmail: src.alternateEmail,
+            phone: src.phone,
+            phoneType: src.phoneType,
+            alternatePhone: src.alternatePhone,
+            staffId: src.staffCode || `STF/${src.id.slice(-3).toUpperCase()}`,
+            staffType: src.staffType ?? "Academic",
+            assignedRole: newRole,
+            schoolBranch: src.schoolBranch,
+            sex: src.sex,
+            dateOfBirth: src.dateOfBirth,
+            maritalStatus: src.maritalStatus,
+            country: src.country,
+            stateOfOrigin: src.stateOfOrigin,
+            cityOfResidence: src.cityOfResidence,
+            department: src.departmentUnit || "General",
+            assignedClasses: [],
+            assignedSubjectIds: [],
+            termLabel,
+            schoolName: prev.teacher.schoolName,
+            avatarUrl: src.avatarUrl || "avatar-5",
+            password: src.password,
+            status: src.status,
+            nextOfKinName: src.nextOfKinName,
+            nextOfKinRelationship: src.nextOfKinRelationship,
+            nextOfKinPhone: src.nextOfKinPhone,
+            nextOfKinAddress: src.nextOfKinAddress,
+          };
+          return {
+            ...prev,
+            teachers: [converted, ...prev.teachers],
+            staff: prev.staff.filter((s) => s.id !== staffId),
+          };
+        }
+
+        if (existingStaff) {
+          const updated: StaffProfile = {
+            ...existingStaff,
+            assignedRole: newRole,
+            roleTitle: newRole,
+            adminScope: resolveAdminScope(newRole),
+            permissions: resolveRolePermissions(newRole),
+          };
+          return {
+            ...prev,
+            staff: prev.staff.map((s) => (s.id === staffId ? updated : s)),
+          };
+        }
+        const src = existingTeacher!;
+        const converted: StaffProfile = {
+          id: src.id,
+          firstName: src.firstName,
+          middleName: src.middleName,
+          lastName: src.lastName,
+          name: src.name,
+          email: src.email,
+          emailType: src.emailType,
+          alternateEmail: src.alternateEmail,
+          phone: src.phone,
+          phoneType: src.phoneType,
+          alternatePhone: src.alternatePhone,
+          staffCode: src.staffId,
+          staffType: src.staffType ?? "Academic",
+          assignedRole: newRole,
+          schoolBranch: src.schoolBranch,
+          sex: src.sex,
+          dateOfBirth: src.dateOfBirth,
+          maritalStatus: src.maritalStatus,
+          country: src.country,
+          stateOfOrigin: src.stateOfOrigin,
+          cityOfResidence: src.cityOfResidence,
+          roleTitle: newRole,
+          adminScope: resolveAdminScope(newRole),
+          permissions: resolveRolePermissions(newRole),
+          avatarUrl: src.avatarUrl || "avatar-2",
+          password: src.password,
+          status: src.status,
+          lastActive: "Updated now",
+          nextOfKinName: src.nextOfKinName,
+          nextOfKinRelationship: src.nextOfKinRelationship,
+          nextOfKinPhone: src.nextOfKinPhone,
+          nextOfKinAddress: src.nextOfKinAddress,
+        };
+        return {
+          ...prev,
+          staff: [converted, ...prev.staff],
+          teachers: prev.teachers.filter((t) => t.id !== staffId),
+        };
+      });
+    },
+    []
+  );
+
+  const setAnyStaffStatus = useCallback(
+    (staffId: string, status: AccountStatus) => {
+      updateStore((prev) => ({
+        ...prev,
+        teachers: prev.teachers.map((item) =>
+          item.id === staffId ? { ...item, status } : item
+        ),
+        teacher:
+          prev.teacher.id === staffId ? { ...prev.teacher, status } : prev.teacher,
+        staff: prev.staff.map((item) =>
+          item.id === staffId ? { ...item, status } : item
+        ),
+      }));
+    },
+    []
+  );
+
+  const deleteAnyStaffAccount = useCallback((staffId: string) => {
+    updateStore((prev) => ({
+      ...prev,
+      teachers: prev.teachers.filter((item) => item.id !== staffId),
+      staff: prev.staff.filter((item) => item.id !== staffId),
+    }));
+  }, []);
+
   // Admin: Academic Sessions & Active Term
   const saveAcademicTerm = useCallback((term: AcademicSessionTerm) => {
     updateStore((prev) => {
@@ -424,6 +772,120 @@ export function usePortalStore() {
       ...prev,
       academicTerms: prev.academicTerms.filter((item) => item.id !== termId),
     }));
+  }, []);
+
+  // Admin: Academic Sessions (separated)
+  const syncCalendarLabel = (
+    prev: PortalStoreData,
+    academicSessions: AcademicSession[],
+    terms: AcademicTerm[]
+  ) => {
+    const activeSes =
+      academicSessions.find((s) => s.isActive) ?? academicSessions[0];
+    const activeTrm = terms.find((t) => t.isActive) ?? terms[0];
+    const termLabel =
+      activeSes && activeTrm
+        ? `${activeTrm.term} · ${activeSes.session}`
+        : prev.student.termLabel;
+    return {
+      academicSessions,
+      terms,
+      student: { ...prev.student, termLabel },
+      teacher: { ...prev.teacher, termLabel },
+      students: prev.students.map((s) => ({ ...s, termLabel })),
+      teachers: prev.teachers.map((t) => ({ ...t, termLabel })),
+    };
+  };
+
+  const saveAcademicSession = useCallback((session: AcademicSession) => {
+    updateStore((prev) => {
+      const exists = prev.academicSessions.some(
+        (item) => item.id === session.id
+      );
+      let nextSessions = exists
+        ? prev.academicSessions.map((item) =>
+            item.id === session.id ? session : item
+          )
+        : [session, ...prev.academicSessions];
+      if (session.isActive) {
+        nextSessions = nextSessions.map((item) => ({
+          ...item,
+          isActive: item.id === session.id,
+        }));
+      }
+      return {
+        ...prev,
+        ...syncCalendarLabel(prev, nextSessions, prev.terms),
+      };
+    });
+  }, []);
+
+  const setActiveAcademicSession = useCallback((sessionId: string) => {
+    updateStore((prev) => {
+      const nextSessions = prev.academicSessions.map((item) => ({
+        ...item,
+        isActive: item.id === sessionId,
+      }));
+      return {
+        ...prev,
+        ...syncCalendarLabel(prev, nextSessions, prev.terms),
+      };
+    });
+  }, []);
+
+  const deleteAcademicSession = useCallback((sessionId: string) => {
+    updateStore((prev) => {
+      const nextSessions = prev.academicSessions.filter(
+        (item) => item.id !== sessionId
+      );
+      return {
+        ...prev,
+        ...syncCalendarLabel(prev, nextSessions, prev.terms),
+      };
+    });
+  }, []);
+
+  // Admin: Academic Terms (separated)
+  const saveTermRecord = useCallback((term: AcademicTerm) => {
+    updateStore((prev) => {
+      const exists = prev.terms.some((item) => item.id === term.id);
+      let nextTerms = exists
+        ? prev.terms.map((item) => (item.id === term.id ? term : item))
+        : [term, ...prev.terms];
+      if (term.isActive) {
+        nextTerms = nextTerms.map((item) => ({
+          ...item,
+          isActive: item.id === term.id,
+        }));
+      }
+      return {
+        ...prev,
+        ...syncCalendarLabel(prev, prev.academicSessions, nextTerms),
+      };
+    });
+  }, []);
+
+  const setActiveTermRecord = useCallback((termId: string) => {
+    updateStore((prev) => {
+      const nextTerms = prev.terms.map((item) => ({
+        ...item,
+        isActive: item.id === termId,
+      }));
+      return {
+        ...prev,
+        ...syncCalendarLabel(prev, prev.academicSessions, nextTerms),
+      };
+    });
+  }, []);
+
+  const deleteTermRecord = useCallback((termId: string) => {
+    updateStore((prev) => {
+      const nextTerms = prev.terms.filter((item) => item.id !== termId);
+      return {
+        ...prev,
+        ...syncCalendarLabel(prev, prev.academicSessions, nextTerms),
+      };
+    });
   }, []);
 
   // Admin: Class Arms
@@ -961,9 +1423,19 @@ export function usePortalStore() {
     saveStaffAccount,
     setStaffStatus,
     deleteStaffAccount,
+    saveUnifiedStaff,
+    assignStaffRole,
+    setAnyStaffStatus,
+    deleteAnyStaffAccount,
     saveAcademicTerm,
     setActiveAcademicTerm,
     deleteAcademicTerm,
+    saveAcademicSession,
+    setActiveAcademicSession,
+    deleteAcademicSession,
+    saveTermRecord,
+    setActiveTermRecord,
+    deleteTermRecord,
     saveClassArm,
     deleteClassArm,
     saveSubject,

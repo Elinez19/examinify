@@ -70,7 +70,7 @@ export const ADMIN_NAV_ITEMS: ReadonlyArray<AdminNavItem> = [
   },
   {
     label: "Users",
-    subtitle: "Students, staff & role assignment",
+    subtitle: "Students, staff, roles & class assignment",
     href: "/admin/user-management",
     icon: "user-management",
     children: [
@@ -91,6 +91,12 @@ export const ADMIN_NAV_ITEMS: ReadonlyArray<AdminNavItem> = [
         subtitle: "Assign roles to registered staff",
         href: "/admin/users/assign-role",
         icon: "user-check",
+      },
+      {
+        label: "Assign Class to Teacher",
+        subtitle: "Assign class arms to teaching staff",
+        href: "/admin/users/assign-class",
+        icon: "clipboard-list",
       },
     ],
   },

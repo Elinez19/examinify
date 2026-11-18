@@ -7,6 +7,7 @@ import {
   BarChart3,
   BookOpen,
   ClipboardCheck,
+  FilePlus2,
   Layers,
   LayoutDashboard,
   Users,
@@ -59,16 +60,16 @@ export function TeacherShell({ children }: { children: React.ReactNode }) {
       ],
     },
     {
-      href: "/teacher/exams",
+      href: "/teacher/exams/create",
       label: "Examinations",
-      description: "Assessments, live monitor, grading & broadsheets",
+      description: "Create exams, live monitor, grading & broadsheets",
       icon: ClipboardCheck,
       children: [
         {
-          href: "/teacher/exams",
-          label: "Assessments",
-          description: "Schedule & configure CBT assessments",
-          icon: ClipboardCheck,
+          href: "/teacher/exams/create",
+          label: "Create Exam",
+          description: "Author exam details, questions & ClassList",
+          icon: FilePlus2,
         },
         {
           href: "/teacher/live-monitor",
@@ -104,17 +105,17 @@ export function TeacherShell({ children }: { children: React.ReactNode }) {
       roleLabel="Teacher Portal"
       navItems={navItems}
       userName={store.teacher.name}
-      userSublabel={`${store.teacher.department}`}
+      userSublabel={`${store.teacher.schoolType ?? "College"} · ${store.teacher.schoolBranch ?? "Guzape Branch"}`}
       userInitials={getInitials(store.teacher.name)}
       avatarUrl={store.teacher.avatarUrl}
       brandTagline={termLabel}
-      statusBadge="Live Invigilation Ready"
+      statusBadge={`${store.teacher.schoolType ?? "College"} · ${store.teacher.schoolBranch ?? "Guzape Branch"}`}
       alerts={store.submissions
         .filter((item) => item.gradingStatus === "needs_theory_review")
         .slice(0, 4)
         .map((item) => ({
           id: item.id,
-          title: `Theory Review · ${item.subjectCode}`,
+          title: `Theory Review · ${item.subjectName || item.examTitle}`,
           detail: `${item.studentName} submitted ${item.examTitle}`,
           time: item.submittedAt,
           tone: "warning" as const,

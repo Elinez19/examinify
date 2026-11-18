@@ -9,17 +9,26 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
+  AdminDataTable,
+  AdminEmptyState,
   AdminSortableTableHead,
+  AdminTable,
+  AdminTableBody,
   AdminTableCell,
   AdminTableHead,
+  AdminTableHeader,
+  AdminTableRow,
   type SortDirection,
 } from "@/components/admin/ui/admin-data-table";
 import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
 import { AdminModal } from "@/components/admin/ui/admin-modal";
+import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
 import { AvatarBadge } from "@/components/portal/avatar-badge";
+import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { StudentProfile } from "@/data/portal-mock-data";
-import { cn } from "@/lib/utils";
 
 type StudentSortKey = "name" | "admissionNo" | "classLevel" | "submissions" | "status";
 
@@ -109,6 +118,10 @@ export function TeacherClassListWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.teacher.termLabel;
 
+  const selection = useTableSelection(
+    filteredStudents.map((student) => student.id)
+  );
+
   return (
     <div className="space-y-6">
       <AdminHeroBanner
@@ -170,66 +183,92 @@ export function TeacherClassListWorkspace() {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-              <tr>
-                <AdminSortableTableHead
-                  label="Student"
-                  sortKey="name"
-                  activeSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <AdminSortableTableHead
-                  label="Admission No"
-                  sortKey="admissionNo"
-                  activeSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <AdminSortableTableHead
-                  label="Class Arm"
-                  sortKey="classLevel"
-                  activeSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <AdminSortableTableHead
-                  label="Submissions"
-                  sortKey="submissions"
-                  activeSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <AdminSortableTableHead
-                  label="Status"
-                  sortKey="status"
-                  activeSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <AdminTableHead className="text-right">Actions</AdminTableHead>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-brand-100 bg-white">
-              {filteredStudents.length === 0 ? (
+        <AdminDataTable
+          title="Enrolled Candidates"
+          subtitle="Sort any column header or use the three-dot menu to inspect candidate profiles and exam history."
+          badge={`${filteredStudents.length} students`}
+          selectedCount={selection.selectedCount}
+          bulkActions={
+            <button
+              type="button"
+              onClick={selection.clearSelection}
+              className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+            >
+              Clear
+            </button>
+          }
+        >
+          {filteredStudents.length === 0 ? (
+            <AdminEmptyState
+              title="No Students Found"
+              description="No students matched the selected filters."
+              icon={<Users className="h-5 w-5 text-accent-sky" />}
+            />
+          ) : (
+            <AdminTable>
+              <AdminTableHeader>
                 <tr>
-                  <AdminTableCell
-                    colSpan={6}
-                    className="py-8 text-center text-xs font-medium text-ink-secondary"
-                  >
-                    No students matched the selected filters.
-                  </AdminTableCell>
+                  <AdminTableHead className="w-10">
+                    <AdminCheckbox
+                      aria-label="Select all students"
+                      checked={selection.allSelected}
+                      indeterminate={selection.someSelected}
+                      onChange={(e) => selection.toggleAll(e.target.checked)}
+                    />
+                  </AdminTableHead>
+                  <AdminSortableTableHead
+                    label="Student"
+                    sortKey="name"
+                    activeSortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <AdminSortableTableHead
+                    label="Admission No"
+                    sortKey="admissionNo"
+                    activeSortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <AdminSortableTableHead
+                    label="Class Arm"
+                    sortKey="classLevel"
+                    activeSortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <AdminSortableTableHead
+                    label="Submissions"
+                    sortKey="submissions"
+                    activeSortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <AdminSortableTableHead
+                    label="Status"
+                    sortKey="status"
+                    activeSortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <AdminTableHead className="text-right">Actions</AdminTableHead>
                 </tr>
-              ) : (
-                filteredStudents.map((student) => {
+              </AdminTableHeader>
+              <AdminTableBody>
+                {filteredStudents.map((student) => {
                   const subCount = getSubmissionCount(student.id);
                   return (
-                    <tr
+                    <AdminTableRow
                       key={student.id}
-                      className="hover:bg-surface-mist/50 transition-colors"
+                      isSelected={selection.isSelected(student.id)}
                     >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${student.name}`}
+                          checked={selection.isSelected(student.id)}
+                          onChange={() => selection.toggleOne(student.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell>
                         <div className="flex items-center gap-2.5">
                           <AvatarBadge
@@ -238,7 +277,7 @@ export function TeacherClassListWorkspace() {
                             size="sm"
                           />
                           <div>
-                            <p className="font-extrabold text-brand-950">
+                            <p className="font-display font-extrabold text-brand-950">
                               {student.name}
                             </p>
                             <p className="text-[11px] font-medium text-ink-secondary">
@@ -251,24 +290,23 @@ export function TeacherClassListWorkspace() {
                         {student.admissionNo}
                       </AdminTableCell>
                       <AdminTableCell>
-                        <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-extrabold text-brand-900">
+                        <PillBadge
+                          tone="sky"
+                          className="px-2.5 py-0.5 text-[11px]"
+                        >
                           {student.classLevel}
-                        </span>
+                        </PillBadge>
                       </AdminTableCell>
                       <AdminTableCell className="font-bold text-brand-900">
                         {subCount} script{subCount === 1 ? "" : "s"}
                       </AdminTableCell>
                       <AdminTableCell>
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
-                            student.status === "active"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-slate-100 text-slate-700"
-                          )}
-                        >
-                          {student.status}
-                        </span>
+                        <AdminStatusPill
+                          status={student.status}
+                          variant={
+                            student.status === "active" ? "success" : "danger"
+                          }
+                        />
                       </AdminTableCell>
                       <AdminTableCell className="text-right">
                         <AdminActionMenu
@@ -289,13 +327,13 @@ export function TeacherClassListWorkspace() {
                           ]}
                         />
                       </AdminTableCell>
-                    </tr>
+                    </AdminTableRow>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </AdminTableBody>
+            </AdminTable>
+          )}
+        </AdminDataTable>
       </AdminSectionCard>
 
       <AdminModal

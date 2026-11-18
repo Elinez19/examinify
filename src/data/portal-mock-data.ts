@@ -1,8 +1,122 @@
+export type SchoolType = "Academy" | "College";
+
+export const ACADEMY_ARMS = [
+  "Discoverers",
+  "Explorers",
+  "Superstars",
+  "Trailblazers",
+] as const;
+
+export type AcademyArmName = (typeof ACADEMY_ARMS)[number];
+
+export const SCHOOL_BRANCHES = [
+  "Guzape Branch",
+  "Maitama Branch",
+  "Wuse Branch",
+] as const;
+
+export const ACADEMY_CLASS_LEVELS: ReadonlyArray<{
+  level: string;
+  classification: ClassClassification;
+  schoolType: SchoolType;
+}> = [
+  { level: "Playgroup", classification: "NURSERY", schoolType: "Academy" },
+  { level: "Preschool", classification: "NURSERY", schoolType: "Academy" },
+  { level: "Kindergarten", classification: "NURSERY", schoolType: "Academy" },
+  { level: "Grade 1", classification: "PRIMARY", schoolType: "Academy" },
+  { level: "Grade 2", classification: "PRIMARY", schoolType: "Academy" },
+  { level: "Grade 3", classification: "PRIMARY", schoolType: "Academy" },
+  { level: "Grade 4", classification: "PRIMARY", schoolType: "Academy" },
+  { level: "Grade 5", classification: "PRIMARY", schoolType: "Academy" },
+  { level: "Grade 6", classification: "PRIMARY", schoolType: "Academy" },
+];
+
+export const COLLEGE_CLASS_LEVELS: ReadonlyArray<{
+  level: string;
+  classification: ClassClassification;
+  schoolType: SchoolType;
+}> = [
+  { level: "JSS 1", classification: "SECONDARY", schoolType: "College" },
+  { level: "JSS 2", classification: "SECONDARY", schoolType: "College" },
+  { level: "JSS 3", classification: "SECONDARY", schoolType: "College" },
+  { level: "SS 1", classification: "SECONDARY", schoolType: "College" },
+  { level: "SS 2", classification: "SECONDARY", schoolType: "College" },
+  { level: "SS 3", classification: "SECONDARY", schoolType: "College" },
+];
+
+export const ALL_SCHOOL_CLASS_LEVELS = [
+  ...ACADEMY_CLASS_LEVELS,
+  ...COLLEGE_CLASS_LEVELS,
+] as const;
+
+export function getSchoolTypeForLevel(levelOrName: string): SchoolType {
+  const upper = levelOrName.trim().toUpperCase();
+  if (
+    upper.startsWith("PLAYGROUP") ||
+    upper.startsWith("PRESCHOOL") ||
+    upper.startsWith("KINDERGARTEN") ||
+    upper.startsWith("GRADE ") ||
+    upper.includes("PRIMARY") ||
+    upper.includes("NURSERY")
+  ) {
+    return "Academy";
+  }
+  return "College";
+}
+
+export function getClassLevelPrefix(className: string): string {
+  const trimmed = className.trim();
+  for (const arm of ACADEMY_ARMS) {
+    const suffix = ` ${arm}`;
+    if (trimmed.toLowerCase().endsWith(suffix.toLowerCase())) {
+      return trimmed.slice(0, trimmed.length - suffix.length).trim();
+    }
+  }
+  return trimmed;
+}
+
+export function isSameClassOrLevel(
+  examClassLevel: string,
+  studentClassLevel: string,
+  targetClassArms?: string[]
+): boolean {
+  if (examClassLevel === studentClassLevel) return true;
+  if (targetClassArms?.includes(studentClassLevel)) return true;
+  const studentLevel = getClassLevelPrefix(studentClassLevel);
+  const examLevel = getClassLevelPrefix(examClassLevel);
+  return Boolean(studentLevel && examLevel && studentLevel === examLevel);
+}
+
+const LEGACY_CLASS_MAP: Record<string, string> = {
+  "JSS 3A": "JSS 3 Superstars",
+  "JSS 3B": "JSS 3 Explorers",
+  "SSS 1A": "SS 1 Trailblazers",
+  "SSS 2A": "SS 2 Discoverers",
+  "SSS 3A": "SS 3 Superstars",
+};
+
+const LEGACY_WING_MAP: Record<string, string> = {
+  "Science Wing": "Superstars",
+  "Arts & Commercial": "Explorers",
+  "General": "Discoverers",
+};
+
+export function normalizeLegacyClassName(value?: string): string {
+  if (!value) return "";
+  return LEGACY_CLASS_MAP[value] ?? value;
+}
+
+export function normalizeLegacyWingName(value?: string): string {
+  if (!value) return "";
+  return LEGACY_WING_MAP[value] ?? value;
+}
+
 export type QuestionType =
   | "objective"
   | "multi_select"
   | "fill_blank"
   | "theory"
+  | "essay"
   | "mcq"
   | "true_false"
   | "short_answer";
@@ -11,6 +125,12 @@ export interface QuestionOption {
   id: string;
   label: string;
   text?: string;
+}
+
+export interface QuestionRubricItem {
+  id: string;
+  criterion: string;
+  maxMarks: number;
 }
 
 export interface QuestionItem {
@@ -33,19 +153,35 @@ export interface QuestionItem {
   correctOptionIds?: string[];
   acceptedAnswers?: string[];
   markingGuide?: string;
+  rubrics?: QuestionRubricItem[];
+  sectionId?: string;
   explanation?: string;
   createdBy: string;
   updatedAt: string;
 }
 
+export type ExamType = "CA1" | "CA2" | "CA3" | "Exam";
+
+export interface ExamSection {
+  id: string;
+  title: string;
+  questionType?: QuestionType;
+  questionIds: string[];
+}
+
 export interface PortalExam {
   id: string;
   title: string;
+  examType?: ExamType;
+  description?: string;
   subjectCode: string;
   code?: string;
   subjectTitle: string;
   subjectName?: string;
   classLevel: string;
+  targetClassArms?: string[];
+  schoolType?: SchoolType;
+  schoolBranch?: string;
   term: string;
   teacherName: string;
   scheduledFor: string;
@@ -61,6 +197,7 @@ export interface PortalExam {
   allowCalculator?: boolean;
   instantResult?: boolean;
   instructions: string | string[];
+  sections?: ExamSection[];
   questionIds: string[];
 }
 
@@ -170,6 +307,7 @@ export interface StudentProfile {
   phoneType?: string;
   admissionNo: string;
   regNo?: string;
+  schoolType?: SchoolType;
   schoolBranch?: string;
   sex?: string;
   country?: string;
@@ -212,6 +350,7 @@ export interface TeacherProfile {
   staffId: string;
   staffType?: StaffType;
   assignedRole?: StaffRoleOption;
+  schoolType?: SchoolType;
   schoolBranch?: string;
   sex?: string;
   dateOfBirth?: string;
@@ -252,6 +391,7 @@ export interface StaffProfile {
   staffCode?: string;
   staffType?: StaffType;
   assignedRole?: StaffRoleOption;
+  schoolType?: SchoolType;
   schoolBranch?: string;
   sex?: string;
   dateOfBirth?: string;
@@ -285,6 +425,7 @@ export interface SubjectEnrollment {
   assignedClasses: string[];
   assignedTeacherIds: string[];
   classDescriptions?: Record<string, string>;
+  schoolType?: SchoolType;
   schoolBranch?: string;
   nextExamAt: string;
   topicsCovered: number;
@@ -325,6 +466,8 @@ export interface ClassArm {
   id: string;
   name: string;
   classification: ClassClassification;
+  schoolType?: SchoolType;
+  schoolBranch?: string;
   level: string;
   arm: string;
   classTeacherId: string;
@@ -378,11 +521,13 @@ export const INITIAL_STUDENT: StudentProfile = {
   email: "amina.bello@students.examinify.ng",
   phone: "+234 809 332 1104",
   admissionNo: "EXM/2026/JSS3/041",
-  classLevel: "JSS 3A",
-  classArmId: "arm_jss3a",
-  wing: "Science Wing",
+  schoolType: "College",
+  schoolBranch: "Guzape Branch",
+  classLevel: "JSS 3 Superstars",
+  classArmId: "arm_jss_3_superstars",
+  wing: "Superstars",
   termLabel: "First Term · 2026/2027",
-  schoolName: "Greenfield Model Academy",
+  schoolName: "Greenfield Model College",
   avatarUrl: "avatar-1",
   password: "Student@2026",
   status: "active",
@@ -398,11 +543,13 @@ export const INITIAL_STUDENTS: StudentProfile[] = [
     email: "tolu.adeyemi@students.examinify.ng",
     phone: "+234 803 741 9920",
     admissionNo: "EXM/2026/JSS3/018",
-    classLevel: "JSS 3A",
-    classArmId: "arm_jss3a",
-    wing: "Science Wing",
+    schoolType: "College",
+    schoolBranch: "Guzape Branch",
+    classLevel: "JSS 3 Superstars",
+    classArmId: "arm_jss_3_superstars",
+    wing: "Superstars",
     termLabel: "First Term · 2026/2027",
-    schoolName: "Greenfield Model Academy",
+    schoolName: "Greenfield Model College",
     avatarUrl: "avatar-2",
     password: "Student@2026",
     status: "active",
@@ -415,11 +562,13 @@ export const INITIAL_STUDENTS: StudentProfile[] = [
     email: "chidinma.nwosu@students.examinify.ng",
     phone: "+234 812 509 4418",
     admissionNo: "EXM/2026/JSS3/022",
-    classLevel: "JSS 3B",
-    classArmId: "arm_jss3b",
-    wing: "Arts & Commercial",
+    schoolType: "College",
+    schoolBranch: "Maitama Branch",
+    classLevel: "JSS 3 Explorers",
+    classArmId: "arm_jss_3_explorers",
+    wing: "Explorers",
     termLabel: "First Term · 2026/2027",
-    schoolName: "Greenfield Model Academy",
+    schoolName: "Greenfield Model College",
     avatarUrl: "avatar-4",
     password: "Student@2026",
     status: "active",
@@ -431,15 +580,55 @@ export const INITIAL_STUDENTS: StudentProfile[] = [
     name: "Ibrahim Danjuma",
     email: "ibrahim.danjuma@students.examinify.ng",
     phone: "+234 805 612 8830",
-    admissionNo: "EXM/2026/SSS1/009",
-    classLevel: "SSS 1A",
-    classArmId: "arm_sss1a",
-    wing: "Science Wing",
+    admissionNo: "EXM/2026/SS1/009",
+    schoolType: "College",
+    schoolBranch: "Wuse Branch",
+    classLevel: "SS 1 Trailblazers",
+    classArmId: "arm_ss_1_trailblazers",
+    wing: "Trailblazers",
     termLabel: "First Term · 2026/2027",
-    schoolName: "Greenfield Model Academy",
+    schoolName: "Greenfield Model College",
     avatarUrl: "avatar-3",
     password: "Student@2026",
     status: "inactive",
+  },
+  {
+    id: "stu_zainab",
+    firstName: "Zainab",
+    lastName: "Usman",
+    name: "Zainab Usman",
+    email: "zainab.usman@students.examinify.ng",
+    phone: "+234 807 415 2290",
+    admissionNo: "EXM/2026/GR5/012",
+    schoolType: "Academy",
+    schoolBranch: "Guzape Branch",
+    classLevel: "Grade 5 Trailblazers",
+    classArmId: "arm_grade_5_trailblazers",
+    wing: "Trailblazers",
+    termLabel: "First Term · 2026/2027",
+    schoolName: "Greenfield Model Academy",
+    avatarUrl: "avatar-1",
+    password: "Student@2026",
+    status: "active",
+  },
+  {
+    id: "stu_kamsi",
+    firstName: "Kamsiyochukwu",
+    lastName: "Obi",
+    name: "Kamsiyochukwu Obi",
+    email: "kamsi.obi@students.examinify.ng",
+    phone: "+234 809 884 1210",
+    admissionNo: "EXM/2026/GR1/004",
+    schoolType: "Academy",
+    schoolBranch: "Maitama Branch",
+    classLevel: "Grade 1 Superstars",
+    classArmId: "arm_grade_1_superstars",
+    wing: "Superstars",
+    termLabel: "First Term · 2026/2027",
+    schoolName: "Greenfield Model Academy",
+    avatarUrl: "avatar-2",
+    password: "Student@2026",
+    status: "active",
   },
 ];
 
@@ -453,11 +642,13 @@ export const INITIAL_TEACHER: TeacherProfile = {
   staffId: "STF/SCI/019",
   staffType: "Academic",
   assignedRole: "Class Teacher",
+  schoolType: "College",
+  schoolBranch: "Guzape Branch",
   department: "Mathematics & Basic Sciences",
-  assignedClasses: ["JSS 3A", "JSS 3B", "SSS 1A"],
+  assignedClasses: ["JSS 3 Superstars", "JSS 3 Explorers", "SS 1 Trailblazers"],
   assignedSubjectIds: ["sub_math", "sub_basic_sci"],
   termLabel: "First Term · 2026/2027",
-  schoolName: "Greenfield Model Academy",
+  schoolName: "Greenfield Model College",
   avatarUrl: "avatar-5",
   password: "Teacher@2026",
   status: "active",
@@ -465,6 +656,56 @@ export const INITIAL_TEACHER: TeacherProfile = {
 
 export const INITIAL_TEACHERS: TeacherProfile[] = [
   INITIAL_TEACHER,
+  {
+    id: "tch_ngozi",
+    firstName: "Ngozi",
+    lastName: "Eze",
+    name: "Ngozi Eze",
+    email: "ngozi.eze@teachers.examinify.ng",
+    phone: "+234 802 910 4412",
+    staffId: "STF/ACD/008",
+    staffType: "Academic",
+    assignedRole: "Class Teacher",
+    schoolType: "Academy",
+    schoolBranch: "Guzape Branch",
+    department: "Primary Numeracy & Literacy",
+    assignedClasses: [
+      "Grade 1 Superstars",
+      "Grade 5 Trailblazers",
+      "Grade 6 Explorers",
+    ],
+    assignedSubjectIds: ["sub_math", "sub_eng"],
+    termLabel: "First Term · 2026/2027",
+    schoolName: "Greenfield Model Academy",
+    avatarUrl: "avatar-4",
+    password: "Teacher@2026",
+    status: "active",
+  },
+  {
+    id: "tch_tunde",
+    firstName: "Tunde",
+    lastName: "Balogun",
+    name: "Tunde Balogun",
+    email: "tunde.balogun@teachers.examinify.ng",
+    phone: "+234 809 112 7734",
+    staffId: "STF/EYF/011",
+    staffType: "Academic",
+    assignedRole: "Teacher",
+    schoolType: "Academy",
+    schoolBranch: "Maitama Branch",
+    department: "Early Years Foundation",
+    assignedClasses: [
+      "Playgroup Discoverers",
+      "Preschool Explorers",
+      "Kindergarten Superstars",
+    ],
+    assignedSubjectIds: ["sub_eng"],
+    termLabel: "First Term · 2026/2027",
+    schoolName: "Greenfield Model Academy",
+    avatarUrl: "avatar-2",
+    password: "Teacher@2026",
+    status: "active",
+  },
   {
     id: "tch_aisha",
     firstName: "Aisha",
@@ -475,11 +716,13 @@ export const INITIAL_TEACHERS: TeacherProfile[] = [
     staffId: "STF/ENG/014",
     staffType: "Academic",
     assignedRole: "Teacher",
+    schoolType: "College",
+    schoolBranch: "Maitama Branch",
     department: "English & Literature",
-    assignedClasses: ["JSS 3A", "JSS 3B"],
+    assignedClasses: ["JSS 2 Discoverers", "JSS 3 Explorers"],
     assignedSubjectIds: ["sub_eng"],
     termLabel: "First Term · 2026/2027",
-    schoolName: "Greenfield Model Academy",
+    schoolName: "Greenfield Model College",
     avatarUrl: "avatar-4",
     password: "Teacher@2026",
     status: "active",
@@ -494,11 +737,13 @@ export const INITIAL_TEACHERS: TeacherProfile[] = [
     staffId: "STF/CIV/027",
     staffType: "Academic",
     assignedRole: "Subject Teacher",
+    schoolType: "College",
+    schoolBranch: "Wuse Branch",
     department: "Humanities & Social Studies",
-    assignedClasses: ["JSS 3A", "SSS 1A"],
+    assignedClasses: ["JSS 3 Superstars", "SS 1 Trailblazers", "SS 3 Discoverers"],
     assignedSubjectIds: ["sub_civic"],
     termLabel: "First Term · 2026/2027",
-    schoolName: "Greenfield Model Academy",
+    schoolName: "Greenfield Model College",
     avatarUrl: "avatar-2",
     password: "Teacher@2026",
     status: "active",
@@ -516,6 +761,8 @@ export const INITIAL_STAFF: StaffProfile[] = [
     staffCode: "STF/ADM/001",
     staffType: "Non-Academic",
     assignedRole: "Admin",
+    schoolType: "College",
+    schoolBranch: "Guzape Branch",
     roleTitle: "Admin",
     adminScope: "super_admin",
     permissions: "Full school portal access",
@@ -534,6 +781,8 @@ export const INITIAL_STAFF: StaffProfile[] = [
     staffCode: "STF/EXM/002",
     staffType: "Academic",
     assignedRole: "Exam Officer",
+    schoolType: "Academy",
+    schoolBranch: "Maitama Branch",
     roleTitle: "Exam Officer",
     adminScope: "kyc_moderator",
     permissions: "Exam scheduling, PINs, question bank & appeals",
@@ -552,6 +801,8 @@ export const INITIAL_STAFF: StaffProfile[] = [
     staffCode: "STF/CBT/003",
     staffType: "Non-Academic",
     assignedRole: "Staff",
+    schoolType: "College",
+    schoolBranch: "Wuse Branch",
     roleTitle: "Staff",
     adminScope: "dispatch_support",
     permissions: "Live exam session support & candidate timing",
@@ -630,45 +881,63 @@ export const INITIAL_TERM_RECORDS: AcademicTerm[] = [
   },
 ];
 
-export const INITIAL_CLASS_ARMS: ClassArm[] = [
-  {
-    id: "arm_jss3a",
-    name: "JSS 3A",
-    classification: "SECONDARY",
-    level: "JSS 3",
-    arm: "Science Wing",
-    classTeacherId: "tch_emeka",
-    capacity: 40,
-    status: "active",
-  },
-  {
-    id: "arm_jss3b",
-    name: "JSS 3B",
-    classification: "SECONDARY",
-    level: "JSS 3",
-    arm: "Arts & Commercial",
-    classTeacherId: "tch_aisha",
-    capacity: 40,
-    status: "active",
-  },
-  {
-    id: "arm_sss1a",
-    name: "SSS 1A",
-    classification: "SECONDARY",
-    level: "SSS 1",
-    arm: "Science Wing",
-    classTeacherId: "tch_babajide",
-    capacity: 35,
-    status: "active",
-  },
-];
+const CLASS_TEACHER_BY_ARM: Record<string, string> = {
+  "Playgroup Discoverers": "tch_tunde",
+  "Preschool Explorers": "tch_tunde",
+  "Kindergarten Superstars": "tch_tunde",
+  "Grade 1 Superstars": "tch_ngozi",
+  "Grade 5 Trailblazers": "tch_ngozi",
+  "Grade 6 Explorers": "tch_ngozi",
+  "JSS 2 Discoverers": "tch_aisha",
+  "JSS 3 Superstars": "tch_emeka",
+  "JSS 3 Explorers": "tch_aisha",
+  "SS 1 Trailblazers": "tch_babajide",
+};
+
+const BRANCH_BY_LEVEL: Record<string, string> = {
+  Playgroup: "Maitama Branch",
+  Preschool: "Maitama Branch",
+  Kindergarten: "Maitama Branch",
+  "Grade 1": "Guzape Branch",
+  "Grade 2": "Maitama Branch",
+  "Grade 3": "Wuse Branch",
+  "Grade 4": "Guzape Branch",
+  "Grade 5": "Guzape Branch",
+  "Grade 6": "Maitama Branch",
+  "JSS 1": "Guzape Branch",
+  "JSS 2": "Maitama Branch",
+  "JSS 3": "Guzape Branch",
+  "SS 1": "Wuse Branch",
+  "SS 2": "Wuse Branch",
+  "SS 3": "Guzape Branch",
+};
+
+export const INITIAL_CLASS_ARMS: ClassArm[] = ALL_SCHOOL_CLASS_LEVELS.flatMap(
+  ({ level, classification, schoolType }) =>
+    ACADEMY_ARMS.map((armName) => {
+      const fullName = `${level} ${armName}`;
+      const slug = fullName.toLowerCase().replace(/\s+/g, "_");
+      return {
+        id: `arm_${slug}`,
+        name: fullName,
+        classification,
+        schoolType,
+        schoolBranch: BRANCH_BY_LEVEL[level] ?? "Guzape Branch",
+        level,
+        arm: armName,
+        classTeacherId: CLASS_TEACHER_BY_ARM[fullName] ?? "",
+        capacity: schoolType === "Academy" ? 30 : 40,
+        status: "active" as const,
+      };
+    })
+);
 
 export const INITIAL_QUESTION_TYPES: QuestionTypeConfig[] = [
   {
     id: "qt_obj",
     code: "objective",
-    label: "Multiple Choice (Objective)",
-    description: "Single best answer from options A–D, auto-graded immediately.",
+    label: "Multi-choice (Objective)",
+    description: "Single or multi-answer options A–D, auto-graded immediately.",
     autoGradable: true,
     enabled: true,
   },
@@ -683,7 +952,7 @@ export const INITIAL_QUESTION_TYPES: QuestionTypeConfig[] = [
   {
     id: "qt_fill",
     code: "fill_blank",
-    label: "Fill-in-the-Blank",
+    label: "Fill in the gaps",
     description: "Short typed value matched against accepted answers.",
     autoGradable: true,
     enabled: true,
@@ -691,8 +960,16 @@ export const INITIAL_QUESTION_TYPES: QuestionTypeConfig[] = [
   {
     id: "qt_theory",
     code: "theory",
-    label: "Theory / Structured Essay",
-    description: "Long-form written response graded via marking rubric.",
+    label: "Theory",
+    description: "Structured written response graded via marking rubric.",
+    autoGradable: false,
+    enabled: true,
+  },
+  {
+    id: "qt_essay",
+    code: "essay",
+    label: "Essay",
+    description: "Extended long-form essay response graded via rubric.",
     autoGradable: false,
     enabled: true,
   },
@@ -705,8 +982,10 @@ export const INITIAL_SUBJECTS: SubjectEnrollment[] = [
     title: "Mathematics",
     category: "Core Quantitative",
     teacherName: "Mr. Emeka Okafor",
-    assignedClasses: ["JSS 3A", "JSS 3B"],
-    assignedTeacherIds: ["tch_emeka"],
+    assignedClasses: ["JSS 3 Superstars", "JSS 3 Explorers", "Grade 5 Trailblazers"],
+    assignedTeacherIds: ["tch_emeka", "tch_ngozi"],
+    schoolType: "College",
+    schoolBranch: "Guzape Branch",
     nextExamAt: "Live Now · Ends 11:30 AM",
     topicsCovered: 9,
     totalTopics: 10,
@@ -720,8 +999,10 @@ export const INITIAL_SUBJECTS: SubjectEnrollment[] = [
     title: "English Language",
     category: "Core Language Arts",
     teacherName: "Mrs. Aisha Kareem",
-    assignedClasses: ["JSS 3A", "JSS 3B"],
-    assignedTeacherIds: ["tch_aisha"],
+    assignedClasses: ["JSS 3 Superstars", "JSS 3 Explorers", "Grade 1 Superstars"],
+    assignedTeacherIds: ["tch_aisha", "tch_ngozi", "tch_tunde"],
+    schoolType: "College",
+    schoolBranch: "Maitama Branch",
     nextExamAt: "Tomorrow · 09:00 AM",
     topicsCovered: 8,
     totalTopics: 10,
@@ -735,8 +1016,10 @@ export const INITIAL_SUBJECTS: SubjectEnrollment[] = [
     title: "Basic Science",
     category: "Integrated STEM",
     teacherName: "Mr. Emeka Okafor",
-    assignedClasses: ["JSS 3A", "SSS 1A"],
+    assignedClasses: ["JSS 3 Superstars", "SS 1 Trailblazers"],
     assignedTeacherIds: ["tch_emeka"],
+    schoolType: "College",
+    schoolBranch: "Guzape Branch",
     nextExamAt: "Thu, Nov 19 · 10:30 AM",
     topicsCovered: 7,
     totalTopics: 9,
@@ -750,8 +1033,10 @@ export const INITIAL_SUBJECTS: SubjectEnrollment[] = [
     title: "Civic Education",
     category: "Humanities",
     teacherName: "Mr. Babajide Lawal",
-    assignedClasses: ["JSS 3A", "SSS 1A"],
+    assignedClasses: ["JSS 3 Superstars", "SS 1 Trailblazers", "Grade 6 Explorers"],
     assignedTeacherIds: ["tch_babajide"],
+    schoolType: "College",
+    schoolBranch: "Wuse Branch",
     nextExamAt: "Completed · Grade Published",
     topicsCovered: 8,
     totalTopics: 8,
@@ -767,7 +1052,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "MTH-301",
     subjectTitle: "Mathematics",
     topic: "Linear Equations & Transposition",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "objective",
     difficulty: "Easy",
@@ -789,7 +1074,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "MTH-301",
     subjectTitle: "Mathematics",
     topic: "Geometry & Angle Properties",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "multi_select",
     difficulty: "Standard",
@@ -811,7 +1096,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "MTH-301",
     subjectTitle: "Mathematics",
     topic: "Percentages & Commercial Arithmetic",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "fill_blank",
     difficulty: "Standard",
@@ -827,7 +1112,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "MTH-301",
     subjectTitle: "Mathematics",
     topic: "Algebraic Word Problems",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "theory",
     difficulty: "Challenge",
@@ -843,7 +1128,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "ENG-302",
     subjectTitle: "English Language",
     topic: "Lexis & Structure",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "objective",
     difficulty: "Easy",
@@ -865,7 +1150,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "ENG-302",
     subjectTitle: "English Language",
     topic: "Summary & Guided Writing",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "theory",
     difficulty: "Standard",
@@ -880,7 +1165,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "BSC-304",
     subjectTitle: "Basic Science",
     topic: "Energy Conversion",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "objective",
     difficulty: "Easy",
@@ -902,7 +1187,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "BSC-304",
     subjectTitle: "Basic Science",
     topic: "Matter & Separation Techniques",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "fill_blank",
     difficulty: "Standard",
@@ -918,7 +1203,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "CIV-305",
     subjectTitle: "Civic Education",
     topic: "National Values & Rule of Law",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "objective",
     difficulty: "Easy",
@@ -940,7 +1225,7 @@ export const INITIAL_QUESTIONS: QuestionItem[] = [
     subjectCode: "CIV-305",
     subjectTitle: "Civic Education",
     topic: "Citizenship & Civic Duties",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
     term: "First Term",
     type: "theory",
     difficulty: "Standard",
@@ -956,9 +1241,13 @@ export const INITIAL_EXAMS: PortalExam[] = [
   {
     id: "exam_mth_midterm",
     title: "JSS 3 Mathematics First Term CBT",
+    examType: "Exam",
+    description: "First term comprehensive mathematics CBT assessment covering algebra, geometry, and word problems.",
     subjectCode: "MTH-301",
     subjectTitle: "Mathematics",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
+    schoolType: "College",
+    schoolBranch: "Guzape Branch",
     term: "First Term",
     teacherName: "Mr. Emeka Okafor",
     scheduledFor: "Live Now · Lab A & B",
@@ -976,9 +1265,13 @@ export const INITIAL_EXAMS: PortalExam[] = [
   {
     id: "exam_eng_ca",
     title: "JSS 3 English Continuous Assessment II",
+    examType: "CA2",
+    description: "Second continuous assessment testing lexis, structure, and guided summary writing.",
     subjectCode: "ENG-302",
     subjectTitle: "English Language",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
+    schoolType: "College",
+    schoolBranch: "Maitama Branch",
     term: "First Term",
     teacherName: "Mrs. Aisha Kareem",
     scheduledFor: "Tomorrow · 09:00 AM",
@@ -996,9 +1289,13 @@ export const INITIAL_EXAMS: PortalExam[] = [
   {
     id: "exam_sci_mock",
     title: "Basic Science Practical & Objective Check",
+    examType: "CA3",
+    description: "Practical energy conversion and separation techniques continuous assessment.",
     subjectCode: "BSC-304",
     subjectTitle: "Basic Science",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
+    schoolType: "College",
+    schoolBranch: "Guzape Branch",
     term: "First Term",
     teacherName: "Mr. Emeka Okafor",
     scheduledFor: "Thu, Nov 19 · 10:30 AM",
@@ -1016,9 +1313,13 @@ export const INITIAL_EXAMS: PortalExam[] = [
   {
     id: "exam_civ_ca1",
     title: "Civic Education Mid-Term Test",
+    examType: "CA1",
+    description: "First continuous assessment covering Rule of Law and civic responsibilities.",
     subjectCode: "CIV-305",
     subjectTitle: "Civic Education",
-    classLevel: "JSS 3A",
+    classLevel: "JSS 3 Superstars",
+    schoolType: "College",
+    schoolBranch: "Wuse Branch",
     term: "First Term",
     teacherName: "Mr. Babajide Lawal",
     scheduledFor: "Completed · Nov 08, 2026",
@@ -1227,43 +1528,76 @@ export function loadPortalStore(): PortalStoreData {
     if (!raw) return INITIAL_PORTAL_STORE;
     const parsed = JSON.parse(raw) as Partial<PortalStoreData>;
 
-    const normalizeStudent = (item: StudentProfile): StudentProfile => ({
-      ...item,
-      firstName: item.firstName ?? "",
-      lastName: item.lastName ?? "",
-      name:
-        item.name ||
-        `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim() ||
-        "Student",
-      email: item.email ?? "",
-      phone: item.phone ?? "",
-      admissionNo: item.admissionNo ?? item.regNo ?? "",
-      classLevel: item.classLevel ?? "",
-      classArmId: item.classArmId ?? "",
-      wing: item.wing ?? "",
-      status: item.status ?? "active",
-    });
+    const legacyArmIdMap: Record<string, string> = {
+      arm_jss3a: "arm_jss_3_superstars",
+      arm_jss3b: "arm_jss_3_explorers",
+      arm_sss1a: "arm_ss_1_trailblazers",
+    };
 
-    const normalizeTeacher = (item: TeacherProfile): TeacherProfile => ({
-      ...item,
-      firstName: item.firstName ?? "",
-      lastName: item.lastName ?? "",
-      name:
-        item.name ||
-        `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim() ||
-        "Teacher",
-      email: item.email ?? "",
-      staffType: item.staffType ?? "Academic",
-      assignedRole: item.assignedRole ?? "Teacher",
-      department: item.department ?? "",
-      assignedClasses: Array.isArray(item.assignedClasses)
-        ? item.assignedClasses
-        : [],
-      assignedSubjectIds: Array.isArray(item.assignedSubjectIds)
-        ? item.assignedSubjectIds
-        : [],
-      status: item.status ?? "active",
-    });
+    const initialTeacherById = new Map(
+      INITIAL_TEACHERS.map((t) => [t.id, t])
+    );
+    const initialStudentById = new Map(
+      INITIAL_STUDENTS.map((s) => [s.id, s])
+    );
+
+    const normalizeStudent = (item: StudentProfile): StudentProfile => {
+      const seed = initialStudentById.get(item.id);
+      const classLevel = normalizeLegacyClassName(item.classLevel ?? seed?.classLevel ?? "");
+      const schoolType =
+        item.schoolType ?? seed?.schoolType ?? getSchoolTypeForLevel(classLevel);
+      return {
+        ...seed,
+        ...item,
+        firstName: item.firstName ?? "",
+        lastName: item.lastName ?? "",
+        name:
+          item.name ||
+          `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim() ||
+          "Student",
+        email: item.email ?? "",
+        phone: item.phone ?? "",
+        admissionNo: item.admissionNo ?? item.regNo ?? "",
+        schoolType,
+        schoolBranch: item.schoolBranch ?? seed?.schoolBranch ?? "Guzape Branch",
+        classLevel,
+        classArmId: legacyArmIdMap[item.classArmId] ?? item.classArmId ?? "",
+        wing: normalizeLegacyWingName(item.wing ?? seed?.wing ?? ""),
+        status: item.status ?? "active",
+      };
+    };
+
+    const normalizeTeacher = (item: TeacherProfile): TeacherProfile => {
+      const seed = initialTeacherById.get(item.id);
+      const assignedClasses = Array.isArray(item.assignedClasses)
+        ? item.assignedClasses.map(normalizeLegacyClassName)
+        : seed?.assignedClasses ?? [];
+      const schoolType =
+        item.schoolType ??
+        seed?.schoolType ??
+        (assignedClasses[0] ? getSchoolTypeForLevel(assignedClasses[0]) : "College");
+      return {
+        ...seed,
+        ...item,
+        firstName: item.firstName ?? "",
+        lastName: item.lastName ?? "",
+        name:
+          item.name ||
+          `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim() ||
+          "Teacher",
+        email: item.email ?? "",
+        staffType: item.staffType ?? "Academic",
+        assignedRole: item.assignedRole ?? "Teacher",
+        schoolType,
+        schoolBranch: item.schoolBranch ?? seed?.schoolBranch ?? "Guzape Branch",
+        department: item.department ?? "",
+        assignedClasses,
+        assignedSubjectIds: Array.isArray(item.assignedSubjectIds)
+          ? item.assignedSubjectIds
+          : [],
+        status: item.status ?? "active",
+      };
+    };
 
     const normalizeStaff = (item: StaffProfile): StaffProfile => ({
       ...item,
@@ -1276,6 +1610,8 @@ export function loadPortalStore(): PortalStoreData {
       email: item.email ?? "",
       staffType: item.staffType ?? "Non-Academic",
       assignedRole: item.assignedRole ?? "Staff",
+      schoolType: item.schoolType ?? "College",
+      schoolBranch: item.schoolBranch ?? "Guzape Branch",
       roleTitle: item.roleTitle ?? item.assignedRole ?? "Staff",
       status: item.status ?? "active",
     });
@@ -1290,6 +1626,9 @@ export function loadPortalStore(): PortalStoreData {
       }
       const probe = `${item.level ?? ""} ${item.name ?? ""}`.toUpperCase();
       if (
+        probe.includes("PLAYGROUP") ||
+        probe.includes("PRESCHOOL") ||
+        probe.includes("KINDERGARTEN") ||
         probe.includes("NURSERY") ||
         probe.includes("KG") ||
         probe.includes("CRECHE")
@@ -1297,6 +1636,7 @@ export function loadPortalStore(): PortalStoreData {
         return "NURSERY";
       }
       if (
+        probe.includes("GRADE ") ||
         probe.includes("PRIMARY") ||
         probe.includes("PRY") ||
         probe.includes("BASIC")
@@ -1306,15 +1646,66 @@ export function loadPortalStore(): PortalStoreData {
       return "SECONDARY";
     };
 
-    const normalizeClassArm = (item: ClassArm): ClassArm => ({
-      ...item,
-      classification: inferClassification(item),
-      level: item.level ?? item.name ?? "",
-      arm: item.arm ?? "General",
-      classTeacherId: item.classTeacherId ?? "",
-      capacity: item.capacity ?? 40,
-      status: item.status ?? "active",
-    });
+    const normalizeClassArm = (item: ClassArm): ClassArm => {
+      const name = normalizeLegacyClassName(item.name);
+      const level = getClassLevelPrefix(item.level ? normalizeLegacyClassName(item.level) : name);
+      const schoolType = item.schoolType ?? getSchoolTypeForLevel(level || name);
+      return {
+        ...item,
+        id: legacyArmIdMap[item.id] ?? item.id,
+        name,
+        classification: inferClassification({ ...item, name, level }),
+        schoolType,
+        schoolBranch: item.schoolBranch ?? "Guzape Branch",
+        level,
+        arm: normalizeLegacyWingName(item.arm ?? "Discoverers"),
+        classTeacherId: item.classTeacherId ?? "",
+        capacity: item.capacity ?? 40,
+        status: item.status ?? "active",
+      };
+    };
+
+    const mergedClassArms = (() => {
+      const rawArms = Array.isArray(parsed.classArms) && parsed.classArms.length > 0
+        ? parsed.classArms.map(normalizeClassArm)
+        : [];
+      const byName = new Map<string, ClassArm>();
+      for (const seedArm of INITIAL_CLASS_ARMS) {
+        byName.set(seedArm.name, seedArm);
+      }
+      for (const arm of rawArms) {
+        byName.set(arm.name, arm);
+      }
+      return Array.from(byName.values());
+    })();
+
+    const mergedTeachers = (() => {
+      const existing =
+        Array.isArray(parsed.teachers) && parsed.teachers.length > 0
+          ? parsed.teachers.map(normalizeTeacher)
+          : [];
+      const byId = new Map(existing.map((t) => [t.id, t]));
+      for (const seedTeacher of INITIAL_TEACHERS) {
+        if (!byId.has(seedTeacher.id)) {
+          byId.set(seedTeacher.id, seedTeacher);
+        }
+      }
+      return Array.from(byId.values());
+    })();
+
+    const mergedStudents = (() => {
+      const existing =
+        Array.isArray(parsed.students) && parsed.students.length > 0
+          ? parsed.students.map(normalizeStudent)
+          : [];
+      const byId = new Map(existing.map((s) => [s.id, s]));
+      for (const seedStudent of INITIAL_STUDENTS) {
+        if (!byId.has(seedStudent.id)) {
+          byId.set(seedStudent.id, seedStudent);
+        }
+      }
+      return Array.from(byId.values());
+    })();
 
     const initialSubjectById = new Map(
       INITIAL_SUBJECTS.map((subj) => [subj.id, subj])
@@ -1330,11 +1721,13 @@ export function loadPortalStore(): PortalStoreData {
         category: item.category ?? seed?.category ?? "Core",
         teacherName: item.teacherName ?? seed?.teacherName ?? "Unassigned",
         assignedClasses: Array.isArray(item.assignedClasses)
-          ? item.assignedClasses
+          ? item.assignedClasses.map(normalizeLegacyClassName)
           : seed?.assignedClasses ?? [],
         assignedTeacherIds: Array.isArray(item.assignedTeacherIds)
           ? item.assignedTeacherIds
           : seed?.assignedTeacherIds ?? [],
+        schoolType: item.schoolType ?? seed?.schoolType ?? "College",
+        schoolBranch: item.schoolBranch ?? seed?.schoolBranch ?? "Guzape Branch",
         nextExamAt: item.nextExamAt ?? seed?.nextExamAt ?? "Not scheduled",
         topicsCovered: item.topicsCovered ?? seed?.topicsCovered ?? 0,
         totalTopics: item.totalTopics ?? seed?.totalTopics ?? 0,
@@ -1348,6 +1741,9 @@ export function loadPortalStore(): PortalStoreData {
       const theoryScores = item.theoryScores ?? item.theoryScoresByQuestion ?? {};
       return {
         ...item,
+        classLevel: item.classLevel
+          ? normalizeLegacyClassName(item.classLevel)
+          : item.classLevel,
         answers: item.answers ?? {},
         theoryScores,
         theoryScoresByQuestion: item.theoryScoresByQuestion ?? theoryScores,
@@ -1371,14 +1767,8 @@ export function loadPortalStore(): PortalStoreData {
         ...INITIAL_TEACHER,
         ...(parsed.teacher ?? {}),
       }),
-      students:
-        Array.isArray(parsed.students) && parsed.students.length > 0
-          ? parsed.students.map(normalizeStudent)
-          : INITIAL_STUDENTS,
-      teachers:
-        Array.isArray(parsed.teachers) && parsed.teachers.length > 0
-          ? parsed.teachers.map(normalizeTeacher)
-          : INITIAL_TEACHERS,
+      students: mergedStudents,
+      teachers: mergedTeachers,
       staff:
         Array.isArray(parsed.staff) && parsed.staff.length > 0
           ? parsed.staff.map(normalizeStaff)
@@ -1406,20 +1796,23 @@ export function loadPortalStore(): PortalStoreData {
               isActive: Boolean(item.isActive),
             }))
           : INITIAL_TERM_RECORDS,
-      classArms:
-        Array.isArray(parsed.classArms) && parsed.classArms.length > 0
-          ? parsed.classArms.map(normalizeClassArm)
-          : INITIAL_CLASS_ARMS,
-      questionTypes:
-        Array.isArray(parsed.questionTypes) && parsed.questionTypes.length > 0
-          ? parsed.questionTypes
-          : INITIAL_QUESTION_TYPES,
+      classArms: mergedClassArms,
+      questionTypes: INITIAL_QUESTION_TYPES,
       subjects:
         Array.isArray(parsed.subjects) && parsed.subjects.length > 0
           ? parsed.subjects.map(normalizeSubject)
           : INITIAL_SUBJECTS,
-      questions: parsed.questions ?? INITIAL_QUESTIONS,
-      exams: parsed.exams ?? INITIAL_EXAMS,
+      questions: (parsed.questions ?? INITIAL_QUESTIONS).map((q) => ({
+        ...q,
+        classLevel: normalizeLegacyClassName(q.classLevel),
+      })),
+      exams: (parsed.exams ?? INITIAL_EXAMS).map((exam) => ({
+        ...exam,
+        classLevel: normalizeLegacyClassName(exam.classLevel),
+        targetClassArms: exam.targetClassArms?.map(normalizeLegacyClassName),
+        schoolType:
+          exam.schoolType ?? getSchoolTypeForLevel(normalizeLegacyClassName(exam.classLevel)),
+      })),
       submissions: Array.isArray(parsed.submissions)
         ? parsed.submissions.map(normalizeSubmission)
         : INITIAL_SUBMISSIONS,

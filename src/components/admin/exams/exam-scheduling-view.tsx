@@ -19,6 +19,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -39,6 +40,7 @@ import {
   generateExamPassCode,
   usePortalStore,
 } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { PortalExam } from "@/data/portal-mock-data";
 import {
   ExamScheduleForm,
@@ -66,7 +68,7 @@ export function ExamSchedulingWorkspace() {
     id: "",
     title: "",
     subjectCode: store.subjects[0]?.code ?? "MTH-301",
-    classLevel: store.classArms[0]?.name ?? "JSS 3A",
+    classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
     scheduledFor: "Tue, Nov 24 · 09:00 AM",
     durationMinutes: 45,
     passCode: "",
@@ -103,7 +105,7 @@ export function ExamSchedulingWorkspace() {
       id: "",
       title: "",
       subjectCode: store.subjects[0]?.code ?? "MTH-301",
-      classLevel: store.classArms[0]?.name ?? "JSS 3A",
+      classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
       scheduledFor: "Tue, Nov 24 · 09:00 AM",
       durationMinutes: 45,
       passCode: generateExamPassCode(),
@@ -209,6 +211,8 @@ export function ExamSchedulingWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : "First Term · 2026/2027";
 
+  const selection = useTableSelection(filteredExams.map((exam) => exam.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -282,6 +286,16 @@ export function ExamSchedulingWorkspace() {
             title="Examination Schedule & Pass Codes"
             subtitle="Issue 6-digit pass codes / PINs via modal, toggle proctoring rules, or adjust timetable windows."
             badge={`${filteredExams.length} exams`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredExams.length === 0 ? (
               <AdminEmptyState
@@ -293,6 +307,14 @@ export function ExamSchedulingWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all examinations"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Examination</AdminTableHead>
                     <AdminTableHead>Class Arm</AdminTableHead>
                     <AdminTableHead>Schedule</AdminTableHead>
@@ -306,7 +328,17 @@ export function ExamSchedulingWorkspace() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredExams.map((exam) => (
-                    <AdminTableRow key={exam.id}>
+                    <AdminTableRow
+                      key={exam.id}
+                      isSelected={selection.isSelected(exam.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${exam.title}`}
+                          checked={selection.isSelected(exam.id)}
+                          onChange={() => selection.toggleOne(exam.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell>
                         <p className="font-display font-extrabold text-brand-950">
                           {exam.title}

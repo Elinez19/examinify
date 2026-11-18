@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -25,6 +26,7 @@ import {
 } from "@/components/admin/ui/admin-dialog-modal";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { AcademicTerm } from "@/data/portal-mock-data";
 import {
   AcademicTermForm,
@@ -120,6 +122,8 @@ export function AcademicTermsWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : "Academic Calendar";
 
+  const selection = useTableSelection(filteredTerms.map((term) => term.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -165,6 +169,16 @@ export function AcademicTermsWorkspace() {
             title="Academic Terms Directory"
             subtitle="Configure school terms and activate the current term."
             badge={`${filteredTerms.length} terms`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredTerms.length === 0 ? (
               <AdminEmptyState
@@ -176,6 +190,14 @@ export function AcademicTermsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all academic terms"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Term</AdminTableHead>
                     <AdminTableHead>Description</AdminTableHead>
                     <AdminTableHead>Status</AdminTableHead>
@@ -186,7 +208,17 @@ export function AcademicTermsWorkspace() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredTerms.map((term) => (
-                    <AdminTableRow key={term.id} isSelected={term.isActive}>
+                    <AdminTableRow
+                      key={term.id}
+                      isSelected={selection.isSelected(term.id) || term.isActive}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${term.term}`}
+                          checked={selection.isSelected(term.id)}
+                          onChange={() => selection.toggleOne(term.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell className="font-display font-extrabold text-brand-950">
                         {term.term}
                       </AdminTableCell>

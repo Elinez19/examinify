@@ -1,10 +1,9 @@
 import type { AdminSelectOption } from "@/components/admin/ui/admin-form-controls";
 
 export const SCHOOL_BRANCH_OPTIONS: ReadonlyArray<AdminSelectOption> = [
-  { id: "Main Campus (Guzape)", label: "Main Campus (Guzape)" },
-  { id: "Senior Secondary Wing", label: "Senior Secondary Wing" },
-  { id: "Junior Secondary Wing", label: "Junior Secondary Wing" },
-  { id: "CBT Assessment Annex", label: "CBT Assessment Annex" },
+  { id: "Guzape Branch", label: "Guzape Branch" },
+  { id: "Maitama Branch", label: "Maitama Branch" },
+  { id: "Wuse Branch", label: "Wuse Branch" },
 ];
 
 export const SEX_OPTIONS: ReadonlyArray<AdminSelectOption> = [

@@ -39,7 +39,7 @@ export function ArtisansKpiSummary({
         <AdminKpiCard
           label="Enrolled Students"
           value={`${customersCount} Students`}
-          badgeText="Primary 1–6 & JSS 1–SSS 3 candidates"
+          badgeText="Academy (Playgroup–Grade 6) & College (JSS 1–SS 3)"
           badgeTone="porcelain"
           badgeIcon="dot"
           ringTone="ink"

@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -25,6 +26,7 @@ import {
 } from "@/components/admin/ui/admin-dialog-modal";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { AcademicSession } from "@/data/portal-mock-data";
 import {
   AcademicSessionForm,
@@ -157,6 +159,8 @@ export function AcademicSessionsWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : "Academic Calendar";
 
+  const selection = useTableSelection(filteredSessions.map((item) => item.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -202,6 +206,16 @@ export function AcademicSessionsWorkspace() {
             title="Academic Sessions Directory"
             subtitle="Configure school sessions, calendar boundaries, and set the active session."
             badge={`${filteredSessions.length} sessions`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredSessions.length === 0 ? (
               <AdminEmptyState
@@ -213,6 +227,14 @@ export function AcademicSessionsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all academic sessions"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Session</AdminTableHead>
                     <AdminTableHead>Description</AdminTableHead>
                     <AdminTableHead>Start Date</AdminTableHead>
@@ -225,7 +247,17 @@ export function AcademicSessionsWorkspace() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredSessions.map((item) => (
-                    <AdminTableRow key={item.id} isSelected={item.isActive}>
+                    <AdminTableRow
+                      key={item.id}
+                      isSelected={selection.isSelected(item.id) || item.isActive}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${item.session}`}
+                          checked={selection.isSelected(item.id)}
+                          onChange={() => selection.toggleOne(item.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell className="font-mono font-extrabold text-brand-950">
                         {item.session}
                       </AdminTableCell>

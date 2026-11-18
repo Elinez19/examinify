@@ -17,7 +17,7 @@ export const INITIAL_TICKETS: SupportTicket[] = [
     ticketCode: "SUP-4098",
     requesterName: "Amina Bello",
     requesterRole: "Student",
-    subject: "Request Exam Resumption After Power Cut in Lab B (SSS 2 Physics)",
+    subject: "Request Exam Resumption After Power Cut in Lab B (SS 2 Physics)",
     city: "Abuja",
     priority: "Normal",
     status: "in_progress",

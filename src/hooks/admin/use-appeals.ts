@@ -82,7 +82,7 @@ export function useDisputes(
   const [clientName, setClientName] = useState("");
   const [artisanName, setArtisanName] = useState("Mr. Emeka Okafor");
   const [serviceTitle, setServiceTitle] = useState(
-    "SSS 3 Mathematics Mock CBT"
+    "SS 3 Mathematics Mock CBT"
   );
   const [escrowAmount, setEscrowAmount] = useState("25000");
   const [status, setStatus] = useState<DisputeStatus>("disputed");
@@ -107,7 +107,7 @@ export function useDisputes(
     setBookingCode(`EXM-${8890 + items.length}`);
     setClientName("");
     setArtisanName("Mr. Emeka Okafor");
-    setServiceTitle("SSS 3 Mathematics Mock CBT");
+    setServiceTitle("SS 3 Mathematics Mock CBT");
     setEscrowAmount("25000");
     setStatus("disputed");
     setReason("");

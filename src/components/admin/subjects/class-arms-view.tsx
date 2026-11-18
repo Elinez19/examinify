@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -26,6 +27,7 @@ import {
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { ClassArm } from "@/data/portal-mock-data";
 import {
   buildClassArmFromForm,
@@ -117,6 +119,8 @@ export function ClassArmsWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : "Academic Setup";
 
+  const selection = useTableSelection(filteredArms.map((arm) => arm.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -162,6 +166,16 @@ export function ClassArmsWorkspace() {
             title="Class Arms Directory"
             subtitle="Configure school class arms and classifications."
             badge={`${filteredArms.length} class arms`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredArms.length === 0 ? (
               <AdminEmptyState
@@ -173,8 +187,16 @@ export function ClassArmsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all class arms"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Arm Name</AdminTableHead>
-                    <AdminTableHead>Classification</AdminTableHead>
+                    <AdminTableHead>School &amp; Classification</AdminTableHead>
                     <AdminTableHead>Class Teacher</AdminTableHead>
                     <AdminTableHead>Enrolled Students</AdminTableHead>
                     <AdminTableHead>Status</AdminTableHead>
@@ -192,18 +214,39 @@ export function ClassArmsWorkspace() {
                       (s) => s.classLevel === arm.name
                     ).length;
                     return (
-                      <AdminTableRow key={arm.id}>
+                      <AdminTableRow
+                        key={arm.id}
+                        isSelected={selection.isSelected(arm.id)}
+                      >
+                        <AdminTableCell className="w-10">
+                          <AdminCheckbox
+                            aria-label={`Select ${arm.name}`}
+                            checked={selection.isSelected(arm.id)}
+                            onChange={() => selection.toggleOne(arm.id)}
+                          />
+                        </AdminTableCell>
                         <AdminTableCell className="font-display font-extrabold text-brand-950">
                           {arm.name}
                         </AdminTableCell>
                         <AdminTableCell>
-                          <PillBadge
-                            tone="sky"
-                            icon="none"
-                            className="px-2.5 py-0.5 text-[10px]"
-                          >
-                            {arm.classification}
-                          </PillBadge>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <PillBadge
+                              tone={
+                                arm.schoolType === "Academy" ? "blue" : "porcelain"
+                              }
+                              icon="none"
+                              className="px-2.5 py-0.5 text-[10px]"
+                            >
+                              {arm.schoolType ?? "College"}
+                            </PillBadge>
+                            <PillBadge
+                              tone="sky"
+                              icon="none"
+                              className="px-2.5 py-0.5 text-[10px]"
+                            >
+                              {arm.classification}
+                            </PillBadge>
+                          </div>
                         </AdminTableCell>
                         <AdminTableCell className="font-semibold text-brand-900">
                           {ct?.name ?? "Unassigned"}

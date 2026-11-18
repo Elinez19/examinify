@@ -16,7 +16,7 @@ export const INITIAL_REVIEWS: ReviewRecord[] = [
     id: "rev_2",
     clientName: "Tunde Bakare",
     artisanName: "Mrs. Chukwudi Eze",
-    serviceTitle: "SSS 3 Physics Paper 1 CBT",
+    serviceTitle: "SS 3 Physics Paper 1 CBT",
     rating: 5,
     comment:
       "Instant result scripts and question-by-question breakdown made revision much easier for the whole class.",
@@ -27,7 +27,7 @@ export const INITIAL_REVIEWS: ReviewRecord[] = [
     id: "rev_3",
     clientName: "Ngozi Okonkwo",
     artisanName: "Mr. Ibrahim Musa",
-    serviceTitle: "Primary 6 Verbal Reasoning Mock",
+    serviceTitle: "Grade 6 Verbal Reasoning Mock",
     rating: 4,
     comment:
       "Browser lockdown kept the lab calm and focused throughout the 45-minute test.",

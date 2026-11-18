@@ -82,7 +82,7 @@ export function AssignSubjectsWorkspace() {
           subjectTitle: sub.title,
           subjectCode: sub.code,
           className: cls,
-          branch: sub.schoolBranch || "Main Campus (Guzape)",
+          branch: sub.schoolBranch || "Guzape Branch",
           description: sub.classDescriptions?.[cls] ?? "",
         });
       }

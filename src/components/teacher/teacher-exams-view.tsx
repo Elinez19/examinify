@@ -11,6 +11,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminSortableTableHead,
@@ -27,6 +28,7 @@ import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
 import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { PortalExam } from "@/data/portal-mock-data";
 import {
   TeacherExamBuilderForm,
@@ -68,7 +70,7 @@ export function TeacherExamsWorkspace() {
     id: "",
     title: "",
     subjectCode: store.subjects[0]?.code ?? "MTH-301",
-    classLevel: store.classArms[0]?.name ?? "JSS 3A",
+    classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
     scheduledFor: "Fri, Nov 20 · 09:00 AM",
     durationMinutes: 40,
     status: "scheduled",
@@ -99,7 +101,7 @@ export function TeacherExamsWorkspace() {
       id: "",
       title: "",
       subjectCode: defaultSubject,
-      classLevel: store.classArms[0]?.name ?? "JSS 3A",
+      classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
       scheduledFor: "Mon, Nov 23 · 10:00 AM",
       durationMinutes: 40,
       status: "scheduled",
@@ -205,6 +207,8 @@ export function TeacherExamsWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.teacher.termLabel;
 
+  const selection = useTableSelection(filteredExams.map((exam) => exam.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -215,7 +219,7 @@ export function TeacherExamsWorkspace() {
         subtitle="Create, schedule, and launch computer-based assessments using the single inline builder form below."
         primaryCta={{
           label: "Create Exam",
-          onClick: openCreateExamForm,
+          href: "/teacher/exams/create",
           variant: "primary",
           icon: <Plus className="h-4 w-4" />,
         }}
@@ -265,10 +269,9 @@ export function TeacherExamsWorkspace() {
           </div>
 
           <CtaButton
-            type="button"
             variant="primary"
             size="sm"
-            onClick={openCreateExamForm}
+            href="/teacher/exams/create"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Create Exam</span>
@@ -280,6 +283,16 @@ export function TeacherExamsWorkspace() {
             title="Assessments Registry"
             subtitle="Sortable, filterable CBT assessments with contextual actions."
             badge={`${filteredExams.length} exams`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredExams.length === 0 ? (
               <AdminEmptyState
@@ -291,6 +304,14 @@ export function TeacherExamsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all assessments"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminSortableTableHead
                       label="Assessment"
                       sortKey="title"
@@ -334,7 +355,17 @@ export function TeacherExamsWorkspace() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredExams.map((exam) => (
-                    <AdminTableRow key={exam.id}>
+                    <AdminTableRow
+                      key={exam.id}
+                      isSelected={selection.isSelected(exam.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${exam.title}`}
+                          checked={selection.isSelected(exam.id)}
+                          onChange={() => selection.toggleOne(exam.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell>
                         <p className="font-display font-extrabold text-brand-950">
                           {exam.title}
@@ -343,8 +374,8 @@ export function TeacherExamsWorkspace() {
                           {exam.scheduledFor} · {exam.questionIds.length} items
                         </p>
                       </AdminTableCell>
-                      <AdminTableCell className="font-mono font-bold text-brand-800">
-                        {exam.subjectCode}
+                      <AdminTableCell className="font-semibold text-brand-800">
+                        {exam.subjectTitle || exam.subjectCode}
                       </AdminTableCell>
                       <AdminTableCell className="font-bold text-brand-900">
                         {exam.classLevel}

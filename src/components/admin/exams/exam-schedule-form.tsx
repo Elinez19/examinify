@@ -90,7 +90,7 @@ export function ExamScheduleForm({
               }
               options={subjects.map((sub) => ({
                 id: sub.code,
-                label: `${sub.title} (${sub.code})`,
+                label: sub.title,
               }))}
             />
             <AdminSelectField

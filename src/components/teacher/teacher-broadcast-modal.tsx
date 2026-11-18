@@ -74,7 +74,7 @@ export function TeacherBroadcastModal({
             onChange={setExamId}
             options={exams.map((exam) => ({
               id: exam.id,
-              label: `${exam.subjectCode} · ${exam.title}`,
+              label: `${exam.subjectTitle || exam.subjectCode} · ${exam.title}`,
             }))}
           />
           <AdminSelectField<"info" | "warning">

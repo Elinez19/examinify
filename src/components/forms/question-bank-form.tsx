@@ -100,7 +100,7 @@ export function QuestionBankForm({
             }
             options={subjects.map((sub) => ({
               id: sub.code,
-              label: `${sub.title} (${sub.code})`,
+              label: sub.title,
             }))}
           />
 
@@ -114,10 +114,11 @@ export function QuestionBankForm({
               }))
             }
             options={[
-              { id: "objective", label: "Objective" },
+              { id: "objective", label: "Multi-choice" },
               { id: "multi_select", label: "Multi-Select" },
-              { id: "fill_blank", label: "Fill-in-Blank" },
+              { id: "fill_blank", label: "Fill in the gaps" },
               { id: "theory", label: "Theory" },
+              { id: "essay", label: "Essay" },
             ]}
           />
 
@@ -309,9 +310,9 @@ export function QuestionBankForm({
             />
           )}
 
-          {formState.type === "theory" && (
+          {(formState.type === "theory" || formState.type === "essay") && (
             <AdminTextareaField
-              label="Marking Guide"
+              label={formState.type === "essay" ? "Essay Marking Guide" : "Marking Guide"}
               value={formState.markingGuide}
               onChange={(event) =>
                 setFormState((prev) => ({

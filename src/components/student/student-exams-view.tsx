@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { BookOpenCheck, Clock, Play, ShieldCheck } from "lucide-react";
+import {
+  BookOpenCheck,
+  Clock,
+  FileSearch,
+  Play,
+  ShieldCheck,
+} from "lucide-react";
 import {
   AdminHeroBanner,
   AdminWorkspaceSlab,
@@ -12,6 +18,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -21,10 +28,12 @@ import {
   AdminTableHeader,
   AdminTableRow,
 } from "@/components/admin/ui/admin-data-table";
+import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
 import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
-import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
+import { isSameClassOrLevel } from "@/data/portal-mock-data";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 
 export function StudentExamsWorkspace() {
   const router = useRouter();
@@ -32,10 +41,12 @@ export function StudentExamsWorkspace() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("ALL");
 
-  const myExams = store.exams.filter(
-    (exam) =>
-      exam.classLevel === store.student.classLevel ||
-      exam.classLevel.startsWith(store.student.classLevel.split(" ")[0] ?? "")
+  const myExams = store.exams.filter((exam) =>
+    isSameClassOrLevel(
+      exam.classLevel,
+      store.student.classLevel,
+      exam.targetClassArms
+    )
   );
 
   const mySubmissions = store.submissions.filter(
@@ -56,6 +67,8 @@ export function StudentExamsWorkspace() {
   const termLabel = activeSessionTerm
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.student.termLabel;
+
+  const selection = useTableSelection(filteredExams.map((exam) => exam.id));
 
   return (
     <div className="space-y-4">
@@ -105,6 +118,16 @@ export function StudentExamsWorkspace() {
             title="Examination Timetable"
             subtitle="Enter live CBTs directly or check your upcoming examination schedule."
             badge={`${filteredExams.length} exams`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredExams.length === 0 ? (
               <AdminEmptyState
@@ -116,12 +139,22 @@ export function StudentExamsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all examinations"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Examination</AdminTableHead>
                     <AdminTableHead>Subject</AdminTableHead>
                     <AdminTableHead>Schedule</AdminTableHead>
                     <AdminTableHead>Duration & Marks</AdminTableHead>
                     <AdminTableHead>Status</AdminTableHead>
-                    <AdminTableHead className="text-right">Action</AdminTableHead>
+                    <AdminTableHead className="text-right">
+                      Actions
+                    </AdminTableHead>
                   </tr>
                 </AdminTableHeader>
                 <AdminTableBody>
@@ -130,7 +163,17 @@ export function StudentExamsWorkspace() {
                       (item) => item.examId === exam.id
                     );
                     return (
-                      <AdminTableRow key={exam.id}>
+                      <AdminTableRow
+                        key={exam.id}
+                        isSelected={selection.isSelected(exam.id)}
+                      >
+                        <AdminTableCell className="w-10">
+                          <AdminCheckbox
+                            aria-label={`Select ${exam.title}`}
+                            checked={selection.isSelected(exam.id)}
+                            onChange={() => selection.toggleOne(exam.id)}
+                          />
+                        </AdminTableCell>
                         <AdminTableCell>
                           <p className="font-display font-extrabold text-brand-950">
                             {exam.title}
@@ -150,7 +193,7 @@ export function StudentExamsWorkspace() {
                             tone="sky"
                             className="px-2.5 py-0.5 text-[10px]"
                           >
-                            {exam.subjectCode} · {exam.subjectTitle}
+                            {exam.subjectTitle}
                           </PillBadge>
                         </AdminTableCell>
                         <AdminTableCell className="font-medium text-ink-secondary">
@@ -178,30 +221,43 @@ export function StudentExamsWorkspace() {
                           />
                         </AdminTableCell>
                         <AdminTableCell className="text-right">
-                          {submitted ? (
-                            <CtaButton
-                              type="button"
-                              variant="secondary"
-                              size="xs"
-                              onClick={() => router.push("/student/results")}
-                            >
-                              View Result
-                            </CtaButton>
-                          ) : exam.status === "live" ? (
-                            <CtaButton
-                              type="button"
-                              variant="primary"
-                              size="xs"
-                              onClick={() => router.push(`/exam/${exam.id}`)}
-                            >
-                              <Play className="h-3 w-3" />
-                              <span>Start CBT</span>
-                            </CtaButton>
-                          ) : (
-                            <span className="text-xs font-bold text-ink-muted">
-                              Not Yet Open
-                            </span>
-                          )}
+                          <AdminActionMenu
+                            ariaLabel={`Actions for ${exam.title}`}
+                            items={
+                              submitted
+                                ? [
+                                    {
+                                      id: "view-result",
+                                      label: "View Result",
+                                      icon: (
+                                        <FileSearch className="h-3.5 w-3.5" />
+                                      ),
+                                      variant: "primary",
+                                      onClick: () =>
+                                        router.push("/student/results"),
+                                    },
+                                  ]
+                                : exam.status === "live"
+                                  ? [
+                                      {
+                                        id: "start-cbt",
+                                        label: "Start CBT",
+                                        icon: <Play className="h-3.5 w-3.5" />,
+                                        variant: "primary",
+                                        onClick: () =>
+                                          router.push(`/exam/${exam.id}`),
+                                      },
+                                    ]
+                                  : [
+                                      {
+                                        id: "not-open",
+                                        label: "Not Yet Open",
+                                        icon: <Clock className="h-3.5 w-3.5" />,
+                                        disabled: true,
+                                      },
+                                    ]
+                            }
+                          />
                         </AdminTableCell>
                       </AdminTableRow>
                     );

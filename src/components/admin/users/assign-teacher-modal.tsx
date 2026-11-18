@@ -128,7 +128,7 @@ export function AssignTeacherModal({
                   {selected && (
                     <CheckCircle2 className="h-3 w-3 text-accent-success" />
                   )}
-                  {sub.title} ({sub.code})
+                  {sub.title}
                 </button>
               );
             })}

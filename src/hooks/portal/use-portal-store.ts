@@ -4,6 +4,7 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import {
   INITIAL_PORTAL_STORE,
   STORAGE_KEY,
+  getSchoolTypeForLevel,
   isTeachingStaffRole,
   loadPortalStore,
   savePortalStore,
@@ -326,6 +327,8 @@ export function usePortalStore() {
           classArmId: arm.id,
           classLevel: arm.name,
           wing: arm.arm,
+          schoolType: arm.schoolType ?? getSchoolTypeForLevel(arm.level || arm.name),
+          schoolBranch: arm.schoolBranch ?? prev.student.schoolBranch,
         };
         return {
           ...prev,
@@ -484,6 +487,7 @@ export function usePortalStore() {
           staffId: input.staffCode.trim(),
           staffType: input.staffType,
           assignedRole: input.role,
+          schoolType: existingTeacher?.schoolType ?? prev.teacher.schoolType ?? "College",
           schoolBranch: input.schoolBranch,
           sex: input.sex,
           maritalStatus: input.maritalStatus,
@@ -906,6 +910,56 @@ export function usePortalStore() {
     }));
   }, []);
 
+  const assignClassToTeacher = useCallback(
+    (teacherId: string, classArmId: string) => {
+      updateStore((prev) => {
+        const targetTeacher = prev.teachers.find((t) => t.id === teacherId);
+        const targetArm = prev.classArms.find((arm) => arm.id === classArmId);
+        if (!targetTeacher || !targetArm) return prev;
+
+        const nextClassArms = prev.classArms.map((arm) =>
+          arm.id === classArmId ? { ...arm, classTeacherId: teacherId } : arm
+        );
+
+        const nextTeachers = prev.teachers.map((t) =>
+          t.id === teacherId
+            ? {
+                ...t,
+                assignedClasses: Array.from(
+                  new Set([...t.assignedClasses, targetArm.name])
+                ),
+              }
+            : t
+        );
+
+        return {
+          ...prev,
+          classArms: nextClassArms,
+          teachers: nextTeachers,
+          teacher:
+            prev.teacher.id === teacherId
+              ? {
+                  ...prev.teacher,
+                  assignedClasses: Array.from(
+                    new Set([...prev.teacher.assignedClasses, targetArm.name])
+                  ),
+                }
+              : prev.teacher,
+        };
+      });
+    },
+    []
+  );
+
+  const unassignClassTeacher = useCallback((classArmId: string) => {
+    updateStore((prev) => ({
+      ...prev,
+      classArms: prev.classArms.map((arm) =>
+        arm.id === classArmId ? { ...arm, classTeacherId: "" } : arm
+      ),
+    }));
+  }, []);
+
   // Admin: Subjects + Class & Teacher assignment
   const saveSubject = useCallback((subject: SubjectEnrollment) => {
     updateStore((prev) => {
@@ -1132,7 +1186,7 @@ export function usePortalStore() {
 
       for (const question of examQuestions) {
         const answer = payload.answers[question.id];
-        if (question.type === "theory") {
+        if (question.type === "theory" || question.type === "essay") {
           theoryTotal += question.marks;
           continue;
         }
@@ -1438,6 +1492,8 @@ export function usePortalStore() {
     deleteTermRecord,
     saveClassArm,
     deleteClassArm,
+    assignClassToTeacher,
+    unassignClassTeacher,
     saveSubject,
     deleteSubject,
     assignSubjectsToClass,

@@ -12,6 +12,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminSortableTableHead,
@@ -27,6 +28,7 @@ import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
 import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
 import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { ExamSubmission, TheoryScoreEntry } from "@/data/portal-mock-data";
 import { ScriptGradingForm } from "./script-grading-form";
 
@@ -57,7 +59,9 @@ function TeacherGradingInner() {
     if (!sub) return initialScores;
     const exam = store.exams.find((e) => e.id === sub.examId);
     const theoryQuestions = store.questions.filter(
-      (q) => q.type === "theory" && (exam?.questionIds.includes(q.id) ?? false)
+      (q) =>
+        (q.type === "theory" || q.type === "essay") &&
+        (exam?.questionIds.includes(q.id) ?? false)
     );
     for (const q of theoryQuestions) {
       initialScores[q.id] =
@@ -158,6 +162,8 @@ function TeacherGradingInner() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.teacher.termLabel;
 
+  const selection = useTableSelection(filteredGrading.map((sub) => sub.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -173,8 +179,8 @@ function TeacherGradingInner() {
           trailingArrow: true,
         }}
         secondaryCta={{
-          label: "Assessments",
-          href: "/teacher/exams",
+          label: "Create Exam",
+          href: "/teacher/exams/create",
           variant: "secondary",
         }}
       />
@@ -217,6 +223,16 @@ function TeacherGradingInner() {
             title="Submitted Candidate Scripts"
             subtitle="Select a script from the action menu to score theory sections and publish marks."
             badge={`${filteredGrading.length} scripts`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredGrading.length === 0 ? (
               <AdminEmptyState
@@ -228,6 +244,14 @@ function TeacherGradingInner() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all submitted scripts"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminSortableTableHead
                       label="Candidate"
                       sortKey="studentName"
@@ -264,7 +288,17 @@ function TeacherGradingInner() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredGrading.map((sub) => (
-                    <AdminTableRow key={sub.id}>
+                    <AdminTableRow
+                      key={sub.id}
+                      isSelected={selection.isSelected(sub.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${sub.studentName}`}
+                          checked={selection.isSelected(sub.id)}
+                          onChange={() => selection.toggleOne(sub.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell>
                         <p className="font-display font-extrabold text-brand-950">
                           {sub.studentName}

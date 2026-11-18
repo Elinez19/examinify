@@ -11,6 +11,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminSortableTableHead,
@@ -33,6 +34,7 @@ import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { STAFF_TYPE_OPTIONS } from "@/components/forms";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import {
   isTeachingStaffRole,
   type AccountStatus,
@@ -278,6 +280,8 @@ export function StaffDirectory() {
     });
   }, [allStaffRows, q, sortDir, sortKey, staffTypeFilter, statusFilter]);
 
+  const selection = useTableSelection(filteredStaff.map((row) => row.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -366,6 +370,16 @@ export function StaffDirectory() {
             title="All Registered Staff"
             subtitle="Academic and Non-Academic school staff accounts."
             badge={`${filteredStaff.length} staff`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredStaff.length === 0 ? (
               <AdminEmptyState
@@ -377,6 +391,14 @@ export function StaffDirectory() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all staff"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminSortableTableHead
                       label="Staff Member"
                       sortKey="name"
@@ -412,7 +434,17 @@ export function StaffDirectory() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredStaff.map((row) => (
-                    <AdminTableRow key={row.id}>
+                    <AdminTableRow
+                      key={row.id}
+                      isSelected={selection.isSelected(row.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${row.name}`}
+                          checked={selection.isSelected(row.id)}
+                          onChange={() => selection.toggleOne(row.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell>
                         <div className="flex items-center gap-2.5">
                           <AvatarBadge

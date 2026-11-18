@@ -108,7 +108,7 @@ export function ClassArmForm({
           onChange={(e) =>
             setFormState((p) => ({ ...p, name: e.target.value }))
           }
-          placeholder="e.g. SSS 2A"
+          placeholder="e.g. Grade 5 Trailblazers or JSS 2 Discoverers"
           required
         />
         <AdminSelectField<ClassClassification>

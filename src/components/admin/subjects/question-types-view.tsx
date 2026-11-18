@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -26,6 +27,7 @@ import {
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { QuestionTypeConfig } from "@/data/portal-mock-data";
 import {
   QuestionTypeForm,
@@ -137,6 +139,8 @@ export function QuestionTypesWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : "Academic Setup";
 
+  const selection = useTableSelection(filteredTypes.map((qt) => qt.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -192,6 +196,16 @@ export function QuestionTypesWorkspace() {
             title="Supported Question Types"
             subtitle="All CBT item formats configured for teachers and examinations."
             badge={`${filteredTypes.length} formats`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredTypes.length === 0 ? (
               <AdminEmptyState
@@ -203,6 +217,14 @@ export function QuestionTypesWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all question types"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Question Type</AdminTableHead>
                     <AdminTableHead>Code</AdminTableHead>
                     <AdminTableHead>Grading Mode</AdminTableHead>
@@ -215,7 +237,17 @@ export function QuestionTypesWorkspace() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredTypes.map((qt) => (
-                    <AdminTableRow key={qt.id}>
+                    <AdminTableRow
+                      key={qt.id}
+                      isSelected={selection.isSelected(qt.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${qt.label}`}
+                          checked={selection.isSelected(qt.id)}
+                          onChange={() => selection.toggleOne(qt.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell className="font-display font-extrabold text-brand-950">
                         {qt.label}
                       </AdminTableCell>

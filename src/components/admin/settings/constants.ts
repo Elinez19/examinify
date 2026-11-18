@@ -21,7 +21,7 @@ export const INITIAL_POLICIES: PolicySettingItem[] = [
     value: "15 sec",
     defaultValue: "15 sec",
     description:
-      "Interval for local IndexedDB answer persistence and server sync across Primary, JSS & SSS labs.",
+      "Interval for local IndexedDB answer persistence and server sync across Academy & College CBT labs.",
     status: "active",
     updatedAt: "Active policy",
   },

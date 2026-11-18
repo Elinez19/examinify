@@ -12,6 +12,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminSortableTableHead,
@@ -30,6 +31,7 @@ import { QuestionBankForm, type QuestionBankFormState } from "@/components/forms
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { QuestionItem } from "@/data/portal-mock-data";
 
 type QuestionSortKey = "topic" | "subjectCode" | "type" | "difficulty" | "marks";
@@ -69,7 +71,7 @@ function TeacherQuestionBankInner() {
     id: "",
     subjectCode: store.subjects[0]?.code ?? "MTH-301",
     topic: "",
-    classLevel: store.classArms[0]?.name ?? "JSS 3A",
+    classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
     type: "objective",
     difficulty: "Standard",
     marks: 2,
@@ -109,7 +111,7 @@ function TeacherQuestionBankInner() {
       id: "",
       subjectCode: code,
       topic: "",
-      classLevel: store.classArms[0]?.name ?? "JSS 3A",
+      classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
       type: "objective",
       difficulty: "Standard",
       marks: 2,
@@ -218,7 +220,7 @@ function TeacherQuestionBankInner() {
     setFeedbackDialog({
       variant: "success",
       title: isUpdate ? "Question Updated" : "Question Added",
-      description: `"${nextItem.topic}" (${nextItem.subjectCode}) has been saved to the Question Bank.`,
+      description: `"${nextItem.topic}" (${nextItem.subjectTitle}) has been saved to the Question Bank.`,
     });
   };
 
@@ -256,6 +258,8 @@ function TeacherQuestionBankInner() {
   const termLabel = activeSessionTerm
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.teacher.termLabel;
+
+  const selection = useTableSelection(filteredQuestions.map((item) => item.id));
 
   return (
     <div className="space-y-4">
@@ -312,7 +316,7 @@ function TeacherQuestionBankInner() {
                 { id: "ALL", label: "All Subjects" },
                 ...store.subjects.map((sub) => ({
                   id: sub.code,
-                  label: `${sub.code} · ${sub.title}`,
+                  label: sub.title,
                 })),
               ]}
             />
@@ -352,6 +356,16 @@ function TeacherQuestionBankInner() {
             title="Question Bank Repository"
             subtitle="Sort, filter, preview, edit, or remove CBT assessment items."
             badge={`${filteredQuestions.length} items`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredQuestions.length === 0 ? (
               <AdminEmptyState
@@ -363,6 +377,14 @@ function TeacherQuestionBankInner() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all questions"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminSortableTableHead
                       label="Topic & Prompt"
                       sortKey="topic"
@@ -405,7 +427,17 @@ function TeacherQuestionBankInner() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredQuestions.map((item) => (
-                    <AdminTableRow key={item.id}>
+                    <AdminTableRow
+                      key={item.id}
+                      isSelected={selection.isSelected(item.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${item.topic}`}
+                          checked={selection.isSelected(item.id)}
+                          onChange={() => selection.toggleOne(item.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell className="max-w-sm">
                         <p className="font-display font-extrabold text-brand-950">
                           {item.topic}
@@ -475,7 +507,7 @@ function TeacherQuestionBankInner() {
         }}
         eyebrow={
           previewQuestion
-            ? `${previewQuestion.subjectCode} · ${previewQuestion.type.replace("_", " ")}`
+            ? `${previewQuestion.subjectTitle} · ${previewQuestion.type.replace("_", " ")}`
             : "Question"
         }
         title={previewQuestion?.topic ?? "Question Preview"}

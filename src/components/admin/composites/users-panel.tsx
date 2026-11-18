@@ -19,3 +19,4 @@ export * from "@/components/admin/users/staff-directory";
 export * from "@/components/admin/users/students-directory";
 export * from "@/components/admin/users/teachers-directory";
 export * from "@/components/admin/users/assign-staff-role-view";
+export * from "@/components/admin/users/assign-class-teacher-view";

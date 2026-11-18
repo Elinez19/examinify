@@ -9,6 +9,7 @@ import {
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -22,6 +23,7 @@ import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
 import { AvatarBadge } from "@/components/portal/avatar-badge";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 
 export function StudentClassWorkspace() {
   const { store, activeSessionTerm } = usePortalStore();
@@ -53,6 +55,8 @@ export function StudentClassWorkspace() {
   const termLabel = activeSessionTerm
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.student.termLabel;
+
+  const selection = useTableSelection(filteredPeers.map((peer) => peer.id));
 
   return (
     <div className="space-y-4">
@@ -139,6 +143,16 @@ export function StudentClassWorkspace() {
             title="Classmate Roster"
             subtitle={`Active students enrolled in ${store.student.classLevel}.`}
             badge={`${filteredPeers.length} students`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredPeers.length === 0 ? (
               <AdminEmptyState
@@ -150,6 +164,14 @@ export function StudentClassWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all classmates"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Student</AdminTableHead>
                     <AdminTableHead>Admission No</AdminTableHead>
                     <AdminTableHead>Class Arm</AdminTableHead>
@@ -160,8 +182,18 @@ export function StudentClassWorkspace() {
                   {filteredPeers.map((peer) => (
                     <AdminTableRow
                       key={peer.id}
-                      isSelected={peer.id === store.student.id}
+                      isSelected={
+                        selection.isSelected(peer.id) ||
+                        peer.id === store.student.id
+                      }
                     >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${peer.name}`}
+                          checked={selection.isSelected(peer.id)}
+                          onChange={() => selection.toggleOne(peer.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell>
                         <div className="flex items-center gap-2.5">
                           <AvatarBadge

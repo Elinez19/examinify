@@ -17,18 +17,28 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
+  AdminDataTable,
+  AdminEmptyState,
   AdminSortableTableHead,
+  AdminTable,
+  AdminTableBody,
   AdminTableCell,
   AdminTableHead,
+  AdminTableHeader,
+  AdminTableRow,
   type SortDirection,
 } from "@/components/admin/ui/admin-data-table";
 import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
+import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
 import {
   AdminDialogModal,
   type ModalVariant,
 } from "@/components/admin/ui/admin-dialog-modal";
 import { AvatarBadge } from "@/components/portal/avatar-badge";
+import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import {
   isTeachingStaffRole,
   type AccountStatus,
@@ -203,7 +213,7 @@ export function UsersDirectory() {
         store.students.length
       ),
       id: stu.id,
-      schoolBranch: stu.schoolBranch ?? "Main Campus (Guzape)",
+      schoolBranch: stu.schoolBranch ?? "Guzape Branch",
       admissionNo: stu.admissionNo,
       firstName: stu.firstName,
       middleName: stu.middleName ?? "",
@@ -281,9 +291,9 @@ export function UsersDirectory() {
       cityOfResidence: studentForm.cityOfResidence.trim() || undefined,
       dateOfBirth: studentForm.dateOfBirth || undefined,
       entrySession: studentForm.entrySession,
-      classArmId: arm?.id ?? "arm_jss3a",
-      classLevel: arm?.name ?? "JSS 3A",
-      wing: arm?.arm ?? "General",
+      classArmId: arm?.id ?? "arm_jss_3_superstars",
+      classLevel: arm?.name ?? "JSS 3 Superstars",
+      wing: arm?.arm ?? "Superstars",
       termLabel,
       schoolName: store.student.schoolName,
       avatarUrl: studentForm.photoDataUrl || existing?.avatarUrl || "avatar-1",
@@ -481,6 +491,13 @@ export function UsersDirectory() {
     });
   }, [allStaffRows, q, sortDir, sortKey, statusFilter]);
 
+  const studentSelection = useTableSelection(
+    filteredStudents.map((stu) => stu.id)
+  );
+  const staffSelection = useTableSelection(filteredStaff.map((row) => row.id));
+  const activeSelection =
+    activeTab === "students" ? studentSelection : staffSelection;
+
   return (
     <div className="space-y-6">
       <AdminHeroBanner
@@ -662,257 +679,324 @@ export function UsersDirectory() {
           />
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-              <tr>
-                <AdminSortableTableHead
-                  label="User"
-                  sortKey="name"
-                  activeSortKey={sortKey}
-                  sortDirection={sortDir}
-                  onSort={toggleSort}
-                />
-                <AdminSortableTableHead
-                  label="Email"
-                  sortKey="email"
-                  activeSortKey={sortKey}
-                  sortDirection={sortDir}
-                  onSort={toggleSort}
-                />
-                <AdminSortableTableHead
-                  label={
-                    activeTab === "students"
-                      ? "Class Arm"
-                      : "Staff Type & Role"
-                  }
-                  sortKey="detail"
-                  activeSortKey={sortKey}
-                  sortDirection={sortDir}
-                  onSort={toggleSort}
-                />
-                <AdminSortableTableHead
-                  label="Status"
-                  sortKey="status"
-                  activeSortKey={sortKey}
-                  sortDirection={sortDir}
-                  onSort={toggleSort}
-                />
-                <AdminTableHead className="text-right">Actions</AdminTableHead>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-brand-100 bg-white">
-              {activeTab === "students" &&
-                filteredStudents.map((stu) => (
-                  <tr
-                    key={stu.id}
-                    className="hover:bg-surface-mist/50 transition-colors"
-                  >
-                    <AdminTableCell>
-                      <div className="flex items-center gap-2.5">
-                        <AvatarBadge
-                          name={stu.name}
-                          avatarUrl={stu.avatarUrl}
-                          size="sm"
+        <AdminDataTable
+          title={
+            activeTab === "students"
+              ? "Student Directory"
+              : "Staff Directory"
+          }
+          subtitle="Sort columns or use the three-dot menu to edit, assign, or manage account status."
+          badge={
+            activeTab === "students"
+              ? `${filteredStudents.length} students`
+              : `${filteredStaff.length} staff`
+          }
+          selectedCount={activeSelection.selectedCount}
+          bulkActions={
+            <button
+              type="button"
+              onClick={activeSelection.clearSelection}
+              className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+            >
+              Clear
+            </button>
+          }
+        >
+          {(activeTab === "students" ? filteredStudents.length : filteredStaff.length) === 0 ? (
+            <AdminEmptyState
+              title={
+                activeTab === "students"
+                  ? "No Students Found"
+                  : "No Staff Found"
+              }
+              description="Register a new account or clear your search filters."
+              icon={
+                activeTab === "students" ? (
+                  <GraduationCap className="h-5 w-5 text-accent-sky" />
+                ) : (
+                  <Shield className="h-5 w-5 text-accent-sky" />
+                )
+              }
+            />
+          ) : (
+            <AdminTable>
+              <AdminTableHeader>
+                <tr>
+                  <AdminTableHead className="w-10">
+                    <AdminCheckbox
+                      aria-label={
+                        activeTab === "students"
+                          ? "Select all students"
+                          : "Select all staff"
+                      }
+                      checked={activeSelection.allSelected}
+                      indeterminate={activeSelection.someSelected}
+                      onChange={(e) =>
+                        activeSelection.toggleAll(e.target.checked)
+                      }
+                    />
+                  </AdminTableHead>
+                  <AdminSortableTableHead
+                    label="User"
+                    sortKey="name"
+                    activeSortKey={sortKey}
+                    sortDirection={sortDir}
+                    onSort={toggleSort}
+                  />
+                  <AdminSortableTableHead
+                    label="Email"
+                    sortKey="email"
+                    activeSortKey={sortKey}
+                    sortDirection={sortDir}
+                    onSort={toggleSort}
+                  />
+                  <AdminSortableTableHead
+                    label={
+                      activeTab === "students"
+                        ? "Class Arm"
+                        : "Staff Type & Role"
+                    }
+                    sortKey="detail"
+                    activeSortKey={sortKey}
+                    sortDirection={sortDir}
+                    onSort={toggleSort}
+                  />
+                  <AdminSortableTableHead
+                    label="Status"
+                    sortKey="status"
+                    activeSortKey={sortKey}
+                    sortDirection={sortDir}
+                    onSort={toggleSort}
+                  />
+                  <AdminTableHead className="text-right">Actions</AdminTableHead>
+                </tr>
+              </AdminTableHeader>
+              <AdminTableBody>
+                {activeTab === "students" &&
+                  filteredStudents.map((stu) => (
+                    <AdminTableRow
+                      key={stu.id}
+                      isSelected={studentSelection.isSelected(stu.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${stu.name}`}
+                          checked={studentSelection.isSelected(stu.id)}
+                          onChange={() => studentSelection.toggleOne(stu.id)}
                         />
-                        <div>
-                          <p className="font-extrabold text-brand-950">
-                            {stu.name}
-                          </p>
-                          <p className="text-[11px] font-mono text-ink-secondary">
-                            {stu.admissionNo}
-                          </p>
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <div className="flex items-center gap-2.5">
+                          <AvatarBadge
+                            name={stu.name}
+                            avatarUrl={stu.avatarUrl}
+                            size="sm"
+                          />
+                          <div>
+                            <p className="font-display font-extrabold text-brand-950">
+                              {stu.name}
+                            </p>
+                            <p className="text-[11px] font-mono text-ink-secondary">
+                              {stu.admissionNo}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </AdminTableCell>
-                    <AdminTableCell className="font-medium text-brand-800">
-                      {stu.email}
-                    </AdminTableCell>
-                    <AdminTableCell>
-                      <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-extrabold text-brand-900">
-                        {stu.classLevel}
-                      </span>
-                    </AdminTableCell>
-                    <AdminTableCell>
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
-                          stu.status === "active"
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-rose-100 text-rose-800"
-                        )}
-                      >
-                        {stu.status}
-                      </span>
-                    </AdminTableCell>
-                    <AdminTableCell className="text-right">
-                      <AdminActionMenu
-                        ariaLabel={`Actions for ${stu.name}`}
-                        items={[
-                          {
-                            id: "edit-stu",
-                            label: "Edit Student Details",
-                            icon: <Edit3 className="h-3.5 w-3.5" />,
-                            onClick: () => openEditStudent(stu),
-                          },
-                          {
-                            id: "assign-cls",
-                            label: "Assign Class Arm",
-                            icon: <GraduationCap className="h-3.5 w-3.5" />,
-                            variant: "primary",
-                            onClick: () => {
-                              setStudentFormOpen(false);
-                              setSelectedClassArmId(stu.classArmId);
-                              setAssignClassTarget(stu);
-                              scrollFormIntoView(assignClassFormRef);
+                      </AdminTableCell>
+                      <AdminTableCell className="font-medium text-brand-800">
+                        {stu.email}
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <PillBadge
+                          tone="sky"
+                          className="px-2.5 py-0.5 text-[11px]"
+                        >
+                          {stu.classLevel}
+                        </PillBadge>
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <AdminStatusPill
+                          status={stu.status}
+                          variant={
+                            stu.status === "active" ? "success" : "danger"
+                          }
+                        />
+                      </AdminTableCell>
+                      <AdminTableCell className="text-right">
+                        <AdminActionMenu
+                          ariaLabel={`Actions for ${stu.name}`}
+                          items={[
+                            {
+                              id: "edit-stu",
+                              label: "Edit Student Details",
+                              icon: <Edit3 className="h-3.5 w-3.5" />,
+                              onClick: () => openEditStudent(stu),
                             },
-                          },
-                          {
-                            id: "toggle-stu",
-                            label:
-                              stu.status === "active"
-                                ? "Deactivate Account"
-                                : "Activate Account",
-                            icon: <Power className="h-3.5 w-3.5" />,
-                            onClick: () =>
-                              setStudentStatus(
-                                stu.id,
-                                stu.status === "active" ? "inactive" : "active"
-                              ),
-                          },
-                          {
-                            id: "del-stu",
-                            label: "Remove Student",
-                            icon: <Trash2 className="h-3.5 w-3.5" />,
-                            variant: "danger",
-                            dividerBefore: true,
-                            onClick: () =>
-                              setDeleteTarget({
-                                kind: "students",
-                                id: stu.id,
-                                label: stu.name,
-                              }),
-                          },
-                        ]}
-                      />
-                    </AdminTableCell>
-                  </tr>
-                ))}
-
-              {activeTab === "staff" &&
-                filteredStaff.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="hover:bg-surface-mist/50 transition-colors"
-                  >
-                    <AdminTableCell>
-                      <div className="flex items-center gap-2.5">
-                        <AvatarBadge
-                          name={row.name}
-                          avatarUrl={row.avatarUrl}
-                          size="sm"
+                            {
+                              id: "assign-cls",
+                              label: "Assign Class Arm",
+                              icon: <GraduationCap className="h-3.5 w-3.5" />,
+                              variant: "primary",
+                              onClick: () => {
+                                setStudentFormOpen(false);
+                                setSelectedClassArmId(stu.classArmId);
+                                setAssignClassTarget(stu);
+                                scrollFormIntoView(assignClassFormRef);
+                              },
+                            },
+                            {
+                              id: "toggle-stu",
+                              label:
+                                stu.status === "active"
+                                  ? "Deactivate Account"
+                                  : "Activate Account",
+                              icon: <Power className="h-3.5 w-3.5" />,
+                              onClick: () =>
+                                setStudentStatus(
+                                  stu.id,
+                                  stu.status === "active"
+                                    ? "inactive"
+                                    : "active"
+                                ),
+                            },
+                            {
+                              id: "del-stu",
+                              label: "Remove Student",
+                              icon: <Trash2 className="h-3.5 w-3.5" />,
+                              variant: "danger",
+                              dividerBefore: true,
+                              onClick: () =>
+                                setDeleteTarget({
+                                  kind: "students",
+                                  id: stu.id,
+                                  label: stu.name,
+                                }),
+                            },
+                          ]}
                         />
-                        <div>
-                          <p className="font-extrabold text-brand-950">
-                            {row.name}
-                          </p>
-                          <p className="text-[11px] font-mono text-ink-secondary">
-                            {row.staffCode}
-                          </p>
+                      </AdminTableCell>
+                    </AdminTableRow>
+                  ))}
+
+                {activeTab === "staff" &&
+                  filteredStaff.map((row) => (
+                    <AdminTableRow
+                      key={row.id}
+                      isSelected={staffSelection.isSelected(row.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${row.name}`}
+                          checked={staffSelection.isSelected(row.id)}
+                          onChange={() => staffSelection.toggleOne(row.id)}
+                        />
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <div className="flex items-center gap-2.5">
+                          <AvatarBadge
+                            name={row.name}
+                            avatarUrl={row.avatarUrl}
+                            size="sm"
+                          />
+                          <div>
+                            <p className="font-display font-extrabold text-brand-950">
+                              {row.name}
+                            </p>
+                            <p className="text-[11px] font-mono text-ink-secondary">
+                              {row.staffCode}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </AdminTableCell>
-                    <AdminTableCell className="font-medium text-brand-800">
-                      {row.email}
-                    </AdminTableCell>
-                    <AdminTableCell>
-                      <p className="font-bold text-brand-950">
-                        {row.staffType} · {row.role}
-                      </p>
-                      {row.teacherData &&
-                        row.teacherData.assignedClasses.length > 0 && (
-                          <p className="text-[11px] text-ink-secondary">
-                            Classes: {row.teacherData.assignedClasses.join(", ")}
-                          </p>
-                        )}
-                    </AdminTableCell>
-                    <AdminTableCell>
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
-                          row.status === "active"
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-rose-100 text-rose-800"
-                        )}
-                      >
-                        {row.status}
-                      </span>
-                    </AdminTableCell>
-                    <AdminTableCell className="text-right">
-                      <AdminActionMenu
-                        ariaLabel={`Actions for ${row.name}`}
-                        items={[
-                          {
-                            id: "edit-stf",
-                            label: "Edit Staff Details",
-                            icon: <Edit3 className="h-3.5 w-3.5" />,
-                            onClick: () => openEditStaff(row),
-                          },
-                          ...(row.teacherData && isTeachingStaffRole(row.role)
-                            ? [
-                                {
-                                  id: "assign-tch",
-                                  label: "Assign Classes & Subjects",
-                                  icon: <UserCheck className="h-3.5 w-3.5" />,
-                                  variant: "primary" as const,
-                                  onClick: () => {
-                                    setStaffFormOpen(false);
-                                    setTeacherClassesDraft(
-                                      row.teacherData!.assignedClasses
-                                    );
-                                    setTeacherSubjectsDraft(
-                                      row.teacherData!.assignedSubjectIds
-                                    );
-                                    setAssignTeacherTarget(row.teacherData!);
-                                    scrollFormIntoView(assignTeacherFormRef);
+                      </AdminTableCell>
+                      <AdminTableCell className="font-medium text-brand-800">
+                        {row.email}
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <p className="font-bold text-brand-950">
+                          {row.staffType} · {row.role}
+                        </p>
+                        {row.teacherData &&
+                          row.teacherData.assignedClasses.length > 0 && (
+                            <p className="text-[11px] text-ink-secondary">
+                              Classes: {row.teacherData.assignedClasses.join(", ")}
+                            </p>
+                          )}
+                      </AdminTableCell>
+                      <AdminTableCell>
+                        <AdminStatusPill
+                          status={row.status}
+                          variant={
+                            row.status === "active" ? "success" : "danger"
+                          }
+                        />
+                      </AdminTableCell>
+                      <AdminTableCell className="text-right">
+                        <AdminActionMenu
+                          ariaLabel={`Actions for ${row.name}`}
+                          items={[
+                            {
+                              id: "edit-stf",
+                              label: "Edit Staff Details",
+                              icon: <Edit3 className="h-3.5 w-3.5" />,
+                              onClick: () => openEditStaff(row),
+                            },
+                            ...(row.teacherData && isTeachingStaffRole(row.role)
+                              ? [
+                                  {
+                                    id: "assign-tch",
+                                    label: "Assign Classes & Subjects",
+                                    icon: <UserCheck className="h-3.5 w-3.5" />,
+                                    variant: "primary" as const,
+                                    onClick: () => {
+                                      setStaffFormOpen(false);
+                                      setTeacherClassesDraft(
+                                        row.teacherData!.assignedClasses
+                                      );
+                                      setTeacherSubjectsDraft(
+                                        row.teacherData!.assignedSubjectIds
+                                      );
+                                      setAssignTeacherTarget(row.teacherData!);
+                                      scrollFormIntoView(assignTeacherFormRef);
+                                    },
                                   },
-                                },
-                              ]
-                            : []),
-                          {
-                            id: "toggle-stf",
-                            label:
-                              row.status === "active"
-                                ? "Deactivate Access"
-                                : "Activate Access",
-                            icon: <Power className="h-3.5 w-3.5" />,
-                            onClick: () =>
-                              setAnyStaffStatus(
-                                row.id,
-                                row.status === "active" ? "inactive" : "active"
-                              ),
-                          },
-                          {
-                            id: "del-stf",
-                            label: "Remove Staff",
-                            icon: <Trash2 className="h-3.5 w-3.5" />,
-                            variant: "danger",
-                            dividerBefore: true,
-                            onClick: () =>
-                              setDeleteTarget({
-                                kind: "staff",
-                                id: row.id,
-                                label: row.name,
-                              }),
-                          },
-                        ]}
-                      />
-                    </AdminTableCell>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
+                                ]
+                              : []),
+                            {
+                              id: "toggle-stf",
+                              label:
+                                row.status === "active"
+                                  ? "Deactivate Access"
+                                  : "Activate Access",
+                              icon: <Power className="h-3.5 w-3.5" />,
+                              onClick: () =>
+                                setAnyStaffStatus(
+                                  row.id,
+                                  row.status === "active"
+                                    ? "inactive"
+                                    : "active"
+                                ),
+                            },
+                            {
+                              id: "del-stf",
+                              label: "Remove Staff",
+                              icon: <Trash2 className="h-3.5 w-3.5" />,
+                              variant: "danger",
+                              dividerBefore: true,
+                              onClick: () =>
+                                setDeleteTarget({
+                                  kind: "staff",
+                                  id: row.id,
+                                  label: row.name,
+                                }),
+                            },
+                          ]}
+                        />
+                      </AdminTableCell>
+                    </AdminTableRow>
+                  ))}
+              </AdminTableBody>
+            </AdminTable>
+          )}
+        </AdminDataTable>
       </AdminSectionCard>
 
       <AdminDialogModal

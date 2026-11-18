@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -25,6 +26,7 @@ import {
 } from "@/components/admin/ui/admin-dialog-modal";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import { ProctorBroadcastModal } from "./proctor-broadcast-modal";
 
 export function ProctoringWorkspace() {
@@ -60,6 +62,8 @@ export function ProctoringWorkspace() {
   const termLabel = activeSessionTerm
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : "First Term · 2026/2027";
+
+  const selection = useTableSelection(filteredCandidates.map((c) => c.id));
 
   return (
     <div className="space-y-4">
@@ -106,6 +110,16 @@ export function ProctoringWorkspace() {
             title="Proctoring Telemetry & Live Seats"
             subtitle="Track active candidates, tab switches, and remaining assessment duration."
             badge={`${filteredCandidates.length} seats`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredCandidates.length === 0 ? (
               <AdminEmptyState
@@ -117,6 +131,14 @@ export function ProctoringWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all candidates"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Candidate</AdminTableHead>
                     <AdminTableHead>Seat</AdminTableHead>
                     <AdminTableHead>Integrity Switches</AdminTableHead>
@@ -129,7 +151,17 @@ export function ProctoringWorkspace() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredCandidates.map((cand) => (
-                    <AdminTableRow key={cand.id}>
+                    <AdminTableRow
+                      key={cand.id}
+                      isSelected={selection.isSelected(cand.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${cand.studentName}`}
+                          checked={selection.isSelected(cand.id)}
+                          onChange={() => selection.toggleOne(cand.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell>
                         <p className="font-display font-extrabold text-brand-950">
                           {cand.studentName}

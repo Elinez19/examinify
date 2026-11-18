@@ -15,6 +15,7 @@ import {
   PortalShell,
   type PortalNavItem,
 } from "@/components/portal/portal-shell";
+import { isSameClassOrLevel } from "@/data/portal-mock-data";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 import { getInitials } from "@/lib/portal-auth";
 
@@ -24,8 +25,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const liveCount = store.exams.filter(
     (exam) =>
       exam.status === "live" &&
-      (exam.classLevel === store.student.classLevel ||
-        exam.classLevel.startsWith(store.student.classLevel.split(" ")[0] ?? ""))
+      isSameClassOrLevel(
+        exam.classLevel,
+        store.student.classLevel,
+        exam.targetClassArms
+      )
   ).length;
 
   const navItems: PortalNavItem[] = [

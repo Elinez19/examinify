@@ -116,7 +116,7 @@ export function TeacherAssignmentForm({
                     )}
                   >
                     {selected && <CheckCircle2 className="h-3 w-3" />}
-                    {sub.title} ({sub.code})
+                    {sub.title}
                   </button>
                 );
               })}

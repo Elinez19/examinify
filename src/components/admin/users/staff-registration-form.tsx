@@ -248,15 +248,6 @@ export function StaffRegistrationForm({
       >
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-9">
-            <AdminSelectField
-              label="School Branch *"
-              value={formState.schoolBranch}
-              onChange={(val) =>
-                setFormState((p) => ({ ...p, schoolBranch: val }))
-              }
-              options={SCHOOL_BRANCH_OPTIONS}
-            />
-
             <IdGeneratorField
               label="Staff ID"
               value={formState.staffCode}

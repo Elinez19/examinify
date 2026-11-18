@@ -782,7 +782,7 @@ export function ExamPlayer({ examId }: { examId: string }) {
                 </div>
               )}
 
-              {currentQ.type === "theory" && (
+              {(currentQ.type === "theory" || currentQ.type === "essay") && (
                 <div className="space-y-2 pt-1">
                   <div className="flex items-center justify-between">
                     <label className="font-display text-xs font-extrabold text-brand-700">

@@ -15,6 +15,7 @@ import {
 import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminKpiCard } from "@/components/admin/ui/admin-kpi-card";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
+import { isSameClassOrLevel } from "@/data/portal-mock-data";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
 
 export function StudentOverviewWorkspace() {
@@ -27,10 +28,12 @@ export function StudentOverviewWorkspace() {
         subject.assignedClasses.includes(store.student.classLevel))
   );
 
-  const myExams = store.exams.filter(
-    (exam) =>
-      exam.classLevel === store.student.classLevel ||
-      exam.classLevel.startsWith(store.student.classLevel.split(" ")[0] ?? "")
+  const myExams = store.exams.filter((exam) =>
+    isSameClassOrLevel(
+      exam.classLevel,
+      store.student.classLevel,
+      exam.targetClassArms
+    )
   );
 
   const liveExams = myExams.filter((exam) => exam.status === "live");
@@ -155,7 +158,7 @@ export function StudentOverviewWorkspace() {
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[10px] font-extrabold text-brand-900">
-                        {exam.subjectCode}
+                        {exam.subjectTitle || exam.subjectCode}
                       </span>
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${
@@ -225,7 +228,7 @@ export function StudentOverviewWorkspace() {
                     {subject.title}
                   </p>
                   <p className="truncate text-[11px] font-medium text-ink-secondary">
-                    {subject.code} · {subject.teacherName}
+                    {subject.teacherName}
                   </p>
                 </div>
                 <Link

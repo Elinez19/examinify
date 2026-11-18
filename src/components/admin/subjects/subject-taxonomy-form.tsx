@@ -123,7 +123,7 @@ export function CategoryTaxonomyForm({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <AdminTextField
                 label="Subject Description"
-                placeholder="WAEC, NECO, and term assessment papers across JSS 1–SSS 3."
+                placeholder="WAEC, NECO, and term assessment papers across Academy & College."
                 value={formData.description}
                 onChange={(e) => onUpdateField("description", e.target.value)}
                 required
@@ -142,7 +142,7 @@ export function CategoryTaxonomyForm({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <AdminTextField
                 label="CBT Paper Title"
-                placeholder="e.g. SSS 3 Mathematics Objective Mock"
+                placeholder="e.g. SS 3 Mathematics Objective Mock"
                 value={formData.serviceTitle}
                 onChange={(e) => onUpdateField("serviceTitle", e.target.value)}
                 required

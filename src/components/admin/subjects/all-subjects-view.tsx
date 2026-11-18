@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -26,6 +27,7 @@ import {
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { SubjectEnrollment } from "@/data/portal-mock-data";
 import {
   buildSubjectFromForm,
@@ -106,7 +108,7 @@ export function AllSubjectsWorkspace() {
       variant: "success",
       eyebrow: "Curriculum Updated",
       title: wasEditing ? "Subject Updated" : "Subject Created",
-      description: `"${saved.title}" (${saved.code}) has been saved to the school subject catalog.`,
+      description: `"${saved.title}" has been saved to the school subject catalog.`,
     });
   };
 
@@ -123,6 +125,8 @@ export function AllSubjectsWorkspace() {
   const termLabel = activeSessionTerm
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : "Academic Setup";
+
+  const selection = useTableSelection(filteredSubjects.map((sub) => sub.id));
 
   return (
     <div className="space-y-4">
@@ -169,6 +173,16 @@ export function AllSubjectsWorkspace() {
             title="School Subjects Directory"
             subtitle="Manage curriculum subjects across all school departments."
             badge={`${filteredSubjects.length} subjects`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredSubjects.length === 0 ? (
               <AdminEmptyState
@@ -180,6 +194,14 @@ export function AllSubjectsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all subjects"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Code</AdminTableHead>
                     <AdminTableHead>Subject Title</AdminTableHead>
                     <AdminTableHead>Assigned Classes</AdminTableHead>
@@ -192,7 +214,17 @@ export function AllSubjectsWorkspace() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredSubjects.map((sub) => (
-                    <AdminTableRow key={sub.id}>
+                    <AdminTableRow
+                      key={sub.id}
+                      isSelected={selection.isSelected(sub.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${sub.title}`}
+                          checked={selection.isSelected(sub.id)}
+                          onChange={() => selection.toggleOne(sub.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell className="font-mono font-extrabold text-brand-900">
                         {sub.code}
                       </AdminTableCell>
@@ -297,7 +329,7 @@ export function AllSubjectsWorkspace() {
         title="Delete Subject?"
         description={
           deleteTarget
-            ? `Permanently remove "${deleteTarget.title}" (${deleteTarget.code}) from the curriculum catalog?`
+            ? `Permanently remove "${deleteTarget.title}" from the curriculum catalog?`
             : undefined
         }
         confirmLabel="Confirm Delete"

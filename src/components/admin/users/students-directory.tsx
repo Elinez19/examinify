@@ -11,6 +11,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminSortableTableHead,
@@ -32,6 +33,7 @@ import { AvatarBadge } from "@/components/portal/avatar-badge";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { StudentProfile } from "@/data/portal-mock-data";
 import {
   createInitialStudentFormState,
@@ -119,7 +121,7 @@ export function StudentsDirectory() {
         store.students.length
       ),
       id: stu.id,
-      schoolBranch: stu.schoolBranch ?? "Main Campus (Guzape)",
+      schoolBranch: stu.schoolBranch ?? "Guzape Branch",
       admissionNo: stu.admissionNo,
       firstName: stu.firstName,
       middleName: stu.middleName ?? "",
@@ -201,9 +203,9 @@ export function StudentsDirectory() {
       cityOfResidence: studentForm.cityOfResidence.trim() || undefined,
       dateOfBirth: studentForm.dateOfBirth || undefined,
       entrySession: studentForm.entrySession,
-      classArmId: arm?.id ?? "arm_jss3a",
-      classLevel: arm?.name ?? "JSS 3A",
-      wing: arm?.arm ?? "General",
+      classArmId: arm?.id ?? "arm_jss_3_superstars",
+      classLevel: arm?.name ?? "JSS 3 Superstars",
+      wing: arm?.arm ?? "Superstars",
       termLabel,
       schoolName: store.student.schoolName,
       avatarUrl: studentForm.photoDataUrl || existing?.avatarUrl || "avatar-1",
@@ -262,6 +264,8 @@ export function StudentsDirectory() {
       return sortDir === "asc" ? cmp : -cmp;
     });
   }, [q, sortDir, sortKey, statusFilter, store.students]);
+
+  const selection = useTableSelection(filteredStudents.map((stu) => stu.id));
 
   return (
     <div className="space-y-4">
@@ -343,6 +347,16 @@ export function StudentsDirectory() {
             title="Student Accounts & Class Assignment"
             subtitle="Edit student records or move a student to another class arm."
             badge={`${filteredStudents.length} students`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredStudents.length === 0 ? (
               <AdminEmptyState
@@ -354,6 +368,14 @@ export function StudentsDirectory() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all students"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminSortableTableHead
                       label="Student"
                       sortKey="name"
@@ -389,7 +411,17 @@ export function StudentsDirectory() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredStudents.map((stu) => (
-                    <AdminTableRow key={stu.id}>
+                    <AdminTableRow
+                      key={stu.id}
+                      isSelected={selection.isSelected(stu.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${stu.name}`}
+                          checked={selection.isSelected(stu.id)}
+                          onChange={() => selection.toggleOne(stu.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell>
                         <div className="flex items-center gap-2.5">
                           <AvatarBadge

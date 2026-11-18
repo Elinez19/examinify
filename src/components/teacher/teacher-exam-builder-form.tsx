@@ -83,7 +83,7 @@ export function TeacherExamBuilderForm({
             onChange={(event) =>
               setFormState((prev) => ({ ...prev, title: event.target.value }))
             }
-            placeholder="e.g. JSS 3 Mathematics First Term CBT"
+            placeholder="e.g. Grade 5 Trailblazers Mathematics CA1"
             required
           />
 
@@ -102,7 +102,7 @@ export function TeacherExamBuilderForm({
               }
               options={subjects.map((sub) => ({
                 id: sub.code,
-                label: `${sub.title} (${sub.code})`,
+                label: sub.title,
               }))}
             />
 

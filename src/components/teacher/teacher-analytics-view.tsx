@@ -12,6 +12,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -25,6 +26,7 @@ import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
 import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 
 export function TeacherAnalyticsWorkspace() {
   const router = useRouter();
@@ -84,6 +86,8 @@ export function TeacherAnalyticsWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.teacher.termLabel;
 
+  const selection = useTableSelection(filteredBroadsheet.map((sub) => sub.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -124,7 +128,7 @@ export function TeacherAnalyticsWorkspace() {
                 { id: "ALL", label: "All Subjects" },
                 ...store.subjects.map((sub) => ({
                   id: sub.code,
-                  label: `${sub.code} · ${sub.title}`,
+                  label: sub.title,
                 })),
               ]}
             />
@@ -146,6 +150,16 @@ export function TeacherAnalyticsWorkspace() {
             title="Consolidated Result Broadsheet"
             subtitle="Objective + theory scores across submitted examination scripts."
             badge={`${filteredBroadsheet.length} records`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredBroadsheet.length === 0 ? (
               <AdminEmptyState
@@ -157,6 +171,14 @@ export function TeacherAnalyticsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all broadsheet records"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Candidate</AdminTableHead>
                     <AdminTableHead>Assessment</AdminTableHead>
                     <AdminTableHead>Total Score</AdminTableHead>
@@ -174,7 +196,17 @@ export function TeacherAnalyticsWorkspace() {
                     const pct =
                       total > 0 ? Math.round((earned / total) * 100) : 0;
                     return (
-                      <AdminTableRow key={sub.id}>
+                      <AdminTableRow
+                        key={sub.id}
+                        isSelected={selection.isSelected(sub.id)}
+                      >
+                        <AdminTableCell className="w-10">
+                          <AdminCheckbox
+                            aria-label={`Select ${sub.studentName}`}
+                            checked={selection.isSelected(sub.id)}
+                            onChange={() => selection.toggleOne(sub.id)}
+                          />
+                        </AdminTableCell>
                         <AdminTableCell>
                           <p className="font-display font-extrabold text-brand-950">
                             {sub.studentName}

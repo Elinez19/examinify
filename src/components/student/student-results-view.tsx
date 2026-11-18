@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -24,6 +25,7 @@ import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { ExamSubmission } from "@/data/portal-mock-data";
 import { ScriptAppealModal } from "./script-appeal-modal";
 
@@ -79,6 +81,10 @@ export function StudentResultsWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.student.termLabel;
 
+  const selection = useTableSelection(
+    filteredSubmissions.map((sub) => sub.id)
+  );
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -114,6 +120,16 @@ export function StudentResultsWorkspace() {
             title="Submitted Scripts & Published Results"
             subtitle="Review marked answers or request a remark on published scores."
             badge={`${filteredSubmissions.length} scripts`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredSubmissions.length === 0 ? (
               <AdminEmptyState
@@ -125,6 +141,14 @@ export function StudentResultsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all submitted scripts"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Subject</AdminTableHead>
                     <AdminTableHead>Examination</AdminTableHead>
                     <AdminTableHead>Score</AdminTableHead>
@@ -142,7 +166,17 @@ export function StudentResultsWorkspace() {
                     const pct =
                       total > 0 ? Math.round((earned / total) * 100) : 0;
                     return (
-                      <AdminTableRow key={sub.id}>
+                      <AdminTableRow
+                        key={sub.id}
+                        isSelected={selection.isSelected(sub.id)}
+                      >
+                        <AdminTableCell className="w-10">
+                          <AdminCheckbox
+                            aria-label={`Select ${sub.examTitle}`}
+                            checked={selection.isSelected(sub.id)}
+                            onChange={() => selection.toggleOne(sub.id)}
+                          />
+                        </AdminTableCell>
                         <AdminTableCell>
                           <PillBadge
                             tone="sky"

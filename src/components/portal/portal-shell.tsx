@@ -18,6 +18,7 @@ import {
 import { ToolPattern } from "@/components/brand/exam-pattern";
 import { BrandLogo } from "@/components/brand/logo";
 import { OffsetRing } from "@/components/brand/offset-ring";
+import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { AvatarBadge } from "@/components/portal/avatar-badge";
 import { motionTokens } from "@/lib/motion";
@@ -391,18 +392,30 @@ export function PortalShell({
         </div>
       </div>
 
-      {/* Sidebar Status Footer */}
-      <div className="relative z-10 mt-6 rounded-2xl border-2 border-brand-100 bg-surface-pearl/90 p-3.5 shadow-gloss-card">
-        <PillBadge
-          tone="blue"
-          icon="dot"
-          className="px-2.5 py-0.5 text-[10px]"
+      {/* Sidebar Footer & Logout CTA */}
+      <div className="relative z-10 mt-6 space-y-2.5 border-t border-brand-100 pt-3">
+        <div className="rounded-2xl border-2 border-brand-100 bg-surface-pearl/90 px-3 py-2.5 shadow-gloss-card">
+          <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-brand-600">
+            Active Term
+          </p>
+          <p className="mt-0.5 text-xs font-semibold leading-relaxed text-brand-950">
+            {brandTagline}
+          </p>
+        </div>
+
+        <CtaButton
+          variant="primary"
+          size="xs"
+          type="button"
+          onClick={() => {
+            onNavigate?.();
+            handleSignOut();
+          }}
+          className="w-full px-2 text-[11px]"
         >
-          {statusBadge}
-        </PillBadge>
-        <p className="mt-2 text-xs font-medium leading-relaxed text-ink-secondary">
-          {brandTagline}
-        </p>
+          <LogOut className="h-3 w-3" />
+          <span>Logout</span>
+        </CtaButton>
       </div>
     </div>
   );

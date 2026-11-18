@@ -62,10 +62,15 @@ export function AssignSubjectModal({
   onSave,
 }: AssignSubjectModalProps) {
   const defaultClass = initialClassName || classArms[0]?.name || "";
-  const defaultBranch = initialBranch || SCHOOL_BRANCH_OPTIONS[0].id;
+  const defaultBranch =
+    initialBranch ||
+    classArms.find((arm) => arm.name === defaultClass)?.schoolBranch ||
+    SCHOOL_BRANCH_OPTIONS[0].id;
 
-  const [branch, setBranch] = React.useState(defaultBranch);
   const [className, setClassName] = React.useState(defaultClass);
+  const resolvedBranch =
+    classArms.find((arm) => arm.name === className)?.schoolBranch ||
+    defaultBranch;
   const [drafts, setDrafts] = React.useState<
     Record<string, AssignSubjectDraftRow>
   >(() => buildDraftRows(subjects, defaultClass));
@@ -115,7 +120,7 @@ export function AssignSubjectModal({
     e.preventDefault();
     if (!className) return;
     onSave({
-      branch,
+      branch: resolvedBranch,
       className,
       rows: Object.values(drafts),
     });
@@ -127,7 +132,7 @@ export function AssignSubjectModal({
       onOpenChange={onOpenChange}
       eyebrow="Academic Allocation"
       title="Assign Subject to Class"
-      description="Select a campus branch and class arm, then tick all subjects offered by that class."
+      description="Select a class arm from your school directory, then tick all subjects offered by that class."
       size="lg"
       footer={
         <>
@@ -155,26 +160,15 @@ export function AssignSubjectModal({
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <AdminSelectField
-            label="Branch *"
-            value={branch}
-            onChange={setBranch}
-            options={SCHOOL_BRANCH_OPTIONS.map((opt) => ({
-              id: opt.id,
-              label: opt.label,
-            }))}
-          />
-          <AdminSelectField
-            label="Class Name *"
-            value={className}
-            onChange={handleClassChange}
-            options={classArms.map((arm) => ({
-              id: arm.name,
-              label: `${arm.name} (${arm.arm})`,
-            }))}
-          />
-        </div>
+        <AdminSelectField
+          label="Class Name *"
+          value={className}
+          onChange={handleClassChange}
+          options={classArms.map((arm) => ({
+            id: arm.name,
+            label: `${arm.name} (${arm.arm})`,
+          }))}
+        />
 
         <div className="overflow-hidden rounded-2xl border-2 border-surface-frost bg-surface-porcelain shadow-gloss-card">
           <div className="max-h-80 overflow-y-auto">
@@ -213,8 +207,8 @@ export function AssignSubjectModal({
                           <p className="font-display text-xs font-extrabold uppercase tracking-tight text-brand-950">
                             {sub.title}
                           </p>
-                          <p className="font-mono text-[10px] font-bold text-ink-secondary">
-                            {sub.code} · {sub.category}
+                          <p className="text-[10px] font-bold text-ink-secondary">
+                            {sub.category}
                           </p>
                         </button>
                       </AdminTableCell>

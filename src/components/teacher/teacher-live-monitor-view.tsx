@@ -11,6 +11,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminSortableTableHead,
@@ -27,6 +28,7 @@ import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
 import { AdminDialogModal } from "@/components/admin/ui/admin-dialog-modal";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import { TeacherBroadcastModal } from "./teacher-broadcast-modal";
 
 type MonitorSortKey =
@@ -136,6 +138,10 @@ export function TeacherLiveMonitorWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.teacher.termLabel;
 
+  const selection = useTableSelection(
+    filteredCandidates.map((cand) => cand.id)
+  );
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -151,8 +157,8 @@ export function TeacherLiveMonitorWorkspace() {
           icon: <Megaphone className="h-4 w-4" />,
         }}
         secondaryCta={{
-          label: "Assessments",
-          href: "/teacher/exams",
+          label: "Create Exam",
+          href: "/teacher/exams/create",
           variant: "secondary",
           trailingArrow: true,
         }}
@@ -198,6 +204,16 @@ export function TeacherLiveMonitorWorkspace() {
             title="Active Candidate Workstations"
             subtitle="Supervise candidate progress, focus switches, and remaining exam timers."
             badge={`${filteredCandidates.length} seats`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredCandidates.length === 0 ? (
               <AdminEmptyState
@@ -209,6 +225,14 @@ export function TeacherLiveMonitorWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all candidate seats"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminSortableTableHead
                       label="Candidate"
                       sortKey="studentName"
@@ -251,7 +275,17 @@ export function TeacherLiveMonitorWorkspace() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredCandidates.map((cand) => (
-                    <AdminTableRow key={cand.id}>
+                    <AdminTableRow
+                      key={cand.id}
+                      isSelected={selection.isSelected(cand.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${cand.studentName}`}
+                          checked={selection.isSelected(cand.id)}
+                          onChange={() => selection.toggleOne(cand.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell>
                         <p className="font-display font-extrabold text-brand-950">
                           {cand.studentName}

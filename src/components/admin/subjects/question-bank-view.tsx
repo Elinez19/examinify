@@ -11,6 +11,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminTable,
@@ -32,6 +33,7 @@ import {
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { QuestionItem } from "@/data/portal-mock-data";
 
 export function QuestionBankWorkspace() {
@@ -48,7 +50,7 @@ export function QuestionBankWorkspace() {
       id: "",
       subjectCode: store.subjects[0]?.code ?? "MTH-301",
       topic: "",
-      classLevel: store.classArms[0]?.name ?? "JSS 3A",
+      classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
       type: "objective",
       difficulty: "Standard",
       marks: 2,
@@ -88,7 +90,7 @@ export function QuestionBankWorkspace() {
       id: "",
       subjectCode: store.subjects[0]?.code ?? "MTH-301",
       topic: "",
-      classLevel: store.classArms[0]?.name ?? "JSS 3A",
+      classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
       type: "objective",
       difficulty: "Standard",
       marks: 2,
@@ -218,6 +220,8 @@ export function QuestionBankWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : "Academic Setup";
 
+  const selection = useTableSelection(filteredQuestions.map((item) => item.id));
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -270,7 +274,7 @@ export function QuestionBankWorkspace() {
                 { id: "ALL", label: "All Subjects" },
                 ...store.subjects.map((sub) => ({
                   id: sub.code,
-                  label: `${sub.code} · ${sub.title}`,
+                  label: sub.title,
                 })),
               ]}
             />
@@ -292,6 +296,16 @@ export function QuestionBankWorkspace() {
             title="Question Bank Repository"
             subtitle="Browse and edit curated CBT items across subjects."
             badge={`${filteredQuestions.length} items`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredQuestions.length === 0 ? (
               <AdminEmptyState
@@ -303,6 +317,14 @@ export function QuestionBankWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all questions"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminTableHead>Topic & Prompt</AdminTableHead>
                     <AdminTableHead>Subject</AdminTableHead>
                     <AdminTableHead>Class</AdminTableHead>
@@ -315,7 +337,17 @@ export function QuestionBankWorkspace() {
                 </AdminTableHeader>
                 <AdminTableBody>
                   {filteredQuestions.map((item) => (
-                    <AdminTableRow key={item.id}>
+                    <AdminTableRow
+                      key={item.id}
+                      isSelected={selection.isSelected(item.id)}
+                    >
+                      <AdminTableCell className="w-10">
+                        <AdminCheckbox
+                          aria-label={`Select ${item.topic}`}
+                          checked={selection.isSelected(item.id)}
+                          onChange={() => selection.toggleOne(item.id)}
+                        />
+                      </AdminTableCell>
                       <AdminTableCell className="max-w-md">
                         <p className="font-display font-extrabold text-brand-950">
                           {item.topic}

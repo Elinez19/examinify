@@ -136,7 +136,7 @@ export function StudentStudyWorkspace() {
                 : "border-2 border-brand-100 bg-surface-porcelain text-brand-800 shadow-gloss-card hover:bg-surface-mist"
             )}
           >
-            {subject.title} ({subject.code})
+            {subject.title}
           </button>
         ))}
       </div>

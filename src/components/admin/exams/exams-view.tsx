@@ -20,18 +20,28 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
+  AdminDataTable,
+  AdminEmptyState,
+  AdminTable,
+  AdminTableBody,
   AdminTableCell,
   AdminTableHead,
+  AdminTableHeader,
+  AdminTableRow,
 } from "@/components/admin/ui/admin-data-table";
 import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
+import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
 import {
   AdminDialogModal,
   type ModalVariant,
 } from "@/components/admin/ui/admin-dialog-modal";
+import { PillBadge } from "@/components/landing/ui/pill-badge";
 import {
   generateExamPassCode,
   usePortalStore,
 } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { PortalExam } from "@/data/portal-mock-data";
 import { cn } from "@/lib/utils";
 import {
@@ -78,7 +88,7 @@ export function ExamsWorkspace() {
     id: "",
     title: "",
     subjectCode: store.subjects[0]?.code ?? "MTH-301",
-    classLevel: store.classArms[0]?.name ?? "JSS 3A",
+    classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
     scheduledFor: "Tue, Nov 24 · 09:00 AM",
     durationMinutes: 45,
     passCode: "",
@@ -109,7 +119,7 @@ export function ExamsWorkspace() {
       id: "",
       title: "",
       subjectCode: store.subjects[0]?.code ?? "MTH-301",
-      classLevel: store.classArms[0]?.name ?? "JSS 3A",
+      classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
       scheduledFor: "Tue, Nov 24 · 09:00 AM",
       durationMinutes: 45,
       passCode: generateExamPassCode(),
@@ -217,6 +227,11 @@ export function ExamsWorkspace() {
   const termLabel = activeSessionTerm
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : "First Term · 2026/2027";
+
+  const examSelection = useTableSelection(filteredExams.map((e) => e.id));
+  const candidateSelection = useTableSelection(
+    store.liveCandidates.map((c) => c.id)
+  );
 
   return (
     <div className="space-y-6">
@@ -340,133 +355,171 @@ export function ExamsWorkspace() {
               />
             </div>
 
-            <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-                  <tr>
-                    <AdminTableHead>Examination</AdminTableHead>
-                    <AdminTableHead>Class Arm</AdminTableHead>
-                    <AdminTableHead>Schedule</AdminTableHead>
-                    <AdminTableHead>Pass Code / PIN</AdminTableHead>
-                    <AdminTableHead>Proctoring</AdminTableHead>
-                    <AdminTableHead>Status</AdminTableHead>
-                    <AdminTableHead className="text-right">Actions</AdminTableHead>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-100 bg-white">
-                  {filteredExams.map((exam) => (
-                    <tr
-                      key={exam.id}
-                      className="hover:bg-surface-mist/50 transition-colors"
-                    >
-                      <AdminTableCell>
-                        <p className="font-extrabold text-brand-950">
-                          {exam.title}
-                        </p>
-                        <p className="text-[11px] font-medium text-ink-secondary">
-                          {exam.subjectCode} · {exam.durationMinutes} mins
-                        </p>
-                      </AdminTableCell>
-                      <AdminTableCell className="font-bold text-brand-900">
-                        {exam.classLevel}
-                      </AdminTableCell>
-                      <AdminTableCell className="font-medium text-ink-primary">
-                        {exam.scheduledFor}
-                      </AdminTableCell>
-                      <AdminTableCell>
-                        <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-brand-100 bg-surface-pearl px-2.5 py-1 font-mono font-extrabold text-brand-950">
-                          <KeyRound className="h-3 w-3 text-brand-600" />
-                          {exam.passCode || "—"}
-                        </span>
-                      </AdminTableCell>
-                      <AdminTableCell>
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
-                            exam.proctoringEnabled
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-slate-100 text-slate-700"
-                          )}
-                        >
-                          <ShieldCheck className="h-3 w-3" />
-                          {exam.proctoringEnabled ? "Enforced" : "Off"}
-                        </span>
-                      </AdminTableCell>
-                      <AdminTableCell>
-                        <span
-                          className={cn(
-                            "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
-                            exam.status === "live"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : exam.status === "scheduled"
-                                ? "bg-amber-100 text-amber-800"
-                                : "bg-slate-100 text-slate-700"
-                          )}
-                        >
-                          {exam.status}
-                        </span>
-                      </AdminTableCell>
-                      <AdminTableCell className="text-right">
-                        <AdminActionMenu
-                          ariaLabel={`Manage ${exam.title}`}
-                          items={[
-                            {
-                              id: "pin",
-                              label: "Manage Pass Code / PIN",
-                              icon: <KeyRound className="h-3.5 w-3.5" />,
-                              variant: "primary",
-                              onClick: () => {
-                                setExamFormOpen(false);
-                                setPinDraft(
-                                  exam.passCode || generateExamPassCode()
-                                );
-                                setPinTarget(exam);
-                                scrollToForm(pinFormRef);
-                              },
-                            },
-                            {
-                              id: "edit",
-                              label: "Edit Schedule & Rules",
-                              icon: <Edit3 className="h-3.5 w-3.5" />,
-                              onClick: () => openEditForm(exam),
-                            },
-                            {
-                              id: "proctor-toggle",
-                              label: exam.proctoringEnabled
-                                ? "Disable Proctoring"
-                                : "Enable Proctoring",
-                              icon: <ShieldCheck className="h-3.5 w-3.5" />,
-                              onClick: () => toggleExamProctoring(exam.id),
-                            },
-                            {
-                              id: "status-toggle",
-                              label:
-                                exam.status === "live"
-                                  ? "Close Live Window"
-                                  : "Open Live Window",
-                              icon: <Play className="h-3.5 w-3.5" />,
-                              onClick: () =>
-                                updateExamStatus(
-                                  exam.id,
-                                  exam.status === "live" ? "completed" : "live"
-                                ),
-                            },
-                            {
-                              id: "delete",
-                              label: "Delete Exam",
-                              icon: <Trash2 className="h-3.5 w-3.5" />,
-                              variant: "danger",
-                              dividerBefore: true,
-                              onClick: () => setDeleteTarget(exam),
-                            },
-                          ]}
+            <AdminDataTable
+              title="Exam Schedule Registry"
+              subtitle="Scheduled CBT windows, access PINs, and proctoring status."
+              badge={`${filteredExams.length} exams`}
+              selectedCount={examSelection.selectedCount}
+              bulkActions={
+                <button
+                  type="button"
+                  onClick={examSelection.clearSelection}
+                  className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+                >
+                  Clear
+                </button>
+              }
+            >
+              {filteredExams.length === 0 ? (
+                <AdminEmptyState
+                  title="No Examinations Found"
+                  description="Schedule a new examination or adjust your search and status filters."
+                  icon={<Clock className="h-5 w-5 text-accent-sky" />}
+                />
+              ) : (
+                <AdminTable>
+                  <AdminTableHeader>
+                    <tr>
+                      <AdminTableHead className="w-10">
+                        <AdminCheckbox
+                          aria-label="Select all examinations"
+                          checked={examSelection.allSelected}
+                          indeterminate={examSelection.someSelected}
+                          onChange={(e) =>
+                            examSelection.toggleAll(e.target.checked)
+                          }
                         />
-                      </AdminTableCell>
+                      </AdminTableHead>
+                      <AdminTableHead>Examination</AdminTableHead>
+                      <AdminTableHead>Class Arm</AdminTableHead>
+                      <AdminTableHead>Schedule</AdminTableHead>
+                      <AdminTableHead>Pass Code / PIN</AdminTableHead>
+                      <AdminTableHead>Proctoring</AdminTableHead>
+                      <AdminTableHead>Status</AdminTableHead>
+                      <AdminTableHead className="text-right">
+                        Actions
+                      </AdminTableHead>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </AdminTableHeader>
+                  <AdminTableBody>
+                    {filteredExams.map((exam) => (
+                      <AdminTableRow
+                        key={exam.id}
+                        isSelected={examSelection.isSelected(exam.id)}
+                      >
+                        <AdminTableCell className="w-10">
+                          <AdminCheckbox
+                            aria-label={`Select ${exam.title}`}
+                            checked={examSelection.isSelected(exam.id)}
+                            onChange={() => examSelection.toggleOne(exam.id)}
+                          />
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          <p className="font-display font-extrabold text-brand-950">
+                            {exam.title}
+                          </p>
+                          <p className="text-[11px] font-medium text-ink-secondary">
+                            {exam.subjectCode} · {exam.durationMinutes} mins
+                          </p>
+                        </AdminTableCell>
+                        <AdminTableCell className="font-bold text-brand-900">
+                          {exam.classLevel}
+                        </AdminTableCell>
+                        <AdminTableCell className="font-medium text-ink-primary">
+                          {exam.scheduledFor}
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-brand-100 bg-surface-pearl px-2.5 py-1 font-mono font-extrabold text-brand-950">
+                            <KeyRound className="h-3 w-3 text-brand-600" />
+                            {exam.passCode || "—"}
+                          </span>
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          <PillBadge
+                            tone={exam.proctoringEnabled ? "sky" : "porcelain"}
+                            icon="none"
+                            className="px-2.5 py-0.5 text-[10px]"
+                          >
+                            <ShieldCheck className="h-3 w-3" />
+                            <span>
+                              {exam.proctoringEnabled ? "Enforced" : "Off"}
+                            </span>
+                          </PillBadge>
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          <AdminStatusPill
+                            status={exam.status}
+                            variant={
+                              exam.status === "live"
+                                ? "active"
+                                : exam.status === "scheduled"
+                                  ? "warning"
+                                  : "neutral"
+                            }
+                          />
+                        </AdminTableCell>
+                        <AdminTableCell className="text-right">
+                          <AdminActionMenu
+                            ariaLabel={`Manage ${exam.title}`}
+                            items={[
+                              {
+                                id: "pin",
+                                label: "Manage Pass Code / PIN",
+                                icon: <KeyRound className="h-3.5 w-3.5" />,
+                                variant: "primary",
+                                onClick: () => {
+                                  setExamFormOpen(false);
+                                  setPinDraft(
+                                    exam.passCode || generateExamPassCode()
+                                  );
+                                  setPinTarget(exam);
+                                  scrollToForm(pinFormRef);
+                                },
+                              },
+                              {
+                                id: "edit",
+                                label: "Edit Schedule & Rules",
+                                icon: <Edit3 className="h-3.5 w-3.5" />,
+                                onClick: () => openEditForm(exam),
+                              },
+                              {
+                                id: "proctor-toggle",
+                                label: exam.proctoringEnabled
+                                  ? "Disable Proctoring"
+                                  : "Enable Proctoring",
+                                icon: <ShieldCheck className="h-3.5 w-3.5" />,
+                                onClick: () => toggleExamProctoring(exam.id),
+                              },
+                              {
+                                id: "status-toggle",
+                                label:
+                                  exam.status === "live"
+                                    ? "Close Live Window"
+                                    : "Open Live Window",
+                                icon: <Play className="h-3.5 w-3.5" />,
+                                onClick: () =>
+                                  updateExamStatus(
+                                    exam.id,
+                                    exam.status === "live" ? "completed" : "live"
+                                  ),
+                              },
+                              {
+                                id: "delete",
+                                label: "Delete Exam",
+                                icon: <Trash2 className="h-3.5 w-3.5" />,
+                                variant: "danger",
+                                dividerBefore: true,
+                                onClick: () => setDeleteTarget(exam),
+                              },
+                            ]}
+                          />
+                        </AdminTableCell>
+                      </AdminTableRow>
+                    ))}
+                  </AdminTableBody>
+                </AdminTable>
+              )}
+            </AdminDataTable>
           </AdminSectionCard>
         </div>
       ) : (
@@ -514,92 +567,133 @@ export function ExamsWorkspace() {
               </button>
             }
           >
-            <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-                  <tr>
-                    <AdminTableHead>Candidate</AdminTableHead>
-                    <AdminTableHead>Seat</AdminTableHead>
-                    <AdminTableHead>Integrity Switches</AdminTableHead>
-                    <AdminTableHead>Time Remaining</AdminTableHead>
-                    <AdminTableHead>Status</AdminTableHead>
-                    <AdminTableHead className="text-right">Actions</AdminTableHead>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-100 bg-white">
-                  {store.liveCandidates.map((cand) => (
-                    <tr
-                      key={cand.id}
-                      className="hover:bg-surface-mist/50 transition-colors"
-                    >
-                      <AdminTableCell>
-                        <p className="font-extrabold text-brand-950">
-                          {cand.studentName}
-                        </p>
-                        <p className="text-[11px] font-mono text-ink-secondary">
-                          {cand.admissionNo}
-                        </p>
-                      </AdminTableCell>
-                      <AdminTableCell className="font-mono font-bold text-brand-800">
-                        {cand.seatLabel}
-                      </AdminTableCell>
-                      <AdminTableCell className="font-bold">
-                        {cand.tabSwitchCount} switch(es)
-                      </AdminTableCell>
-                      <AdminTableCell className="font-bold text-brand-900">
-                        {cand.timeRemainingMinutes} mins
-                      </AdminTableCell>
-                      <AdminTableCell>
-                        <span
-                          className={cn(
-                            "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase",
-                            cand.status === "flagged"
-                              ? "bg-rose-100 text-rose-800"
-                              : cand.status === "active"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-slate-100 text-slate-700"
-                          )}
-                        >
-                          {cand.status}
-                        </span>
-                      </AdminTableCell>
-                      <AdminTableCell className="text-right">
-                        <AdminActionMenu
-                          ariaLabel={`Proctor ${cand.studentName}`}
-                          items={[
-                            {
-                              id: "extend",
-                              label: "Grant +5 Mins Extra Time",
-                              icon: <Clock className="h-3.5 w-3.5" />,
-                              disabled: cand.status === "submitted",
-                              onClick: () => extendCandidateTime(cand.id, 5),
-                            },
-                            {
-                              id: "flag",
-                              label:
-                                cand.status === "flagged"
-                                  ? "Clear Proctor Flag"
-                                  : "Flag Integrity Breach",
-                              icon: <Flag className="h-3.5 w-3.5" />,
-                              onClick: () => flagCandidateSession(cand.id),
-                            },
-                            {
-                              id: "terminate",
-                              label: "Force Submit Session",
-                              icon: <ShieldAlert className="h-3.5 w-3.5" />,
-                              variant: "danger",
-                              dividerBefore: true,
-                              disabled: cand.status === "submitted",
-                              onClick: () => forceSubmitCandidate(cand.id),
-                            },
-                          ]}
+            <AdminDataTable
+              title="Live Candidate Monitoring"
+              subtitle="Monitor focus-loss flags, adjust candidate timers, or submit sessions."
+              badge={`${store.liveCandidates.length} candidates`}
+              selectedCount={candidateSelection.selectedCount}
+              bulkActions={
+                <button
+                  type="button"
+                  onClick={candidateSelection.clearSelection}
+                  className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+                >
+                  Clear
+                </button>
+              }
+            >
+              {store.liveCandidates.length === 0 ? (
+                <AdminEmptyState
+                  title="No Live Candidates"
+                  description="Candidates currently taking live CBT sessions will appear here."
+                  icon={<ShieldCheck className="h-5 w-5 text-accent-sky" />}
+                />
+              ) : (
+                <AdminTable>
+                  <AdminTableHeader>
+                    <tr>
+                      <AdminTableHead className="w-10">
+                        <AdminCheckbox
+                          aria-label="Select all live candidates"
+                          checked={candidateSelection.allSelected}
+                          indeterminate={candidateSelection.someSelected}
+                          onChange={(e) =>
+                            candidateSelection.toggleAll(e.target.checked)
+                          }
                         />
-                      </AdminTableCell>
+                      </AdminTableHead>
+                      <AdminTableHead>Candidate</AdminTableHead>
+                      <AdminTableHead>Seat</AdminTableHead>
+                      <AdminTableHead>Integrity Switches</AdminTableHead>
+                      <AdminTableHead>Time Remaining</AdminTableHead>
+                      <AdminTableHead>Status</AdminTableHead>
+                      <AdminTableHead className="text-right">
+                        Actions
+                      </AdminTableHead>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </AdminTableHeader>
+                  <AdminTableBody>
+                    {store.liveCandidates.map((cand) => (
+                      <AdminTableRow
+                        key={cand.id}
+                        isSelected={candidateSelection.isSelected(cand.id)}
+                      >
+                        <AdminTableCell className="w-10">
+                          <AdminCheckbox
+                            aria-label={`Select ${cand.studentName}`}
+                            checked={candidateSelection.isSelected(cand.id)}
+                            onChange={() =>
+                              candidateSelection.toggleOne(cand.id)
+                            }
+                          />
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          <p className="font-display font-extrabold text-brand-950">
+                            {cand.studentName}
+                          </p>
+                          <p className="text-[11px] font-mono text-ink-secondary">
+                            {cand.admissionNo}
+                          </p>
+                        </AdminTableCell>
+                        <AdminTableCell className="font-mono font-bold text-brand-800">
+                          {cand.seatLabel}
+                        </AdminTableCell>
+                        <AdminTableCell className="font-bold">
+                          {cand.tabSwitchCount} switch(es)
+                        </AdminTableCell>
+                        <AdminTableCell className="font-bold text-brand-900">
+                          {cand.timeRemainingMinutes} mins
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          <AdminStatusPill
+                            status={cand.status}
+                            variant={
+                              cand.status === "flagged"
+                                ? "danger"
+                                : cand.status === "active"
+                                  ? "active"
+                                  : "neutral"
+                            }
+                          />
+                        </AdminTableCell>
+                        <AdminTableCell className="text-right">
+                          <AdminActionMenu
+                            ariaLabel={`Proctor ${cand.studentName}`}
+                            items={[
+                              {
+                                id: "extend",
+                                label: "Grant +5 Mins Extra Time",
+                                icon: <Clock className="h-3.5 w-3.5" />,
+                                disabled: cand.status === "submitted",
+                                onClick: () => extendCandidateTime(cand.id, 5),
+                              },
+                              {
+                                id: "flag",
+                                label:
+                                  cand.status === "flagged"
+                                    ? "Clear Proctor Flag"
+                                    : "Flag Integrity Breach",
+                                icon: <Flag className="h-3.5 w-3.5" />,
+                                onClick: () => flagCandidateSession(cand.id),
+                              },
+                              {
+                                id: "terminate",
+                                label: "Force Submit Session",
+                                icon: <ShieldAlert className="h-3.5 w-3.5" />,
+                                variant: "danger",
+                                dividerBefore: true,
+                                disabled: cand.status === "submitted",
+                                onClick: () => forceSubmitCandidate(cand.id),
+                              },
+                            ]}
+                          />
+                        </AdminTableCell>
+                      </AdminTableRow>
+                    ))}
+                  </AdminTableBody>
+                </AdminTable>
+              )}
+            </AdminDataTable>
           </AdminSectionCard>
         </div>
       )}

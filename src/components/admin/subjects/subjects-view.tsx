@@ -15,8 +15,15 @@ import { AdminHeroBanner } from "@/components/admin/ui/admin-hero-banner";
 import { AdminSectionCard } from "@/components/admin/ui/admin-section-card";
 import { AdminSearchInput } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
+  AdminDataTable,
+  AdminEmptyState,
+  AdminTable,
+  AdminTableBody,
   AdminTableCell,
   AdminTableHead,
+  AdminTableHeader,
+  AdminTableRow,
 } from "@/components/admin/ui/admin-data-table";
 import { AdminActionMenu } from "@/components/admin/ui/admin-action-menu";
 import {
@@ -29,6 +36,7 @@ import {
   type QuestionBankFormState,
 } from "@/components/forms";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type {
   ClassArm,
   QuestionItem,
@@ -111,7 +119,7 @@ export function SubjectsWorkspace() {
       id: "",
       subjectCode: store.subjects[0]?.code ?? "MTH-301",
       topic: "",
-      classLevel: store.classArms[0]?.name ?? "JSS 3A",
+      classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
       type: "objective",
       difficulty: "Standard",
       marks: 2,
@@ -190,7 +198,7 @@ export function SubjectsWorkspace() {
       variant: "success",
       eyebrow: "Curriculum Updated",
       title: wasEditing ? "Subject Updated" : "Subject Created",
-      description: `"${saved.title}" (${saved.code}) has been saved to the school subject catalog.`,
+      description: `"${saved.title}" has been saved to the school subject catalog.`,
     });
   };
 
@@ -286,7 +294,7 @@ export function SubjectsWorkspace() {
       id: "",
       subjectCode: store.subjects[0]?.code ?? "MTH-301",
       topic: "",
-      classLevel: store.classArms[0]?.name ?? "JSS 3A",
+      classLevel: store.classArms[0]?.name ?? "JSS 3 Superstars",
       type: "objective",
       difficulty: "Standard",
       marks: 2,
@@ -383,7 +391,9 @@ export function SubjectsWorkspace() {
               .filter(Boolean)
           : undefined,
       markingGuide:
-        questionForm.type === "theory" ? questionForm.markingGuide : undefined,
+        questionForm.type === "theory" || questionForm.type === "essay"
+          ? questionForm.markingGuide
+          : undefined,
       explanation: questionForm.explanation.trim() || undefined,
       createdBy: "School Administrator",
       updatedAt: "Today",
@@ -394,11 +404,26 @@ export function SubjectsWorkspace() {
       variant: "success",
       eyebrow: "Question Bank Updated",
       title: wasEditing ? "Question Updated" : "Question Added",
-      description: `"${questionForm.topic.trim()}" has been saved to ${questionForm.subjectCode}.`,
+      description: `"${questionForm.topic.trim()}" has been saved to ${subject?.title ?? questionForm.subjectCode}.`,
     });
   };
 
   const q = searchQuery.trim().toLowerCase();
+  const filteredSubjects = store.subjects.filter(
+    (s) =>
+      !q ||
+      s.title.toLowerCase().includes(q) ||
+      s.code.toLowerCase().includes(q)
+  );
+  const subjectSelection = useTableSelection(
+    filteredSubjects.map((s) => s.id)
+  );
+  const classArmSelection = useTableSelection(
+    store.classArms.map((arm) => arm.id)
+  );
+  const questionSelection = useTableSelection(
+    store.questions.map((item) => item.id)
+  );
 
   return (
     <div className="space-y-6">
@@ -517,35 +542,68 @@ export function SubjectsWorkspace() {
               />
             </div>
 
-            <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-                  <tr>
-                    <AdminTableHead>Code</AdminTableHead>
-                    <AdminTableHead>Subject Title</AdminTableHead>
-                    <AdminTableHead>Assigned Classes</AdminTableHead>
-                    <AdminTableHead>Assigned Teachers</AdminTableHead>
-                    <AdminTableHead className="text-right">Actions</AdminTableHead>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-100 bg-white">
-                  {store.subjects
-                    .filter(
-                      (s) =>
-                        !q ||
-                        s.title.toLowerCase().includes(q) ||
-                        s.code.toLowerCase().includes(q)
-                    )
-                    .map((sub) => (
-                      <tr
+            <AdminDataTable
+              title="School Subjects"
+              subtitle="Manage subject catalog, assigned classes, and teaching staff."
+              badge={`${filteredSubjects.length} subjects`}
+              selectedCount={subjectSelection.selectedCount}
+              bulkActions={
+                <button
+                  type="button"
+                  onClick={subjectSelection.clearSelection}
+                  className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+                >
+                  Clear
+                </button>
+              }
+            >
+              {filteredSubjects.length === 0 ? (
+                <AdminEmptyState
+                  title="No Subjects Found"
+                  description="Create a new subject or clear your search filter."
+                  icon={<BookOpen className="h-5 w-5 text-accent-sky" />}
+                />
+              ) : (
+                <AdminTable>
+                  <AdminTableHeader>
+                    <tr>
+                      <AdminTableHead className="w-10">
+                        <AdminCheckbox
+                          aria-label="Select all subjects"
+                          checked={subjectSelection.allSelected}
+                          indeterminate={subjectSelection.someSelected}
+                          onChange={(e) =>
+                            subjectSelection.toggleAll(e.target.checked)
+                          }
+                        />
+                      </AdminTableHead>
+                      <AdminTableHead>Code</AdminTableHead>
+                      <AdminTableHead>Subject Title</AdminTableHead>
+                      <AdminTableHead>Assigned Classes</AdminTableHead>
+                      <AdminTableHead>Assigned Teachers</AdminTableHead>
+                      <AdminTableHead className="text-right">
+                        Actions
+                      </AdminTableHead>
+                    </tr>
+                  </AdminTableHeader>
+                  <AdminTableBody>
+                    {filteredSubjects.map((sub) => (
+                      <AdminTableRow
                         key={sub.id}
-                        className="hover:bg-surface-mist/50 transition-colors"
+                        isSelected={subjectSelection.isSelected(sub.id)}
                       >
+                        <AdminTableCell className="w-10">
+                          <AdminCheckbox
+                            aria-label={`Select ${sub.title}`}
+                            checked={subjectSelection.isSelected(sub.id)}
+                            onChange={() => subjectSelection.toggleOne(sub.id)}
+                          />
+                        </AdminTableCell>
                         <AdminTableCell className="font-mono font-extrabold text-brand-900">
                           {sub.code}
                         </AdminTableCell>
                         <AdminTableCell>
-                          <p className="font-extrabold text-brand-950">
+                          <p className="font-display font-extrabold text-brand-950">
                             {sub.title}
                           </p>
                           <p className="text-[11px] text-ink-secondary">
@@ -555,12 +613,14 @@ export function SubjectsWorkspace() {
                         <AdminTableCell>
                           <div className="flex flex-wrap gap-1">
                             {sub.assignedClasses.map((c) => (
-                              <span
+                              <PillBadge
                                 key={c}
-                                className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-extrabold text-brand-900"
+                                tone="sky"
+                                icon="none"
+                                className="px-2 py-0.5 text-[10px]"
                               >
                                 {c}
-                              </span>
+                              </PillBadge>
                             ))}
                           </div>
                         </AdminTableCell>
@@ -568,8 +628,8 @@ export function SubjectsWorkspace() {
                           {sub.assignedTeacherIds
                             .map(
                               (id) =>
-                                store.teachers.find((t) => t.id === id)?.name ??
-                                sub.teacherName
+                                store.teachers.find((t) => t.id === id)
+                                  ?.name ?? sub.teacherName
                             )
                             .join(", ") || sub.teacherName}
                         </AdminTableCell>
@@ -599,11 +659,12 @@ export function SubjectsWorkspace() {
                             ]}
                           />
                         </AdminTableCell>
-                      </tr>
+                      </AdminTableRow>
                     ))}
-                </tbody>
-              </table>
-            </div>
+                  </AdminTableBody>
+                </AdminTable>
+              )}
+            </AdminDataTable>
           </AdminSectionCard>
         </div>
       )}
@@ -621,7 +682,7 @@ export function SubjectsWorkspace() {
 
           <AdminSectionCard
             title="Class Arms & Class Teachers"
-            description="Define school arms (e.g. JSS 3A) and classifications."
+            description="Define school arms (e.g. Grade 5 Trailblazers or JSS 2 Discoverers) and classifications."
             action={
               <button
                 type="button"
@@ -633,80 +694,123 @@ export function SubjectsWorkspace() {
               </button>
             }
           >
-            <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-                  <tr>
-                    <AdminTableHead>Arm Name</AdminTableHead>
-                    <AdminTableHead>Classification</AdminTableHead>
-                    <AdminTableHead>Class Teacher</AdminTableHead>
-                    <AdminTableHead>Enrolled Students</AdminTableHead>
-                    <AdminTableHead className="text-right">Actions</AdminTableHead>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-100 bg-white">
-                  {store.classArms.map((arm) => {
-                    const ct = store.teachers.find(
-                      (t) => t.id === arm.classTeacherId
-                    );
-                    const stuCount = store.students.filter(
-                      (s) => s.classLevel === arm.name
-                    ).length;
-                    return (
-                      <tr
-                        key={arm.id}
-                        className="hover:bg-surface-mist/50 transition-colors"
-                      >
-                        <AdminTableCell className="font-extrabold text-brand-950">
-                          {arm.name}
-                        </AdminTableCell>
-                        <AdminTableCell>
-                          <PillBadge
-                            tone="sky"
-                            icon="none"
-                            className="px-2.5 py-0.5 text-[10px]"
-                          >
-                            {arm.classification}
-                          </PillBadge>
-                        </AdminTableCell>
-                        <AdminTableCell className="font-semibold text-brand-900">
-                          {ct?.name ?? "Unassigned"}
-                        </AdminTableCell>
-                        <AdminTableCell className="font-bold">
-                          {stuCount} / {arm.capacity} seats
-                        </AdminTableCell>
-                        <AdminTableCell className="text-right">
-                          <AdminActionMenu
-                            ariaLabel={`Actions for ${arm.name}`}
-                            items={[
-                              {
-                                id: "edit-arm",
-                                label: "Edit Class Arm",
-                                icon: <Edit3 className="h-3.5 w-3.5" />,
-                                onClick: () => openEditClassArm(arm),
-                              },
-                              {
-                                id: "del-arm",
-                                label: "Remove Class Arm",
-                                icon: <Trash2 className="h-3.5 w-3.5" />,
-                                variant: "danger",
-                                dividerBefore: true,
-                                onClick: () =>
-                                  setDeleteTarget({
-                                    kind: "class",
-                                    id: arm.id,
-                                    label: arm.name,
-                                  }),
-                              },
-                            ]}
-                          />
-                        </AdminTableCell>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <AdminDataTable
+              title="Class Arms Directory"
+              subtitle="Configured class arms, classifications, and form teachers."
+              badge={`${store.classArms.length} class arms`}
+              selectedCount={classArmSelection.selectedCount}
+              bulkActions={
+                <button
+                  type="button"
+                  onClick={classArmSelection.clearSelection}
+                  className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+                >
+                  Clear
+                </button>
+              }
+            >
+              {store.classArms.length === 0 ? (
+                <AdminEmptyState
+                  title="No Class Arms Found"
+                  description="Create a class arm to organize students and form teachers."
+                  icon={<GraduationCap className="h-5 w-5 text-accent-sky" />}
+                />
+              ) : (
+                <AdminTable>
+                  <AdminTableHeader>
+                    <tr>
+                      <AdminTableHead className="w-10">
+                        <AdminCheckbox
+                          aria-label="Select all class arms"
+                          checked={classArmSelection.allSelected}
+                          indeterminate={classArmSelection.someSelected}
+                          onChange={(e) =>
+                            classArmSelection.toggleAll(e.target.checked)
+                          }
+                        />
+                      </AdminTableHead>
+                      <AdminTableHead>Arm Name</AdminTableHead>
+                      <AdminTableHead>Classification</AdminTableHead>
+                      <AdminTableHead>Class Teacher</AdminTableHead>
+                      <AdminTableHead>Enrolled Students</AdminTableHead>
+                      <AdminTableHead className="text-right">
+                        Actions
+                      </AdminTableHead>
+                    </tr>
+                  </AdminTableHeader>
+                  <AdminTableBody>
+                    {store.classArms.map((arm) => {
+                      const ct = store.teachers.find(
+                        (t) => t.id === arm.classTeacherId
+                      );
+                      const stuCount = store.students.filter(
+                        (s) => s.classLevel === arm.name
+                      ).length;
+                      return (
+                        <AdminTableRow
+                          key={arm.id}
+                          isSelected={classArmSelection.isSelected(arm.id)}
+                        >
+                          <AdminTableCell className="w-10">
+                            <AdminCheckbox
+                              aria-label={`Select ${arm.name}`}
+                              checked={classArmSelection.isSelected(arm.id)}
+                              onChange={() =>
+                                classArmSelection.toggleOne(arm.id)
+                              }
+                            />
+                          </AdminTableCell>
+                          <AdminTableCell className="font-display font-extrabold text-brand-950">
+                            {arm.name}
+                          </AdminTableCell>
+                          <AdminTableCell>
+                            <PillBadge
+                              tone="sky"
+                              icon="none"
+                              className="px-2.5 py-0.5 text-[10px]"
+                            >
+                              {arm.classification}
+                            </PillBadge>
+                          </AdminTableCell>
+                          <AdminTableCell className="font-semibold text-brand-900">
+                            {ct?.name ?? "Unassigned"}
+                          </AdminTableCell>
+                          <AdminTableCell className="font-bold text-brand-950">
+                            {stuCount} / {arm.capacity} seats
+                          </AdminTableCell>
+                          <AdminTableCell className="text-right">
+                            <AdminActionMenu
+                              ariaLabel={`Actions for ${arm.name}`}
+                              items={[
+                                {
+                                  id: "edit-arm",
+                                  label: "Edit Class Arm",
+                                  icon: <Edit3 className="h-3.5 w-3.5" />,
+                                  onClick: () => openEditClassArm(arm),
+                                },
+                                {
+                                  id: "del-arm",
+                                  label: "Remove Class Arm",
+                                  icon: <Trash2 className="h-3.5 w-3.5" />,
+                                  variant: "danger",
+                                  dividerBefore: true,
+                                  onClick: () =>
+                                    setDeleteTarget({
+                                      kind: "class",
+                                      id: arm.id,
+                                      label: arm.name,
+                                    }),
+                                },
+                              ]}
+                            />
+                          </AdminTableCell>
+                        </AdminTableRow>
+                      );
+                    })}
+                  </AdminTableBody>
+                </AdminTable>
+              )}
+            </AdminDataTable>
           </AdminSectionCard>
         </div>
       )}
@@ -871,73 +975,120 @@ export function SubjectsWorkspace() {
               </button>
             }
           >
-            <div className="overflow-x-auto rounded-2xl border-2 border-brand-100 bg-surface-porcelain">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b-2 border-brand-100 bg-surface-pearl">
-                  <tr>
-                    <AdminTableHead>Topic & Prompt</AdminTableHead>
-                    <AdminTableHead>Subject</AdminTableHead>
-                    <AdminTableHead>Type</AdminTableHead>
-                    <AdminTableHead>Marks</AdminTableHead>
-                    <AdminTableHead className="text-right">Actions</AdminTableHead>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-100 bg-white">
-                  {store.questions.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-surface-mist/50 transition-colors"
-                    >
-                      <AdminTableCell className="max-w-md">
-                        <p className="font-extrabold text-brand-950">
-                          {item.topic}
-                        </p>
-                        <p className="line-clamp-1 text-[11px] text-ink-secondary">
-                          {item.prompt}
-                        </p>
-                      </AdminTableCell>
-                      <AdminTableCell className="font-mono font-bold text-brand-800">
-                        {item.subjectCode}
-                      </AdminTableCell>
-                      <AdminTableCell>
-                        <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-brand-900">
-                          {item.type.replace("_", " ")}
-                        </span>
-                      </AdminTableCell>
-                      <AdminTableCell className="font-bold">
-                        {item.marks}
-                      </AdminTableCell>
-                      <AdminTableCell className="text-right">
-                        <AdminActionMenu
-                          ariaLabel={`Manage ${item.topic}`}
-                          items={[
-                            {
-                              id: "edit-q",
-                              label: "Edit Question",
-                              icon: <Edit3 className="h-3.5 w-3.5" />,
-                              onClick: () => openEditQuestion(item),
-                            },
-                            {
-                              id: "del-q",
-                              label: "Delete Question",
-                              icon: <Trash2 className="h-3.5 w-3.5" />,
-                              variant: "danger",
-                              dividerBefore: true,
-                              onClick: () =>
-                                setDeleteTarget({
-                                  kind: "question",
-                                  id: item.id,
-                                  label: item.topic,
-                                }),
-                            },
-                          ]}
+            <AdminDataTable
+              title="Question Bank Repository"
+              subtitle="Curated CBT items across all subjects and formats."
+              badge={`${store.questions.length} items`}
+              selectedCount={questionSelection.selectedCount}
+              bulkActions={
+                <button
+                  type="button"
+                  onClick={questionSelection.clearSelection}
+                  className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+                >
+                  Clear
+                </button>
+              }
+            >
+              {store.questions.length === 0 ? (
+                <AdminEmptyState
+                  title="No Questions Yet"
+                  description="Add questions to the school bank to build CBT assessments."
+                  icon={<Layers className="h-5 w-5 text-accent-sky" />}
+                />
+              ) : (
+                <AdminTable>
+                  <AdminTableHeader>
+                    <tr>
+                      <AdminTableHead className="w-10">
+                        <AdminCheckbox
+                          aria-label="Select all questions"
+                          checked={questionSelection.allSelected}
+                          indeterminate={questionSelection.someSelected}
+                          onChange={(e) =>
+                            questionSelection.toggleAll(e.target.checked)
+                          }
                         />
-                      </AdminTableCell>
+                      </AdminTableHead>
+                      <AdminTableHead>Topic & Prompt</AdminTableHead>
+                      <AdminTableHead>Subject</AdminTableHead>
+                      <AdminTableHead>Type</AdminTableHead>
+                      <AdminTableHead>Marks</AdminTableHead>
+                      <AdminTableHead className="text-right">
+                        Actions
+                      </AdminTableHead>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </AdminTableHeader>
+                  <AdminTableBody>
+                    {store.questions.map((item) => (
+                      <AdminTableRow
+                        key={item.id}
+                        isSelected={questionSelection.isSelected(item.id)}
+                      >
+                        <AdminTableCell className="w-10">
+                          <AdminCheckbox
+                            aria-label={`Select ${item.topic}`}
+                            checked={questionSelection.isSelected(item.id)}
+                            onChange={() =>
+                              questionSelection.toggleOne(item.id)
+                            }
+                          />
+                        </AdminTableCell>
+                        <AdminTableCell className="max-w-md">
+                          <p className="font-display font-extrabold text-brand-950">
+                            {item.topic}
+                          </p>
+                          <p className="line-clamp-1 text-[11px] text-ink-secondary">
+                            {item.prompt}
+                          </p>
+                        </AdminTableCell>
+                        <AdminTableCell className="font-mono font-bold text-brand-800">
+                          {item.subjectCode}
+                        </AdminTableCell>
+                        <AdminTableCell>
+                          <PillBadge
+                            tone="sky"
+                            icon="none"
+                            className="px-2.5 py-0.5 text-[10px] uppercase"
+                          >
+                            {item.type.replace("_", " ")}
+                          </PillBadge>
+                        </AdminTableCell>
+                        <AdminTableCell className="font-bold text-brand-950">
+                          {item.marks}
+                        </AdminTableCell>
+                        <AdminTableCell className="text-right">
+                          <AdminActionMenu
+                            ariaLabel={`Manage ${item.topic}`}
+                            items={[
+                              {
+                                id: "edit-q",
+                                label: "Edit Question",
+                                icon: <Edit3 className="h-3.5 w-3.5" />,
+                                onClick: () => openEditQuestion(item),
+                              },
+                              {
+                                id: "del-q",
+                                label: "Delete Question",
+                                icon: <Trash2 className="h-3.5 w-3.5" />,
+                                variant: "danger",
+                                dividerBefore: true,
+                                onClick: () =>
+                                  setDeleteTarget({
+                                    kind: "question",
+                                    id: item.id,
+                                    label: item.topic,
+                                  }),
+                              },
+                            ]}
+                          />
+                        </AdminTableCell>
+                      </AdminTableRow>
+                    ))}
+                  </AdminTableBody>
+                </AdminTable>
+              )}
+            </AdminDataTable>
           </AdminSectionCard>
         </div>
       )}

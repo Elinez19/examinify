@@ -12,6 +12,7 @@ import {
   AdminSelectField,
 } from "@/components/admin/ui/admin-form-controls";
 import {
+  AdminCheckbox,
   AdminDataTable,
   AdminEmptyState,
   AdminSortableTableHead,
@@ -29,6 +30,7 @@ import { AdminStatusPill } from "@/components/admin/ui/admin-status-pill";
 import { CtaButton } from "@/components/landing/ui/cta-button";
 import { PillBadge } from "@/components/landing/ui/pill-badge";
 import { usePortalStore } from "@/hooks/portal/use-portal-store";
+import { useTableSelection } from "@/hooks/portal/use-table-selection";
 import type { SubjectEnrollment } from "@/data/portal-mock-data";
 
 type SubjectSortKey = "code" | "title" | "questions" | "passRate";
@@ -100,6 +102,10 @@ export function TeacherSubjectsWorkspace() {
     ? `${activeSessionTerm.term} · ${activeSessionTerm.session}`
     : store.teacher.termLabel;
 
+  const selection = useTableSelection(
+    filteredSubjects.map((subject) => subject.id)
+  );
+
   return (
     <div className="space-y-4">
       <AdminHeroBanner
@@ -149,6 +155,16 @@ export function TeacherSubjectsWorkspace() {
             title="Assigned Subjects Directory"
             subtitle="Inspect subject metadata or jump straight into its question bank."
             badge={`${filteredSubjects.length} subjects`}
+            selectedCount={selection.selectedCount}
+            bulkActions={
+              <button
+                type="button"
+                onClick={selection.clearSelection}
+                className="text-xs font-bold text-ink-secondary hover:text-brand-900 transition-colors px-1 cursor-pointer"
+              >
+                Clear
+              </button>
+            }
           >
             {filteredSubjects.length === 0 ? (
               <AdminEmptyState
@@ -160,6 +176,14 @@ export function TeacherSubjectsWorkspace() {
               <AdminTable>
                 <AdminTableHeader>
                   <tr>
+                    <AdminTableHead className="w-10">
+                      <AdminCheckbox
+                        aria-label="Select all subjects"
+                        checked={selection.allSelected}
+                        indeterminate={selection.someSelected}
+                        onChange={(e) => selection.toggleAll(e.target.checked)}
+                      />
+                    </AdminTableHead>
                     <AdminSortableTableHead
                       label="Code"
                       sortKey="code"
@@ -201,7 +225,17 @@ export function TeacherSubjectsWorkspace() {
                       (item) => item.subjectCode === subject.code
                     ).length;
                     return (
-                      <AdminTableRow key={subject.id}>
+                      <AdminTableRow
+                        key={subject.id}
+                        isSelected={selection.isSelected(subject.id)}
+                      >
+                        <AdminTableCell className="w-10">
+                          <AdminCheckbox
+                            aria-label={`Select ${subject.title}`}
+                            checked={selection.isSelected(subject.id)}
+                            onChange={() => selection.toggleOne(subject.id)}
+                          />
+                        </AdminTableCell>
                         <AdminTableCell className="font-mono font-bold text-brand-900">
                           {subject.code}
                         </AdminTableCell>
